@@ -37,69 +37,47 @@
     <div id="status" class="mt-4 text-center text-sm"></div>
   </div>
 
-  <script>
-    // 🪄 Replace with your Supabase credentials
-     const SUPABASE_URL = "https://jlzqdefinnwoazsqlunf.supabase.co";
+  <!-- Tailwind first -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Then Supabase client -->
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<!-- Then your custom JS code -->
+<script>
+   const SUPABASE_URL = "https://jlzqdefinnwoazsqlunf.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsenFkZWZpbm53b2F6c3FsdW5mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI0NTgwOTksImV4cCI6MjA3ODAzNDA5OX0.ZPfFVDqJgZkuhPGO9WNlYHKDwKgQ9SZoGjSIypgaDIE";
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const form = document.getElementById("participantForm");
-    const status = document.getElementById("status");
+  // ✅ Initialize client
+  const client = supabase.createClient(supabaseUrl, supabaseAnonKey);
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      status.textContent = "Uploading... Please wait ⏳";
+  // ✅ Example: handle form submission
+  document.getElementById("registerForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = document.getElementById("name").value.trim();
+    const mobile = document.getElementById("mobile").value.trim();
+    const unit = document.getElementById("unit").value.trim();
+    const futureReady = document.getElementById("futureReady").value.trim();
 
-      const name = document.getElementById("name").value.trim();
-      const unit = document.getElementById("unit").value.trim();
-      const mobile = document.getElementById("mobile").value.trim();
-      const future_ready = document.getElementById("futureReady").value.trim();
-      const selfieFile = document.getElementById("selfie").files[0];
-      const reelFile = document.getElementById("reel").files[0];
-
-      let selfie_url = null, reel_url = null;
-
-      // Upload selfie
-      if (selfieFile) {
-        const selfiePath = `selfies/${mobile}-${Date.now()}-${selfieFile.name}`;
-        const { error: selfieErr } = await supabase.storage.from("selfies").upload(selfiePath, selfieFile);
-        if (!selfieErr) {
-          const { data } = supabase.storage.from("selfies").getPublicUrl(selfiePath);
-          selfie_url = data.publicUrl;
-        }
-      }
-
-      // Upload reel
-      if (reelFile) {
-        const reelPath = `reels/${mobile}-${Date.now()}-${reelFile.name}`;
-        const { error: reelErr } = await supabase.storage.from("reels").upload(reelPath, reelFile);
-        if (!reelErr) {
-          const { data } = supabase.storage.from("reels").getPublicUrl(reelPath);
-          reel_url = data.publicUrl;
-        }
-      }
-
-      // Call upsert_participant()
-      const { data, error } = await supabase.rpc("upsert_participant", {
+    const { data, error } = await client
+      .rpc("upsert_participant", {
         p_mobile: mobile,
         p_name: name,
         p_unit: unit,
-        p_future_ready: future_ready,
-        p_selfie_url: selfie_url,
-        p_reel_url: reel_url
+        p_future_ready: futureReady,
+        p_selfie_url: null,
+        p_reel_url: null,
       });
 
-      if (error) {
-        console.error(error);
-        status.textContent = "⚠️ Something went wrong. Try again.";
-        status.className = "mt-4 text-center text-sm text-red-600";
-      } else {
-        status.textContent = "✅ Registration successful!";
-        status.className = "mt-4 text-center text-sm text-green-600";
-        form.reset();
-      }
-    });
-  </script>
+    if (error) {
+      alert("Error: " + error.message);
+    } else {
+      alert("✅ Registered successfully!");
+    }
+  });
+</script>
+
+  
 </body>
 </html>
 
