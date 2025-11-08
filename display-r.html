@@ -7,98 +7,97 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <style>
-    @keyframes slideInLeft {
-      from { opacity: 0; transform: translateX(-50px); }
-      to { opacity: 1; transform: translateX(0); }
+    @keyframes scroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
     }
-    @keyframes slideInRight {
-      from { opacity: 0; transform: translateX(50px); }
-      to { opacity: 1; transform: translateX(0); }
+    .scroll-container {
+      animation: scroll 90s linear infinite;
     }
-    @keyframes slideInBottom {
-      from { opacity: 0; transform: translateY(50px); }
-      to { opacity: 1; transform: translateY(0); }
+    .scroll-container:hover {
+      animation-play-state: paused;
     }
-    .slide-in-left {
-      animation: slideInLeft 0.6s ease-out;
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
     }
-    .slide-in-right {
-      animation: slideInRight 0.6s ease-out;
-    }
-    .slide-in-bottom {
-      animation: slideInBottom 0.6s ease-out;
-    }
-    .trophy-gold {
-      background: linear-gradient(135deg, #FFD700, #FFA500);
-      box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
-    }
-    .trophy-silver {
-      background: linear-gradient(135deg, #C0C0C0, #A8A8A8);
-      box-shadow: 0 0 25px rgba(192, 192, 192, 0.5);
-    }
-    .trophy-bronze {
-      background: linear-gradient(135deg, #CD7F32, #B87333);
-      box-shadow: 0 0 20px rgba(205, 127, 50, 0.5);
+    .resolution-card {
+      animation: fadeIn 0.5s ease-out;
     }
   </style>
 </head>
 <body class="bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 min-h-screen overflow-hidden">
   
   <!-- Header -->
-  <header class="bg-white/90 backdrop-blur-lg shadow-xl py-6 px-8 sticky top-0 z-50">
+  <header class="bg-white/95 backdrop-blur-lg shadow-xl py-8 px-12 sticky top-0 z-50">
     <div class="max-w-[1920px] mx-auto flex justify-between items-center">
       <div>
-        <div class="inline-block bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-1 rounded-full text-sm font-semibold mb-2">
+        <div class="inline-block bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-2 rounded-full text-base font-semibold mb-3">
           Ladies Meet 2025
         </div>
-        <h1 class="text-5xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+        <h1 class="text-6xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
           Resolution Dashboard 2026
         </h1>
       </div>
       <div class="text-right">
-        <div class="text-4xl font-bold text-purple-600" id="totalCount">0</div>
-        <div class="text-sm text-gray-600">Total Resolutions</div>
+        <div class="text-5xl font-bold text-purple-600" id="totalCount">0</div>
+        <div class="text-lg text-gray-600">Total Resolutions</div>
       </div>
     </div>
   </header>
 
   <!-- Main Dashboard -->
-  <main class="max-w-[1920px] mx-auto p-8 pb-20">
+  <main class="py-8">
     
-    <!-- Top 3 Most Liked (Trophy Row) -->
-    <section class="mb-8">
-      <h2 class="text-3xl font-bold text-purple-800 mb-6 flex items-center gap-3">
-        <span>🏆</span> Top 3 Most Loved
-      </h2>
-      <div id="topThree" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <!-- Top 3 cards will be inserted here -->
+    <!-- Top Liked - Horizontal Scroll -->
+    <section class="mb-8 px-12">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-4xl font-bold text-purple-800 flex items-center gap-3">
+          <span class="text-5xl">❤️</span> Most Loved
+        </h2>
+        <div class="text-2xl font-semibold text-purple-600" id="topCount">0</div>
+      </div>
+      <div class="overflow-hidden">
+        <div id="topRow" class="scroll-container flex gap-6 whitespace-nowrap">
+          <!-- Top liked cards -->
+        </div>
       </div>
     </section>
 
-    <!-- Recently Updated -->
-    <section class="mb-8">
-      <h2 class="text-3xl font-bold text-blue-800 mb-6 flex items-center gap-3">
-        <span>🆕</span> Recently Updated
-      </h2>
-      <div id="recentUpdates" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        <!-- Recent cards will be inserted here -->
+    <!-- Recently Updated - Horizontal Scroll -->
+    <section class="mb-8 px-12">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-4xl font-bold text-blue-800 flex items-center gap-3">
+          <span class="text-5xl">🆕</span> Recently Updated
+        </h2>
+        <div class="text-2xl font-semibold text-blue-600" id="recentCount">0</div>
+      </div>
+      <div class="overflow-hidden">
+        <div id="recentRow" class="scroll-container flex gap-6 whitespace-nowrap" style="animation-direction: reverse;">
+          <!-- Recent cards -->
+        </div>
       </div>
     </section>
 
-    <!-- Random Resolutions -->
-    <section class="mb-8">
-      <h2 class="text-3xl font-bold text-green-800 mb-6 flex items-center gap-3">
-        <span>🎲</span> More Resolutions
-      </h2>
-      <div id="randomResolutions" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-        <!-- Random cards will be inserted here -->
+    <!-- Random Resolutions - Horizontal Scroll -->
+    <section class="mb-8 px-12">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-4xl font-bold text-green-800 flex items-center gap-3">
+          <span class="text-5xl">🎲</span> More Resolutions
+        </h2>
+        <div class="text-2xl font-semibold text-green-600" id="randomCount">0</div>
+      </div>
+      <div class="overflow-hidden">
+        <div id="randomRow" class="scroll-container flex gap-6 whitespace-nowrap">
+          <!-- Random cards -->
+        </div>
       </div>
     </section>
 
   </main>
 
   <!-- Footer -->
-  <footer class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg py-3 text-center text-sm text-gray-600 shadow-lg">
+  <footer class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg py-4 text-center text-base text-gray-600 shadow-lg">
     Made with ❤️ by Ordnance Fraternity • Auto-refreshing every 45 seconds
   </footer>
 
@@ -117,11 +116,16 @@
     const { createClient } = window.supabase;
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const topThree = document.getElementById('topThree');
-    const recentUpdates = document.getElementById('recentUpdates');
-    const randomResolutions = document.getElementById('randomResolutions');
+    const topRow = document.getElementById('topRow');
+    const recentRow = document.getElementById('recentRow');
+    const randomRow = document.getElementById('randomRow');
     const totalCount = document.getElementById('totalCount');
+    const topCount = document.getElementById('topCount');
+    const recentCount = document.getElementById('recentCount');
+    const randomCount = document.getElementById('randomCount');
     const loading = document.getElementById('loading');
+
+    let currentDataHash = '';
 
     function escapeHtml(s) {
       if (s == null) return '';
@@ -139,65 +143,40 @@
       return parts[0];
     }
 
-    function createTopCard(resolution, rank) {
-      const trophyClasses = [
-        'trophy-gold scale-110',
-        'trophy-silver scale-105',
-        'trophy-bronze scale-100'
-      ];
-      const trophyEmojis = ['🥇', '🥈', '🥉'];
-      
+    function createCard(resolution, bgGradient, borderColor) {
       return `
-        <div class="slide-in-bottom relative ${trophyClasses[rank]} rounded-3xl p-8 text-white overflow-hidden" style="animation-delay: ${rank * 0.2}s">
-          <div class="absolute top-4 right-4 text-6xl opacity-50">${trophyEmojis[rank]}</div>
-          <div class="relative z-10">
+        <div class="resolution-card inline-block w-[450px] bg-gradient-to-br ${bgGradient} rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border-4 ${borderColor}">
+          <div class="p-8">
+            <!-- Header -->
             <div class="flex items-start justify-between mb-4">
-              <div>
-                <div class="text-sm opacity-90 mb-1">${escapeHtml(resolution.unit || 'Unit not specified')}</div>
-                <h3 class="text-3xl font-bold">${escapeHtml(shortName(resolution.name))}</h3>
+              <div class="flex-1">
+                <div class="text-sm text-gray-600 mb-2 font-medium">${escapeHtml(resolution.unit || 'Unit not specified')}</div>
+                <h3 class="text-3xl font-bold text-gray-800 mb-1">${escapeHtml(shortName(resolution.name))}</h3>
               </div>
-              <div class="text-right">
-                <div class="text-4xl font-bold">❤️ ${resolution.likes || 0}</div>
-                <div class="text-xs opacity-90">likes</div>
+              <div class="flex flex-col items-end gap-2">
+                <div class="flex items-center gap-2 bg-gradient-to-r from-red-100 to-pink-100 px-4 py-2 rounded-full shadow-md">
+                  <span class="text-2xl">❤️</span>
+                  <span class="font-bold text-2xl text-red-600">${resolution.likes || 0}</span>
+                </div>
               </div>
             </div>
-            <div class="bg-white/20 backdrop-blur-sm rounded-2xl p-6 mt-4">
-              <p class="text-lg leading-relaxed" style="display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;">
+            
+            <!-- Resolution Text -->
+            <div class="bg-white/80 backdrop-blur-sm rounded-2xl p-6 mb-4 min-h-[180px]">
+              <p class="text-lg text-gray-700 leading-relaxed" style="display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden;">
                 ${escapeHtml(resolution.resolution)}
               </p>
             </div>
-            <div class="mt-4 flex justify-between items-center text-sm opacity-90">
-              <span>Edits: ${resolution.edits || 0}/3</span>
-              <span>${new Date(resolution.created_at).toLocaleDateString()}</span>
+            
+            <!-- Footer -->
+            <div class="flex justify-between items-center text-sm text-gray-600">
+              <div class="flex items-center gap-4">
+                <span class="flex items-center gap-1">
+                  <span class="font-semibold">✏️ ${resolution.edits || 0}</span>/3 edits
+                </span>
+              </div>
+              <span class="text-xs">${new Date(resolution.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
             </div>
-          </div>
-        </div>
-      `;
-    }
-
-    function createStandardCard(resolution, animationClass = 'slide-in-left', delay = 0) {
-      return `
-        <div class="${animationClass} bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300" style="animation-delay: ${delay}s">
-          <div class="flex items-start justify-between mb-3">
-            <div class="flex-1">
-              <div class="text-xs text-gray-500 mb-1">${escapeHtml(resolution.unit || 'Unit not specified')}</div>
-              <h3 class="text-xl font-bold text-gray-800">${escapeHtml(shortName(resolution.name))}</h3>
-            </div>
-            <div class="flex items-center gap-2 bg-gradient-to-r from-red-100 to-pink-100 px-3 py-2 rounded-full">
-              <span>❤️</span>
-              <span class="font-bold text-red-600">${resolution.likes || 0}</span>
-            </div>
-          </div>
-          
-          <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 mb-3">
-            <p class="text-gray-700 text-sm leading-relaxed" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
-              ${escapeHtml(resolution.resolution)}
-            </p>
-          </div>
-          
-          <div class="flex justify-between items-center text-xs text-gray-500">
-            <span>Edits: ${resolution.edits || 0}/3</span>
-            <span>${new Date(resolution.created_at).toLocaleDateString()}</span>
           </div>
         </div>
       `;
@@ -214,53 +193,77 @@
 
     async function loadResolutions() {
       try {
-        // Fetch all resolutions
         const { data, error } = await supabase
           .from('resolutions')
           .select('*')
           .order('created_at', { ascending: false })
           .limit(100);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Supabase error:', error);
+          throw error;
+        }
 
         const resolutions = data || [];
+        
+        // Check if data has changed
+        const newHash = JSON.stringify(resolutions);
+        if (newHash === currentDataHash) {
+          return; // No changes, skip re-render
+        }
+        currentDataHash = newHash;
+
         totalCount.textContent = resolutions.length;
 
         if (resolutions.length === 0) {
           loading.classList.add('hidden');
-          topThree.innerHTML = '<div class="col-span-3 text-center py-20 text-gray-500 text-xl">No resolutions yet</div>';
+          topRow.innerHTML = '<div class="inline-block text-center py-20 px-40 text-gray-500 text-2xl">No resolutions yet</div>';
           return;
         }
 
-        // Sort by likes for top 3
+        // Sort by likes for top section
         const sortedByLikes = [...resolutions].sort((a, b) => (b.likes || 0) - (a.likes || 0));
-        const top3 = sortedByLikes.slice(0, 3);
+        const topLiked = sortedByLikes.slice(0, 10);
 
-        // Recent updates (sorted by created_at, already sorted from query)
-        const recent = resolutions.slice(0, 8);
+        // Recent updates (already sorted by created_at)
+        const recent = resolutions.slice(0, 10);
 
-        // Random resolutions (exclude top 3 and recent)
-        const usedIds = new Set([...top3.map(r => r.id), ...recent.map(r => r.id)]);
+        // Random resolutions (exclude top and recent)
+        const usedIds = new Set([...topLiked.map(r => r.id), ...recent.map(r => r.id)]);
         const remaining = resolutions.filter(r => !usedIds.has(r.id));
-        const random = shuffleArray(remaining).slice(0, 10);
+        const random = shuffleArray(remaining).slice(0, 12);
 
-        // Render sections
-        topThree.innerHTML = top3.map((r, i) => createTopCard(r, i)).join('');
-        recentUpdates.innerHTML = recent.map((r, i) => createStandardCard(r, 'slide-in-right', i * 0.1)).join('');
-        randomResolutions.innerHTML = random.map((r, i) => createStandardCard(r, 'slide-in-bottom', i * 0.05)).join('');
+        // Update counts
+        topCount.textContent = topLiked.length;
+        recentCount.textContent = recent.length;
+        randomCount.textContent = random.length;
+
+        // Create cards for each section
+        const topCards = topLiked.map(r => createCard(r, 'from-purple-100 to-pink-100', 'border-purple-300')).join('');
+        const recentCards = recent.map(r => createCard(r, 'from-blue-100 to-cyan-100', 'border-blue-300')).join('');
+        const randomCards = random.map(r => createCard(r, 'from-green-100 to-emerald-100', 'border-green-300')).join('');
+
+        // Duplicate content for seamless infinite scroll
+        topRow.innerHTML = topCards + topCards;
+        recentRow.innerHTML = recentCards + recentCards;
+        randomRow.innerHTML = randomCards + randomCards;
 
         loading.classList.add('hidden');
 
       } catch (err) {
         console.error('Error loading resolutions:', err);
         loading.classList.add('hidden');
-        topThree.innerHTML = `
-          <div class="col-span-3 text-center py-20">
-            <div class="text-6xl mb-4">⚠️</div>
-            <p class="text-red-600 text-xl">Failed to load resolutions</p>
-            <p class="text-gray-600 text-sm mt-2">Retrying in 45 seconds...</p>
-          </div>
-        `;
+        
+        // Show error only if no data is currently displayed
+        if (!currentDataHash) {
+          topRow.innerHTML = `
+            <div class="inline-block text-center py-20 px-40">
+              <div class="text-6xl mb-4">⚠️</div>
+              <p class="text-red-600 text-2xl mb-2">Failed to load resolutions</p>
+              <p class="text-gray-600 text-base">Retrying in 45 seconds...</p>
+            </div>
+          `;
+        }
       }
     }
 
@@ -268,11 +271,15 @@
     loadResolutions();
 
     // Auto-refresh every 45 seconds
-    setInterval(loadResolutions, 45000);
+    setInterval(() => {
+      console.log('Auto-refreshing resolutions...');
+      loadResolutions();
+    }, 45000);
 
     // Refresh when page becomes visible
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
+        console.log('Page visible, refreshing resolutions...');
         loadResolutions();
       }
     });
