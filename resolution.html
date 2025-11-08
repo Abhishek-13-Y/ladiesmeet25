@@ -1,96 +1,464 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ladies Meet 2025 – Resolution Submission</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Resolution App — Ladies Meet 2025</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    .card-shadow { box-shadow: 0 8px 20px rgba(60,60,90,0.06); }
+    .glass {
+      background: linear-gradient(180deg, rgba(255,255,255,0.8), rgba(250,250,255,0.6));
+      backdrop-filter: blur(6px);
+    }
+  </style>
 </head>
+<body class="min-h-screen bg-gradient-to-br from-[#F6FFFA] via-[#F7F5FF] to-[#FFF7F3] font-sans text-gray-800 p-4">
 
-<body class="bg-gradient-to-br from-pink-50 via-rose-100 to-amber-50 min-h-screen flex items-center justify-center font-sans p-4">
-  <div class="bg-white/95 backdrop-blur-xl shadow-2xl rounded-3xl p-8 w-full max-w-2xl border border-pink-200">
-
-    <div class="text-center mb-6">
-      <div class="inline-block bg-gradient-to-r from-rose-500 to-pink-500 text-white px-6 py-2 rounded-full text-sm font-semibold mb-3">
-        Ladies Meet 2025
-      </div>
-      <h1 class="text-3xl font-bold bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent mb-2">
-        Resolution Wall ✨
+  <div class="max-w-4xl mx-auto">
+    <header class="text-center mb-8">
+      <div class="inline-block px-4 py-1 rounded-full bg-gradient-to-r from-[#C5F5E1] to-[#E9D8FD] text-[#374151] font-semibold">Ladies Meet 2025</div>
+      <h1 class="mt-4 text-3xl md:text-4xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#6EE7B7] to-[#C7B8FF]">
+        Resolution Portal — 2026
       </h1>
-      <p class="text-gray-600">Share your <span class="font-semibold text-rose-600">New Year Resolution</span> for 2026</p>
-    </div>
+      <p class="mt-2 text-sm text-gray-600">Add / Edit your resolution or view & like others' resolutions</p>
+      <p class="text-xs text-gray-400 mt-2">Made with ❤️ by Ordnance Fraternity</p>
+    </header>
 
-    <form id="resolutionForm" class="space-y-5">
-      <input id="name" type="text" placeholder="Full Name" required class="w-full p-4 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-rose-400 focus:border-rose-400" />
-      <input id="unit" type="text" placeholder="Unit / Directorate" required class="w-full p-4 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-rose-400 focus:border-rose-400" />
-      <input id="mobile" type="tel" placeholder="Mobile Number (10 digits)" maxlength="10" required class="w-full p-4 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-rose-400 focus:border-rose-400" />
-      <textarea id="resolution" rows="4" placeholder="Enter your 2026 resolution..." required class="w-full p-4 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-rose-400 focus:border-rose-400"></textarea>
+    <main class="glass rounded-3xl p-6 card-shadow">
 
-      <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-rose-600 to-pink-600 text-white py-4 rounded-xl font-bold text-lg hover:from-rose-700 hover:to-pink-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-        Submit Resolution ✓
-      </button>
-    </form>
+      <!-- Landing / controls -->
+      <section id="landingView" class="text-center space-y-4">
+        <p class="text-sm text-gray-600">Choose an action</p>
 
-    <div id="successMessage" class="hidden mt-8 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-400 rounded-2xl p-8 text-center shadow-lg">
-      <div class="text-6xl mb-3 animate-bounce">🌸</div>
-      <h2 class="text-2xl font-bold text-green-700 mb-2">Resolution Submitted!</h2>
-      <p class="text-green-600 text-sm">Thank you for sharing your inspiring resolution.</p>
-    </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <button id="btnAdd" class="py-4 px-6 rounded-2xl bg-white border border-[#E9E3FF] hover:shadow-lg transition text-lg font-semibold">
+            ✍️ Add / Edit My Resolution
+          </button>
 
-    <div id="status" class="mt-4 text-center text-sm"></div>
+          <button id="btnView" class="py-4 px-6 rounded-2xl bg-white border border-[#DFF6EE] hover:shadow-lg transition text-lg font-semibold">
+            💖 View All Resolutions
+          </button>
+        </div>
+
+        <div class="mt-6 text-xs text-gray-500">
+          Tip: Enter mobile to edit if your entry exists. Edits to the resolution are limited to <strong>3</strong> times.
+        </div>
+      </section>
+
+      <!-- Add/Edit form -->
+      <section id="formView" class="hidden mt-6">
+        <div class="max-w-2xl mx-auto space-y-4">
+          <div id="mobileStep" class="space-y-2">
+            <label class="text-sm font-medium">Enter your mobile number</label>
+            <div class="flex gap-2">
+              <input id="mobileInput" type="tel" maxlength="10" placeholder="10-digit mobile" class="flex-1 p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#CDEFD3]" />
+              <button id="mobileCheckBtn" class="px-4 rounded-xl bg-[#C5F5E1] hover:bg-[#A8EBC0] font-semibold">Check</button>
+            </div>
+            <p id="mobileError" class="text-sm text-red-600 hidden"></p>
+          </div>
+
+          <form id="resolutionForm" class="space-y-4 hidden">
+            <div>
+              <label class="text-sm font-medium">Full name</label>
+              <input id="nameInput" type="text" required class="w-full p-3 rounded-xl border border-gray-200 disabled:bg-gray-50" />
+            </div>
+
+            <div>
+              <label class="text-sm font-medium">Unit / Directorate</label>
+              <input id="unitInput" type="text" class="w-full p-3 rounded-xl border border-gray-200 disabled:bg-gray-50" />
+            </div>
+
+            <div>
+              <label class="text-sm font-medium flex items-center justify-between">
+                <span>Resolution (max 500 characters)</span>
+                <span id="charCount" class="text-xs text-gray-500">0 / 500</span>
+              </label>
+              <textarea id="resolutionInput" rows="5" maxlength="500" required class="w-full p-3 rounded-xl border border-gray-200"></textarea>
+              <p id="editWarning" class="text-sm text-orange-600 hidden mt-1"></p>
+            </div>
+
+            <div class="flex gap-2">
+              <button id="submitResolutionBtn" type="button" class="flex-1 py-3 rounded-xl bg-[#C7B8FF] hover:bg-[#B39CFF] font-semibold">Submit</button>
+              <button id="cancelFormBtn" type="button" class="flex-1 py-3 rounded-xl bg-white border border-gray-200 hover:shadow">Cancel</button>
+            </div>
+            <p id="formStatus" class="text-sm text-center text-gray-600"></p>
+          </form>
+        </div>
+      </section>
+
+      <!-- View resolutions -->
+      <section id="listView" class="hidden mt-6">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+          <div class="flex gap-2 w-full md:w-auto">
+            <input id="searchInput" type="search" placeholder="Search name / unit / resolution..." class="p-3 rounded-xl border border-gray-200 flex-1 md:w-96" />
+            <button id="refreshBtn" class="px-4 py-3 rounded-xl bg-white border border-gray-200 hover:shadow">🔄</button>
+          </div>
+          <div class="text-sm text-gray-500">Showing <span id="countBadge">0</span> resolutions</div>
+        </div>
+
+        <div id="cardsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+
+        <div id="emptyState" class="hidden text-center text-gray-500 py-8">
+          No resolutions yet. Be the first ✨
+        </div>
+
+        <div class="mt-6 text-center">
+          <button id="backToMainBtn" class="px-6 py-3 rounded-xl bg-white border border-gray-200 hover:shadow font-semibold">
+            ← Back to Main
+          </button>
+        </div>
+      </section>
+
+    </main>
   </div>
 
   <script>
     const SUPABASE_URL = "https://jlzqdefinnwoazsqlunf.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsenFkZWZpbm53b2F6c3FsdW5mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI0NTgwOTksImV4cCI6MjA3ODAzNDA5OX0.ZPfFVDqJgZkuhPGO9WNlYHKDwKgQ9SZoGjSIypgaDIE";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsenFkZWZpbm53b2F6c3FsdW5mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI0NTgwOTksImV4cCI6MjA3ODAzNDA5OX0.ZPfFVDqJgZkuhPGO9WNlYHKDwKgQ9SZoGjSIypgaDIE";
 
     const { createClient } = window.supabase;
-    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    document.getElementById("resolutionForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
+    // UI references
+    const landingView = document.getElementById('landingView');
+    const formView = document.getElementById('formView');
+    const listView = document.getElementById('listView');
+    const btnAdd = document.getElementById('btnAdd');
+    const btnView = document.getElementById('btnView');
+    const mobileInput = document.getElementById('mobileInput');
+    const mobileCheckBtn = document.getElementById('mobileCheckBtn');
+    const mobileError = document.getElementById('mobileError');
+    const resolutionForm = document.getElementById('resolutionForm');
+    const nameInput = document.getElementById('nameInput');
+    const unitInput = document.getElementById('unitInput');
+    const resolutionInput = document.getElementById('resolutionInput');
+    const charCount = document.getElementById('charCount');
+    const editWarning = document.getElementById('editWarning');
+    const submitResolutionBtn = document.getElementById('submitResolutionBtn');
+    const cancelFormBtn = document.getElementById('cancelFormBtn');
+    const formStatus = document.getElementById('formStatus');
+    const searchInput = document.getElementById('searchInput');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const cardsContainer = document.getElementById('cardsContainer');
+    const countBadge = document.getElementById('countBadge');
+    const emptyState = document.getElementById('emptyState');
+    const backToMainBtn = document.getElementById('backToMainBtn');
 
-      const name = document.getElementById("name").value.trim();
-      const unit = document.getElementById("unit").value.trim();
-      const mobile = document.getElementById("mobile").value.trim();
-      const resolution = document.getElementById("resolution").value.trim();
+    let currentRecord = null;
+    let allResolutions = [];
 
-      const statusDiv = document.getElementById("status");
-      const submitBtn = document.getElementById("submitBtn");
-      submitBtn.disabled = true;
-      submitBtn.textContent = "⏳ Submitting...";
-      statusDiv.textContent = "Saving your resolution...";
+    function showLanding() {
+      landingView.classList.remove('hidden');
+      formView.classList.add('hidden');
+      listView.classList.add('hidden');
+    }
 
+    function showForm() {
+      landingView.classList.add('hidden');
+      formView.classList.remove('hidden');
+      listView.classList.add('hidden');
+      resolutionForm.classList.add('hidden');
+      mobileInput.value = '';
+      nameInput.value = '';
+      unitInput.value = '';
+      resolutionInput.value = '';
+      charCount.textContent = '0 / 500';
+      editWarning.classList.add('hidden');
+      mobileError.classList.add('hidden');
+      formStatus.textContent = '';
+      currentRecord = null;
+    }
+
+    function showList() {
+      landingView.classList.add('hidden');
+      formView.classList.add('hidden');
+      listView.classList.remove('hidden');
+    }
+
+    function validateMobile(num) {
+      return /^[6-9]\d{9}$/.test(num);
+    }
+
+    function shortName(n) {
+      if (!n) return 'Anonymous';
+      const parts = n.split(' ');
+      return parts[0];
+    }
+
+    function escapeHtml(s) {
+      if (s == null) return '';
+      return String(s)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function renderCards(list) {
+      cardsContainer.innerHTML = '';
+      if (!list || list.length === 0) {
+        emptyState.classList.remove('hidden');
+        countBadge.textContent = '0';
+        return;
+      }
+      emptyState.classList.add('hidden');
+      countBadge.textContent = String(list.length);
+      
+      list.forEach((r) => {
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col justify-between card-shadow';
+        card.innerHTML = `
+          <div>
+            <div class="flex items-start justify-between mb-2">
+              <div class="flex-1">
+                <div class="text-xs text-gray-500 mb-1">${escapeHtml(r.unit || 'Unit not specified')}</div>
+                <div class="font-semibold text-lg">${escapeHtml(shortName(r.name))}</div>
+              </div>
+              <div class="text-xs text-gray-400">${new Date(r.created_at).toLocaleDateString()}</div>
+            </div>
+            <div class="text-gray-700 mb-4 text-sm" style="white-space:pre-wrap;">${escapeHtml(r.resolution)}</div>
+          </div>
+          <div class="flex items-center justify-between mt-2 pt-3 border-t border-gray-100">
+            <button data-id="${r.id}" class="like-btn inline-flex items-center gap-2 px-3 py-2 rounded-full bg-gradient-to-r from-[#FFEEDD] to-[#FDEFD6] text-sm font-semibold hover:shadow-md transition">
+              ❤️ <span class="likes-count">${r.likes || 0}</span>
+            </button>
+            <div class="text-xs text-gray-500">Edits: ${r.edits || 0}/3</div>
+          </div>
+        `;
+        cardsContainer.appendChild(card);
+
+        card.querySelector('.like-btn').addEventListener('click', async (ev) => {
+          const btn = ev.currentTarget;
+          const id = btn.getAttribute('data-id');
+          const span = btn.querySelector('.likes-count');
+          const old = parseInt(span.textContent || '0', 10);
+          
+          btn.disabled = true;
+          span.textContent = old + 1;
+          
+          try {
+            const { data, error } = await supabase.rpc('increment_likes', { resolution_id: id });
+            
+            if (error) throw error;
+            
+            // Update with actual value from server
+            if (data !== null) {
+              span.textContent = data;
+            }
+          } catch (err) {
+            console.error('Like error:', err);
+            span.textContent = old;
+            alert('Failed to like. Please try again.');
+          } finally {
+            btn.disabled = false;
+          }
+        });
+      });
+    }
+
+    async function loadResolutions() {
       try {
-        const { error } = await supabaseClient
-          .from("resolutions")
-          .upsert({
-            name,
-            unit,
-            mobile,
-            resolution,
-            likes: 0,
-            created_at: new Date().toISOString()
-          }, { onConflict: 'mobile', ignoreDuplicates: false });
-
+        const { data, error } = await supabase
+          .from('resolutions')
+          .select('*')
+          .order('likes', { ascending: false })
+          .order('created_at', { ascending: false })
+          .limit(200);
+        
         if (error) throw error;
+        
+        allResolutions = data || [];
+        renderCards(allResolutions);
+      } catch (err) {
+        console.error('Failed to load resolutions:', err);
+        cardsContainer.innerHTML = '<div class="text-center text-red-600 p-4">Failed to load resolutions. Please refresh.</div>';
+      }
+    }
 
-        document.getElementById("resolutionForm").classList.add("hidden");
-        document.getElementById("successMessage").classList.remove("hidden");
-        statusDiv.textContent = "";
-      } catch (error) {
-        statusDiv.textContent = "❌ " + error.message;
-        statusDiv.className = "mt-4 text-center text-sm text-red-600";
+    function applySearch() {
+      const term = (searchInput.value || '').toLowerCase().trim();
+      if (!term) {
+        renderCards(allResolutions);
+        return;
+      }
+      const filtered = allResolutions.filter(r => {
+        return (r.name||'').toLowerCase().includes(term)
+          || (r.unit||'').toLowerCase().includes(term)
+          || (r.resolution||'').toLowerCase().includes(term);
+      });
+      renderCards(filtered);
+    }
+
+    mobileCheckBtn.addEventListener('click', async () => {
+      const mobile = mobileInput.value.trim();
+      mobileError.classList.add('hidden');
+      
+      if (!validateMobile(mobile)) {
+        mobileError.textContent = 'Enter a valid 10-digit mobile number starting with 6-9';
+        mobileError.classList.remove('hidden');
+        return;
+      }
+
+      resolutionForm.classList.add('hidden');
+      formStatus.textContent = 'Checking…';
+      mobileCheckBtn.disabled = true;
+      
+      try {
+        const { data, error } = await supabase
+          .from('resolutions')
+          .select('*')
+          .eq('mobile', mobile)
+          .maybeSingle();
+        
+        if (data) {
+          currentRecord = data;
+          nameInput.value = data.name || '';
+          unitInput.value = data.unit || '';
+          resolutionInput.value = data.resolution || '';
+          charCount.textContent = `${(resolutionInput.value||'').length} / 500`;
+
+          nameInput.disabled = true;
+          unitInput.disabled = true;
+
+          if ((data.edits || 0) >= 3) {
+            editWarning.textContent = '⚠️ You have reached the maximum of 3 edits. Editing is disabled.';
+            editWarning.classList.remove('hidden');
+            resolutionInput.disabled = true;
+            submitResolutionBtn.disabled = true;
+          } else {
+            editWarning.textContent = `ℹ️ You have ${3 - (data.edits || 0)} edit(s) remaining.`;
+            editWarning.classList.remove('hidden');
+            resolutionInput.disabled = false;
+            submitResolutionBtn.disabled = false;
+          }
+        } else {
+          currentRecord = null;
+          nameInput.value = '';
+          unitInput.value = '';
+          resolutionInput.value = '';
+          nameInput.disabled = false;
+          unitInput.disabled = false;
+          resolutionInput.disabled = false;
+          editWarning.classList.add('hidden');
+          submitResolutionBtn.disabled = false;
+        }
+        
+        resolutionForm.classList.remove('hidden');
+        formStatus.textContent = '';
+      } catch (err) {
+        console.error('Check error:', err);
+        currentRecord = null;
+        resolutionForm.classList.remove('hidden');
+        nameInput.disabled = false;
+        unitInput.disabled = false;
+        resolutionInput.disabled = false;
+        editWarning.classList.add('hidden');
+        submitResolutionBtn.disabled = false;
+        formStatus.textContent = '';
       } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = "Submit Resolution ✓";
+        mobileCheckBtn.disabled = false;
       }
     });
 
-    document.getElementById("mobile").addEventListener("input", (e) => {
+    resolutionInput.addEventListener('input', () => {
+      charCount.textContent = `${resolutionInput.value.length} / 500`;
+    });
+
+    submitResolutionBtn.addEventListener('click', async () => {
+      const mobile = mobileInput.value.trim();
+      const name = nameInput.value.trim();
+      const unit = unitInput.value.trim();
+      const resolutionText = resolutionInput.value.trim();
+
+      if (!validateMobile(mobile)) {
+        formStatus.textContent = '❌ Enter a valid mobile number.';
+        formStatus.className = 'text-sm text-red-600 mt-2 text-center font-semibold';
+        return;
+      }
+      if (!name) {
+        formStatus.textContent = '❌ Name is required.';
+        formStatus.className = 'text-sm text-red-600 mt-2 text-center font-semibold';
+        return;
+      }
+      if (!resolutionText || resolutionText.length < 5) {
+        formStatus.textContent = '❌ Please write a resolution (min 5 characters).';
+        formStatus.className = 'text-sm text-red-600 mt-2 text-center font-semibold';
+        return;
+      }
+
+      submitResolutionBtn.disabled = true;
+      submitResolutionBtn.textContent = 'Saving…';
+      formStatus.textContent = '⏳ Saving…';
+      formStatus.className = 'text-sm text-gray-600 mt-2 text-center';
+      
+      try {
+        if (currentRecord) {
+          // Update existing
+          const newEdits = (currentRecord.edits || 0) + 1;
+          if (newEdits > 3) {
+            throw new Error('Maximum edits reached');
+          }
+          
+          const { data, error } = await supabase
+            .from('resolutions')
+            .update({
+              resolution: resolutionText,
+              edits: newEdits
+            })
+            .eq('id', currentRecord.id)
+            .select();
+
+          if (error) throw error;
+        } else {
+          // Insert new
+          const { data, error } = await supabase
+            .from('resolutions')
+            .insert({
+              mobile: mobile,
+              name: name,
+              unit: unit,
+              resolution: resolutionText,
+              likes: 0,
+              edits: 0
+            })
+            .select();
+
+          if (error) throw error;
+        }
+
+        formStatus.textContent = '✅ Saved! Redirecting to view...';
+        formStatus.className = 'text-sm text-green-600 mt-2 text-center font-semibold';
+        
+        await loadResolutions();
+        setTimeout(() => showList(), 1000);
+      } catch (err) {
+        console.error('Submit error:', err);
+        formStatus.textContent = '❌ ' + (err.message || 'Failed to save');
+        formStatus.className = 'text-sm text-red-600 mt-2 text-center font-semibold';
+      } finally {
+        submitResolutionBtn.disabled = false;
+        submitResolutionBtn.textContent = 'Submit';
+      }
+    });
+
+    cancelFormBtn.addEventListener('click', () => showLanding());
+    btnAdd.addEventListener('click', () => showForm());
+    btnView.addEventListener('click', async () => {
+      showList();
+      await loadResolutions();
+    });
+    backToMainBtn.addEventListener('click', () => showLanding());
+    searchInput.addEventListener('input', () => applySearch());
+    refreshBtn.addEventListener('click', () => loadResolutions());
+
+    mobileInput.addEventListener('input', (e) => {
       e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 10);
     });
+
+    showLanding();
   </script>
 </body>
 </html>
