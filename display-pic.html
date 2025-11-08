@@ -1,216 +1,201 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Selfie Gallery - Ladies Meet 2025</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <style>
-    @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.95); }
-      to { opacity: 1; transform: scale(1); }
-    }
-    @keyframes fadeOut {
-      from { opacity: 1; transform: scale(1); }
-      to { opacity: 0; transform: scale(0.95); }
-    }
-    .fade-in {
-      animation: fadeIn 1s ease-out forwards;
-    }
-    .fade-out {
-      animation: fadeOut 0.8s ease-in forwards;
-    }
-    .grid-item {
-      transition: all 0.8s ease-in-out;
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Selfie Gallery - Ladies Meet 2025</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes fadeOut {
+      from { opacity: 1; transform: scale(1); }
+      to { opacity: 0; transform: scale(0.95); }
+    }
+    .fade-in {
+      animation: fadeIn 1s ease-out forwards;
+    }
+    .fade-out {
+      animation: fadeOut 0.8s ease-in forwards;
+    }
+    .grid-item {
+      transition: all 0.8s ease-in-out;
+    }
+  </style>
 </head>
 <body class="bg-gradient-to-br from-rose-100 via-pink-50 to-purple-100 min-h-screen overflow-hidden">
-  
-  <!-- Header -->
-  <header class="bg-white/95 backdrop-blur-lg shadow-xl py-6 px-12 sticky top-0 z-50">
-    <div class="max-w-[1920px] mx-auto flex justify-between items-center">
-      <div>
-        <div class="inline-block bg-gradient-to-r from-rose-500 to-pink-500 text-white px-6 py-2 rounded-full text-base font-semibold mb-2">
-          Ladies Meet 2025
-        </div>
-        <h1 class="text-6xl font-bold bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent">
-          Selfie Gallery
-        </h1>
-      </div>
-      <div class="text-right">
-        <div class="text-5xl font-bold text-rose-600" id="photoCount">0</div>
-        <div class="text-lg text-gray-600">Future Ready Faces</div>
-        <div class="text-sm text-gray-500 mt-2">Showing <span id="currentBatch">1-8</span></div>
-      </div>
-    </div>
-  </header>
+  
+      <header class="bg-white/95 backdrop-blur-lg shadow-xl py-4 px-8 sticky top-0 z-50">
+    <div class="max-w-[1920px] mx-auto flex justify-between items-center">
+      <div>
+        <div class="inline-block bg-gradient-to-r from-rose-500 to-pink-500 text-white px-5 py-1.5 rounded-full text-sm font-semibold mb-2">
+          Ladies Meet 2025
+        </div>
+        <h1 class="text-3xl font-bold bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent">
+          Selfie Gallery
+        </h1>
+      </div>
+      <div class="text-right">
+        <div class="text-4xl font-bold text-rose-600" id="photoCount">0</div>
+        <div class="text-base text-gray-600">Future Ready Faces</div>
+        <div class="text-xs text-gray-500 mt-1">Showing <span id="currentBatch">1-8</span></div>
+      </div>
+    </div>
+  </header>
 
-  <!-- Slideshow Grid (4x2 = 8 photos at once) -->
-  <main class="h-[calc(100vh-180px)] p-6">
-    <div id="gallery" class="grid grid-cols-4 grid-rows-2 gap-4 h-full w-full">
-      <!-- 8 cards will be displayed here -->
-    </div>
-  </main>
+      <main class="h-[calc(100vh-100px)] p-4">
+    <div id="gallery" class="grid grid-cols-4 grid-rows-2 gap-4 h-full w-full">
+          </div>
+  </main>
 
-  <!-- Loading State -->
-  <div id="loading" class="fixed inset-0 bg-white/95 flex items-center justify-center z-50">
-    <div class="text-center">
-      <div class="inline-block animate-spin rounded-full h-20 w-20 border-4 border-rose-200 border-t-rose-600 mb-4"></div>
-      <p class="text-gray-800 text-2xl">Loading selfies...</p>
-    </div>
-  </div>
+    <div id="loading" class="fixed inset-0 bg-white/95 flex items-center justify-center z-50">
+    <div class="text-center">
+      <div class="inline-block animate-spin rounded-full h-16 w-16 border-4 border-rose-200 border-t-rose-600 mb-4"></div>
+      <p class="text-gray-800 text-xl">Loading selfies...</p>
+    </div>
+  </div>
 
-  <!-- Empty State -->
-  <div id="empty" class="hidden fixed inset-0 bg-gradient-to-br from-rose-100 via-pink-50 to-purple-100 flex items-center justify-center">
-    <div class="text-center">
-      <div class="text-8xl mb-6">📸</div>
-      <p class="text-gray-800 text-3xl font-bold mb-2">No selfies yet</p>
-      <p class="text-gray-600 text-xl">Check back soon!</p>
-    </div>
-  </div>
+    <div id="empty" class="hidden fixed inset-0 bg-gradient-to-br from-rose-100 via-pink-50 to-purple-100 flex items-center justify-center">
+    <div class="text-center">
+      <div class="text-8xl mb-6">📸</div>
+      <p class="text-gray-800 text-3xl font-bold mb-2">No selfies yet</p>
+      <p class="text-gray-600 text-xl">Check back soon!</p>
+    </div>
+  </div>
 
-  <!-- Footer -->
-  <footer class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg py-3 text-center text-base text-gray-600 shadow-lg">
-    Made with ❤️ by Ordnance Fraternity • Rotating every 15 seconds
-  </footer>
+      <footer class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg py-2 text-center text-sm text-gray-600 shadow-lg">
+    Made with ❤️ by Ordnance Fraternity • Rotating every 15 seconds
+  </footer>
 
-  <script>
-    const SUPABASE_URL = "https://jlzqdefinnwoazsqlunf.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsenFkZWZpbm53b2F6c3FsdW5mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI0NTgwOTksImV4cCI6MjA3ODAzNDA5OX0.ZPfFVDqJgZkuhPGO9WNlYHKDwKgQ9SZoGjSIypgaDIE";
-    
-    const { createClient } = window.supabase;
-    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+  <script>
+    const SUPABASE_URL = "https://jlzqdefinnwoazsqlunf.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsenFkZWZpbm53b2F6c3FsdW5mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI0NTgwOTksImV4cCI6MjA3ODAzNDA5OX0.ZPfFVDqJgZkuhPGO9WNlYHKDwKgQ9SZoGjSIypgaDIE";
+    
+    const { createClient } = window.supabase;
+    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const gallery = document.getElementById('gallery');
-    const loading = document.getElementById('loading');
-    const empty = document.getElementById('empty');
-    const photoCount = document.getElementById('photoCount');
-    const currentBatch = document.getElementById('currentBatch');
+    const gallery = document.getElementById('gallery');
+    const loading = document.getElementById('loading');
+    const empty = document.getElementById('empty');
+    const photoCount = document.getElementById('photoCount');
+    const currentBatch = document.getElementById('currentBatch');
 
-    let allPhotos = [];
-    let currentIndex = 0;
-    const PHOTOS_PER_SLIDE = 8;
-    const TRANSITION_TIME = 15000; // 15 seconds per slide
+    let allPhotos = [];
+    let currentIndex = 0;
+    const PHOTOS_PER_SLIDE = 8;
+    const TRANSITION_TIME = 15000; // 15 seconds per slide
 
-    function escapeHtml(s) {
-      if (s == null) return '';
-      return String(s)
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#39;');
-    }
+    function escapeHtml(s) {
+      if (s == null) return '';
+      return String(s)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
 
-    function createCard(p) {
-      return `
-        <div class="grid-item bg-white rounded-3xl overflow-hidden shadow-2xl h-full flex flex-col">
-          <div class="flex-1 relative bg-gray-100 overflow-hidden">
-            ${p.selfie_url ? `
-              <img src="${escapeHtml(p.selfie_url)}" 
-                   alt="${escapeHtml(p.name)}" 
-                   class="w-full h-full object-cover"
-                   onerror="this.parentElement.innerHTML='<div class=\'flex items-center justify-center h-full bg-gradient-to-br from-rose-200 to-pink-200\'><span class=\'text-8xl\'>👤</span></div>'" />
-            ` : `
-              <div class="flex items-center justify-center h-full bg-gradient-to-br from-rose-200 to-pink-200">
-                <span class="text-8xl">👤</span>
-              </div>
-            `}
-          </div>
-          <div class="p-6 bg-gradient-to-br from-white to-rose-50">
-            <h3 class="font-bold text-2xl text-gray-800 truncate mb-1">${escapeHtml(p.name)}</h3>
-            <p class="text-base text-gray-600 truncate mb-2">${escapeHtml(p.unit || 'Unit not specified')}</p>
-            ${p.future_ready ? `
-              <div class="bg-white/80 rounded-xl p-3 border-l-4 border-rose-500 mt-2">
-                <p class="text-sm text-gray-700 line-clamp-2 italic">"${escapeHtml(p.future_ready)}"</p>
-              </div>
-            ` : ''}
-          </div>
-        </div>
-      `;
-    }
+    // --- MODIFIED createCard Function ---
+    // 1. Removed the 'future_ready' section
+    // 2. Reduced text padding from p-6 to p-4
+    // 3. Reduced font sizes from text-2xl/text-base to text-xl/text-sm
+    // 4. Reduced fallback icon size from 8xl to 6xl
+    function createCard(p) {
+      return `
+        <div class="grid-item bg-white rounded-3xl overflow-hidden shadow-2xl h-full flex flex-col">
+          <div class="flex-1 relative bg-gray-100 overflow-hidden">
+            ${p.selfie_url ? `
+              <img src="${escapeHtml(p.selfie_url)}" 
+                   alt="${escapeHtml(p.name)}" 
+                   class="w-full h-full object-cover"
+                   onerror="this.parentElement.innerHTML='<div class=\'flex items-center justify-center h-full bg-gradient-to-br from-rose-200 to-pink-200\'><span class=\'text-6xl\'>👤</span></div>'" />
+            ` : `
+              <div class="flex items-center justify-center h-full bg-gradient-to-br from-rose-200 to-pink-200">
+                <span class="text-6xl">👤</span>
+              </div>
+            `}
+          </div>
+          <div class="p-4 bg-gradient-to-br from-white to-rose-50">
+            <h3 class="font-bold text-xl text-gray-800 truncate mb-1">${escapeHtml(p.name)}</h3>
+            <p class="text-sm text-gray-600 truncate">${escapeHtml(p.unit || 'Unit not specified')}</p>
+          </div>
+        </div>
+      `;
+    }
 
-    function showSlide() {
-      if (!allPhotos || allPhotos.length === 0) return;
+    function showSlide() {
+      if (!allPhotos || allPhotos.length === 0) return;
 
-      // Get next batch of 6 photos
-      const batch = [];
-      for (let i = 0; i < PHOTOS_PER_SLIDE; i++) {
-        batch.push(allPhotos[currentIndex]);
-        currentIndex = (currentIndex + 1) % allPhotos.length;
-      }
+      const batch = [];
+      for (let i = 0; i < PHOTOS_PER_SLIDE; i++) {
+        batch.push(allPhotos[currentIndex]);
+        currentIndex = (currentIndex + 1) % allPhotos.length;
+      }
 
-      // Add fade-out effect
-      gallery.classList.add('fade-out');
+      gallery.classList.add('fade-out');
 
-      // After fade-out, update content and fade-in
-      setTimeout(() => {
-        gallery.innerHTML = batch.map(p => createCard(p)).join('');
-        gallery.classList.remove('fade-out');
-        gallery.classList.add('fade-in');
+      setTimeout(() => {
+        gallery.innerHTML = batch.map(p => createCard(p)).join('');
+        gallery.classList.remove('fade-out');
+        gallery.classList.add('fade-in');
 
-        // Update batch counter
-        const start = ((currentIndex - PHOTOS_PER_SLIDE + allPhotos.length) % allPhotos.length) + 1;
-        const end = start + PHOTOS_PER_SLIDE - 1;
-        currentBatch.textContent = `${start}-${Math.min(end, allPhotos.length)} of ${allPhotos.length}`;
+        const start = ((currentIndex - PHOTOS_PER_SLIDE + allPhotos.length) % allPhotos.length) + 1;
+        const end = (start + PHOTOS_PER_SLIDE - 1) % allPhotos.length;
+        const endDisplay = (end === 0 ? allPhotos.length : end > start ? end : allPhotos.length);
+        currentBatch.textContent = `${start}-${endDisplay} of ${allPhotos.length}`;
 
-        // Remove fade-in class after animation
-        setTimeout(() => {
-          gallery.classList.remove('fade-in');
-        }, 1000);
-      }, 800);
-    }
+        setTimeout(() => {
+          gallery.classList.remove('fade-in');
+        }, 1000);
+      }, 800);
+    }
 
-    async function loadSelfies() {
-      try {
-        const { data, error } = await supabase
-          .from('participants')
-          .select('name, unit, selfie_url, future_ready, created_at')
-          .not('selfie_url', 'is', null)
-          .order('created_at', { ascending: false });
+    async function loadSelfies() {
+      try {
+        const { data, error } = await supabase
+          .from('participants')
+          .select('name, unit, selfie_url, future_ready, created_at')
+          .not('selfie_url', 'is', null)
+          .order('created_at', { ascending: false });
 
-        if (error) {
-          console.error('Supabase error:', error);
-          throw error;
-        }
+        if (error) {
+          console.error('Supabase error:', error);
+          throw error;
+        }
 
-        if (!data || data.length === 0) {
-          loading.classList.add('hidden');
-          empty.classList.remove('hidden');
-          photoCount.textContent = '0';
-          return;
-        }
+        if (!data || data.length === 0) {
+          loading.classList.add('hidden');
+          empty.classList.remove('hidden');
+          photoCount.textContent = '0';
+          return;
+  _     }
 
-        allPhotos = data;
-        photoCount.textContent = data.length;
-        
-        loading.classList.add('hidden');
-        empty.classList.add('hidden');
+        allPhotos = data;
+        photoCount.textContent = data.length;
+        
+        loading.classList.add('hidden');
+        empty.classList.add('hidden');
 
-        // Show first slide immediately
-        showSlide();
+        showSlide();
+        setInterval(showSlide, TRANSITION_TIME);
 
-        // Start slideshow rotation
-        setInterval(showSlide, TRANSITION_TIME);
+      } catch (err) {
+        console.error('Error loading selfies:', err);
+        loading.classList.add('hidden');
+        empty.classList.remove('hidden');
+      }
+    }
 
-      } catch (err) {
-        console.error('Error loading selfies:', err);
-        loading.classList.add('hidden');
-        empty.classList.remove('hidden');
-      }
-    }
+    loadSelfies();
 
-    // Initial load
-    loadSelfies();
-
-    // Pause/resume on visibility change
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden && allPhotos.length > 0) {
-        showSlide();
-      }
-    });
-  </script>
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && allPhotos.length > 0) {
+        showSlide();
+      }
+    });
+  </script>
 </body>
 </html>
