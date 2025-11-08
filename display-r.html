@@ -7,46 +7,68 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <style>
+    /* Smooth horizontal scroll animation */
     @keyframes scroll {
       0% { transform: translateX(0); }
       100% { transform: translateX(-50%); }
     }
     .scroll-container {
-      animation: scroll 90s linear infinite;
       display: flex;
       gap: 1.5rem;
+      animation: scroll 80s linear infinite;
     }
     .scroll-container:hover {
       animation-play-state: paused;
     }
+
+    /* Fade-in animation for cards */
     @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.95); }
-      to { opacity: 1; transform: scale(1); }
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     .resolution-card {
-      animation: fadeIn 0.5s ease-out;
+      animation: fadeIn 0.6s ease-out;
       flex-shrink: 0;
-      width: 550px !important;
-      min-width: 550px !important;
+      width: 420px;
+      min-width: 420px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .resolution-card:hover {
+      transform: scale(1.04);
+    }
+
+    /* Responsive behavior */
+    @media (max-width: 1024px) {
+      .resolution-card {
+        width: 340px;
+        min-width: 340px;
+      }
+      h1.text-6xl {
+        font-size: 2rem;
+      }
+      section h2 {
+        font-size: 1.5rem;
+      }
     }
   </style>
 </head>
-<body class="bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 min-h-screen overflow-hidden">
-  
+
+<body class="bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 min-h-screen overflow-x-hidden">
+
   <!-- Header -->
-  <header class="bg-white/95 backdrop-blur-lg shadow-xl py-8 px-12 sticky top-0 z-50">
-    <div class="max-w-[1920px] mx-auto flex justify-between items-center">
+  <header class="bg-white/90 backdrop-blur-md shadow-lg py-6 px-6 md:px-12 sticky top-0 z-50">
+    <div class="max-w-[1920px] mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
       <div>
-        <div class="inline-block bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-2 rounded-full text-base font-semibold mb-3">
+        <div class="inline-block bg-gradient-to-r from-purple-500 to-pink-500 text-white px-5 py-1.5 rounded-full text-sm md:text-base font-semibold mb-2">
           Ladies Meet 2025
         </div>
-        <h1 class="text-6xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+        <h1 class="text-4xl md:text-6xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent leading-tight">
           Resolution Dashboard 2026
         </h1>
       </div>
       <div class="text-right">
-        <div class="text-5xl font-bold text-purple-600" id="totalCount">0</div>
-        <div class="text-lg text-gray-600">Total Resolutions</div>
+        <div class="text-4xl md:text-5xl font-bold text-purple-600" id="totalCount">0</div>
+        <div class="text-sm md:text-lg text-gray-600">Total Resolutions</div>
       </div>
     </div>
   </header>
@@ -54,70 +76,64 @@
   <!-- Main Dashboard -->
   <main class="py-8">
     
-    <!-- Top Liked - Horizontal Scroll -->
-    <section class="mb-8 px-12">
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-4xl font-bold text-purple-800 flex items-center gap-3">
-          <span class="text-5xl">❤️</span> Most Loved
+    <!-- Top Liked -->
+    <section class="mb-12 px-4 md:px-12">
+      <div class="flex items-center justify-between mb-4 md:mb-6">
+        <h2 class="text-2xl md:text-4xl font-bold text-purple-800 flex items-center gap-2 md:gap-3">
+          <span class="text-4xl md:text-5xl">❤️</span> Most Loved
         </h2>
-        <div class="text-2xl font-semibold text-purple-600" id="topCount">0</div>
+        <div class="text-xl md:text-2xl font-semibold text-purple-600" id="topCount">0</div>
       </div>
       <div class="overflow-hidden">
-        <div id="topRow" class="scroll-container">
-          <!-- Top liked cards -->
-        </div>
+        <div id="topRow" class="scroll-container"></div>
       </div>
     </section>
 
-    <!-- Recently Updated - Horizontal Scroll -->
-    <section class="mb-8 px-12">
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-4xl font-bold text-blue-800 flex items-center gap-3">
-          <span class="text-5xl">🆕</span> Recently Updated
+    <!-- Recently Updated -->
+    <section class="mb-12 px-4 md:px-12">
+      <div class="flex items-center justify-between mb-4 md:mb-6">
+        <h2 class="text-2xl md:text-4xl font-bold text-blue-800 flex items-center gap-2 md:gap-3">
+          <span class="text-4xl md:text-5xl">🆕</span> Recently Updated
         </h2>
-        <div class="text-2xl font-semibold text-blue-600" id="recentCount">0</div>
+        <div class="text-xl md:text-2xl font-semibold text-blue-600" id="recentCount">0</div>
       </div>
       <div class="overflow-hidden">
-        <div id="recentRow" class="scroll-container" style="animation-direction: reverse;">
-          <!-- Recent cards -->
-        </div>
+        <div id="recentRow" class="scroll-container" style="animation-direction: reverse;"></div>
       </div>
     </section>
 
-    <!-- Random Resolutions - Horizontal Scroll -->
-    <section class="mb-8 px-12">
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-4xl font-bold text-green-800 flex items-center gap-3">
-          <span class="text-5xl">🎲</span> More Resolutions
+    <!-- Random Resolutions -->
+    <section class="mb-12 px-4 md:px-12">
+      <div class="flex items-center justify-between mb-4 md:mb-6">
+        <h2 class="text-2xl md:text-4xl font-bold text-green-800 flex items-center gap-2 md:gap-3">
+          <span class="text-4xl md:text-5xl">🎲</span> More Resolutions
         </h2>
-        <div class="text-2xl font-semibold text-green-600" id="randomCount">0</div>
+        <div class="text-xl md:text-2xl font-semibold text-green-600" id="randomCount">0</div>
       </div>
       <div class="overflow-hidden">
-        <div id="randomRow" class="scroll-container">
-          <!-- Random cards -->
-        </div>
+        <div id="randomRow" class="scroll-container"></div>
       </div>
     </section>
 
   </main>
 
   <!-- Footer -->
-  <footer class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg py-4 text-center text-base text-gray-600 shadow-lg">
+  <footer class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md py-3 text-center text-sm md:text-base text-gray-600 shadow-inner">
     Made with ❤️ by Ordnance Fraternity • Auto-refreshing every 45 seconds
   </footer>
 
   <!-- Loading Overlay -->
   <div id="loading" class="fixed inset-0 bg-white/95 flex items-center justify-center z-50">
     <div class="text-center">
-      <div class="inline-block animate-spin rounded-full h-20 w-20 border-4 border-purple-200 border-t-purple-600 mb-4"></div>
-      <p class="text-gray-800 text-2xl">Loading Resolutions...</p>
+      <div class="inline-block animate-spin rounded-full h-16 w-16 md:h-20 md:w-20 border-4 border-purple-200 border-t-purple-600 mb-4"></div>
+      <p class="text-gray-800 text-xl md:text-2xl">Loading Resolutions...</p>
     </div>
   </div>
 
   <script>
     const SUPABASE_URL = "https://jlzqdefinnwoazsqlunf.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsenFkZWZpbm53b2F6c3FsdW5mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI0NTgwOTksImV4cCI6MjA3ODAzNDA5OX0.ZPfFVDqJgZkuhPGO9WNlYHKDwKgQ9SZoGjSIypgaDIE";
-    
+
     const { createClient } = window.supabase;
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -144,43 +160,36 @@
 
     function shortName(name) {
       if (!name) return 'Anonymous';
-      const parts = name.split(' ');
-      return parts[0];
+      return name.split(' ')[0];
     }
 
     function createCard(resolution, bgGradient, borderColor) {
       return `
-        <div class="resolution-card bg-gradient-to-br ${bgGradient} rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border-4 ${borderColor}">
-          <div class="p-8">
+        <div class="resolution-card bg-gradient-to-br ${bgGradient} border-4 ${borderColor} rounded-3xl shadow-xl hover:shadow-2xl">
+          <div class="p-6 md:p-8">
             <!-- Header -->
-            <div class="flex items-start justify-between mb-4">
-              <div class="flex-1">
-                <div class="text-sm text-gray-600 mb-2 font-medium">${escapeHtml(resolution.unit || 'Unit not specified')}</div>
-                <h3 class="text-3xl font-bold text-gray-800 mb-1">${escapeHtml(shortName(resolution.name))}</h3>
+            <div class="flex items-start justify-between mb-3 md:mb-4">
+              <div>
+                <div class="text-xs md:text-sm text-gray-600 mb-1 font-medium">${escapeHtml(resolution.unit || 'Unit not specified')}</div>
+                <h3 class="text-2xl md:text-3xl font-bold text-gray-800">${escapeHtml(shortName(resolution.name))}</h3>
               </div>
-              <div class="flex flex-col items-end gap-2">
-                <div class="flex items-center gap-2 bg-gradient-to-r from-red-100 to-pink-100 px-4 py-2 rounded-full shadow-md">
-                  <span class="text-2xl">❤️</span>
-                  <span class="font-bold text-2xl text-red-600">${resolution.likes || 0}</span>
-                </div>
+              <div class="flex items-center gap-1 bg-gradient-to-r from-red-100 to-pink-100 px-3 md:px-4 py-1.5 md:py-2 rounded-full shadow-md">
+                <span class="text-lg md:text-2xl">❤️</span>
+                <span class="font-bold text-lg md:text-2xl text-red-600">${resolution.likes || 0}</span>
               </div>
             </div>
             
             <!-- Resolution Text -->
-            <div class="bg-white/80 backdrop-blur-sm rounded-2xl p-6 mb-4 min-h-[180px]">
-              <p class="text-lg text-gray-700 leading-relaxed" style="display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden;">
-                ${escapeHtml(resolution.resolution)}
+            <div class="bg-white/90 rounded-2xl p-4 md:p-6 mb-3 min-h-[160px]">
+              <p class="text-base md:text-lg text-gray-700 leading-relaxed line-clamp-5">
+                “${escapeHtml(resolution.resolution)}”
               </p>
             </div>
             
             <!-- Footer -->
-            <div class="flex justify-between items-center text-sm text-gray-600">
-              <div class="flex items-center gap-4">
-                <span class="flex items-center gap-1">
-                  <span class="font-semibold">✏️ ${resolution.edits || 0}</span>/3 edits
-                </span>
-              </div>
-              <span class="text-xs">${new Date(resolution.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+            <div class="flex justify-between items-center text-xs md:text-sm text-gray-600">
+              <span>✏️ <strong>${resolution.edits || 0}</strong>/3 edits</span>
+              <span>${new Date(resolution.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
             </div>
           </div>
         </div>
@@ -204,90 +213,49 @@
           .order('created_at', { ascending: false })
           .limit(100);
 
-        if (error) {
-          console.error('Supabase error:', error);
-          throw error;
-        }
+        if (error) throw error;
 
         const resolutions = data || [];
-        
-        // Check if data has changed
-        const newHash = JSON.stringify(resolutions);
-        if (newHash === currentDataHash) {
-          return; // No changes, skip re-render
-        }
-        currentDataHash = newHash;
-
         totalCount.textContent = resolutions.length;
 
         if (resolutions.length === 0) {
           loading.classList.add('hidden');
-          topRow.innerHTML = '<div class="inline-block text-center py-20 px-40 text-gray-500 text-2xl">No resolutions yet</div>';
+          topRow.innerHTML = `<div class="py-12 px-20 text-gray-500 text-xl">No resolutions yet</div>`;
           return;
         }
 
-        // Sort by likes for top section
-        const sortedByLikes = [...resolutions].sort((a, b) => (b.likes || 0) - (a.likes || 0));
-        const topLiked = sortedByLikes.slice(0, 10);
-
-        // Recent updates (already sorted by created_at)
+        // Top liked
+        const topLiked = [...resolutions].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 10);
         const recent = resolutions.slice(0, 10);
 
-        // Random resolutions (exclude top and recent)
+        // Ensure fresh shuffle for random every reload
         const usedIds = new Set([...topLiked.map(r => r.id), ...recent.map(r => r.id)]);
         const remaining = resolutions.filter(r => !usedIds.has(r.id));
         const random = shuffleArray(remaining).slice(0, 12);
 
-        // Update counts
         topCount.textContent = topLiked.length;
         recentCount.textContent = recent.length;
         randomCount.textContent = random.length;
 
-        // Create cards for each section
-        const topCards = topLiked.map(r => createCard(r, 'from-purple-100 to-pink-100', 'border-purple-300')).join('');
-        const recentCards = recent.map(r => createCard(r, 'from-blue-100 to-cyan-100', 'border-blue-300')).join('');
-        const randomCards = random.map(r => createCard(r, 'from-green-100 to-emerald-100', 'border-green-300')).join('');
-
-        // Duplicate content for seamless infinite scroll
-        topRow.innerHTML = topCards + topCards;
-        recentRow.innerHTML = recentCards + recentCards;
-        randomRow.innerHTML = randomCards + randomCards;
+        // Generate cards
+        topRow.innerHTML = topLiked.map(r => createCard(r, 'from-purple-100 to-pink-100', 'border-purple-300')).join('') +
+                           topLiked.map(r => createCard(r, 'from-purple-100 to-pink-100', 'border-purple-300')).join('');
+        recentRow.innerHTML = recent.map(r => createCard(r, 'from-blue-100 to-cyan-100', 'border-blue-300')).join('') +
+                              recent.map(r => createCard(r, 'from-blue-100 to-cyan-100', 'border-blue-300')).join('');
+        randomRow.innerHTML = random.map(r => createCard(r, 'from-green-100 to-emerald-100', 'border-green-300')).join('') +
+                              random.map(r => createCard(r, 'from-green-100 to-emerald-100', 'border-green-300')).join('');
 
         loading.classList.add('hidden');
 
       } catch (err) {
         console.error('Error loading resolutions:', err);
         loading.classList.add('hidden');
-        
-        // Show error only if no data is currently displayed
-        if (!currentDataHash) {
-          topRow.innerHTML = `
-            <div class="inline-block text-center py-20 px-40">
-              <div class="text-6xl mb-4">⚠️</div>
-              <p class="text-red-600 text-2xl mb-2">Failed to load resolutions</p>
-              <p class="text-gray-600 text-base">Retrying in 45 seconds...</p>
-            </div>
-          `;
-        }
       }
     }
 
-    // Initial load
     loadResolutions();
-
-    // Auto-refresh every 45 seconds
-    setInterval(() => {
-      console.log('Auto-refreshing resolutions...');
-      loadResolutions();
-    }, 45000);
-
-    // Refresh when page becomes visible
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) {
-        console.log('Page visible, refreshing resolutions...');
-        loadResolutions();
-      }
-    });
+    setInterval(loadResolutions, 45000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) loadResolutions(); });
   </script>
 </body>
 </html>
