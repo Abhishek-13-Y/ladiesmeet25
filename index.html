@@ -3,75 +3,103 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ladies Meet 2026 – Registration</title>
+  <title>Ladies Meet 2025 – Registration</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    body { background: linear-gradient(135deg, #fff6fa, #e9e3ff); font-family: 'Inter', sans-serif; }
-  </style>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
-  <div class="bg-white/80 backdrop-blur-md p-8 rounded-2xl shadow-lg w-full max-w-md">
-    <h1 class="text-2xl font-semibold text-center text-purple-800 mb-4">🌸 Ladies Meet 2026</h1>
-    <h2 class="text-md text-center text-gray-700 mb-6">Register & share your Future Ready 2026 thoughts</h2>
 
-    <form id="regForm" class="space-y-4">
-      <input id="name" type="text" placeholder="Name" required class="w-full p-3 border rounded-xl" />
-      <input id="mobile" type="tel" placeholder="Mobile Number" pattern="[0-9]{10}" required class="w-full p-3 border rounded-xl" />
-      <input id="unit" type="text" placeholder="Unit / Directorate" required class="w-full p-3 border rounded-xl" />
-      <textarea id="future" rows="3" placeholder="What do you think is Future Ready for 2026?" class="w-full p-3 border rounded-xl"></textarea>
+<body class="bg-gradient-to-b from-rose-50 to-pink-100 min-h-screen flex items-center justify-center font-sans">
+  <div class="bg-white/80 backdrop-blur-lg shadow-lg rounded-2xl p-8 w-full max-w-lg">
+    <h1 class="text-3xl font-semibold text-center text-rose-700 mb-4">Ladies Meet 2025</h1>
+    <p class="text-center text-gray-600 mb-6">Register & share how you're <b>Future Ready for 2026</b></p>
 
-      <label class="block text-gray-600 text-sm">Upload Selfie (optional)</label>
-      <input id="selfie" type="file" accept="image/*" class="w-full text-sm" />
+    <form id="participantForm" class="space-y-4">
+      <input id="name" type="text" placeholder="Full Name" required class="w-full p-3 rounded-lg border focus:ring-2 focus:ring-rose-400" />
+      <input id="unit" type="text" placeholder="Unit / Directorate" required class="w-full p-3 rounded-lg border focus:ring-2 focus:ring-rose-400" />
+      <input id="mobile" type="tel" placeholder="Mobile Number" pattern="[0-9]{10}" required class="w-full p-3 rounded-lg border focus:ring-2 focus:ring-rose-400" />
+      <textarea id="futureReady" rows="3" placeholder="What makes you Future Ready for 2026?" class="w-full p-3 rounded-lg border focus:ring-2 focus:ring-rose-400"></textarea>
 
-      <label class="block text-gray-600 text-sm mt-2">Upload Reel (optional, max 10 sec)</label>
-      <input id="reel" type="file" accept="video/*" class="w-full text-sm" />
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">Upload Selfie (optional)</label>
+        <input id="selfie" type="file" accept="image/*" class="w-full p-2 border rounded-lg bg-white" />
+      </div>
 
-      <button class="w-full bg-purple-600 text-white py-3 rounded-xl hover:bg-purple-700">Submit</button>
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">Upload Reel (optional, max 10s)</label>
+        <input id="reel" type="file" accept="video/*" class="w-full p-2 border rounded-lg bg-white" />
+      </div>
+
+      <button type="submit" class="w-full bg-rose-600 text-white py-3 rounded-lg font-semibold hover:bg-rose-700 transition">
+        Submit
+      </button>
     </form>
 
-    <p id="msg" class="text-center mt-4 text-purple-700 font-medium"></p>
+    <div id="status" class="mt-4 text-center text-sm"></div>
   </div>
 
   <script>
-    const SUPABASE_URL = "https://jlzqdefinnwoazsqlunf.supabase.co";
+    // 🪄 Replace with your Supabase credentials
+     const SUPABASE_URL = "https://jlzqdefinnwoazsqlunf.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsenFkZWZpbm53b2F6c3FsdW5mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI0NTgwOTksImV4cCI6MjA3ODAzNDA5OX0.ZPfFVDqJgZkuhPGO9WNlYHKDwKgQ9SZoGjSIypgaDIE";
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const form = document.getElementById('regForm');
-    const msg = document.getElementById('msg');
+    const form = document.getElementById("participantForm");
+    const status = document.getElementById("status");
 
-    form.addEventListener('submit', async (e) => {
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      msg.textContent = 'Uploading...';
+      status.textContent = "Uploading... Please wait ⏳";
 
-      const name = form.name.value.trim();
-      const mobile = form.mobile.value.trim();
-      const unit = form.unit.value.trim();
-      const future = form.future.value.trim();
-      let selfieURL = null, reelURL = null;
+      const name = document.getElementById("name").value.trim();
+      const unit = document.getElementById("unit").value.trim();
+      const mobile = document.getElementById("mobile").value.trim();
+      const future_ready = document.getElementById("futureReady").value.trim();
+      const selfieFile = document.getElementById("selfie").files[0];
+      const reelFile = document.getElementById("reel").files[0];
 
-      try {
-        if (form.selfie.files[0]) {
-          const selfieFile = form.selfie.files[0];
-          const { data } = await supabase.storage.from('selfies').upload(`selfies/${mobile}-${Date.now()}`, selfieFile, { upsert: true });
-          selfieURL = supabase.storage.from('selfies').getPublicUrl(data.path).data.publicUrl;
+      let selfie_url = null, reel_url = null;
+
+      // Upload selfie
+      if (selfieFile) {
+        const selfiePath = `selfies/${mobile}-${Date.now()}-${selfieFile.name}`;
+        const { error: selfieErr } = await supabase.storage.from("selfies").upload(selfiePath, selfieFile);
+        if (!selfieErr) {
+          const { data } = supabase.storage.from("selfies").getPublicUrl(selfiePath);
+          selfie_url = data.publicUrl;
         }
+      }
 
-        if (form.reel.files[0]) {
-          const reelFile = form.reel.files[0];
-          const { data } = await supabase.storage.from('reels').upload(`reels/${mobile}-${Date.now()}`, reelFile, { upsert: true });
-          reelURL = supabase.storage.from('reels').getPublicUrl(data.path).data.publicUrl;
+      // Upload reel
+      if (reelFile) {
+        const reelPath = `reels/${mobile}-${Date.now()}-${reelFile.name}`;
+        const { error: reelErr } = await supabase.storage.from("reels").upload(reelPath, reelFile);
+        if (!reelErr) {
+          const { data } = supabase.storage.from("reels").getPublicUrl(reelPath);
+          reel_url = data.publicUrl;
         }
+      }
 
-        await supabase.from('registrations').insert([{ name, mobile, unit, future_ready: future, selfie_url: selfieURL, reel_url: reelURL }]);
-        msg.textContent = '✅ Registration successful!';
+      // Call upsert_participant()
+      const { data, error } = await supabase.rpc("upsert_participant", {
+        p_mobile: mobile,
+        p_name: name,
+        p_unit: unit,
+        p_future_ready: future_ready,
+        p_selfie_url: selfie_url,
+        p_reel_url: reel_url
+      });
+
+      if (error) {
+        console.error(error);
+        status.textContent = "⚠️ Something went wrong. Try again.";
+        status.className = "mt-4 text-center text-sm text-red-600";
+      } else {
+        status.textContent = "✅ Registration successful!";
+        status.className = "mt-4 text-center text-sm text-green-600";
         form.reset();
-      } catch (err) {
-        console.error(err);
-        msg.textContent = '❌ Error saving data. Try again.';
       }
     });
   </script>
 </body>
 </html>
+
