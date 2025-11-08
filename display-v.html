@@ -10,28 +10,58 @@
     body {
       overflow: hidden;
     }
-    .reel-container {
-      scroll-snap-type: y mandatory;
-      scroll-behavior: smooth;
-    }
-    .reel-slide {
-      scroll-snap-align: start;
-      scroll-snap-stop: always;
-    }
     @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes fadeOut {
+      from { opacity: 1; transform: scale(1); }
+      to { opacity: 0; transform: scale(0.95); }
     }
     .fade-in {
-      animation: fadeIn 0.5s ease-in;
+      animation: fadeIn 1s ease-out forwards;
+    }
+    .fade-out {
+      animation: fadeOut 0.8s ease-in forwards;
+    }
+    .video-container {
+      transition: all 0.8s ease-in-out;
     }
   </style>
 </head>
 <body class="bg-black">
   
-  <!-- Reel Container -->
-  <div id="reelContainer" class="reel-container h-screen w-screen overflow-y-auto">
-    <!-- Reels will be inserted here -->
+  <!-- Main Video Display -->
+  <div id="videoDisplay" class="h-screen w-screen flex items-center justify-center relative">
+    <video 
+      id="mainVideo"
+      class="max-h-screen max-w-screen object-contain"
+      autoplay 
+      muted 
+      loop 
+      playsinline>
+    </video>
+    
+    <!-- Info Overlay -->
+    <div id="infoCard" class="absolute bottom-12 left-12 right-12 bg-gradient-to-r from-black/90 to-black/70 backdrop-blur-xl rounded-3xl p-10 text-white max-w-3xl shadow-2xl">
+      <h2 id="personName" class="text-5xl font-bold mb-3"></h2>
+      <p id="personUnit" class="text-2xl text-gray-300 mb-6"></p>
+      <div id="futureReadySection" class="border-l-4 border-rose-500 pl-6 hidden">
+        <p id="futureReadyText" class="text-xl italic leading-relaxed"></p>
+      </div>
+    </div>
+
+    <!-- Progress Indicator -->
+    <div class="absolute top-8 right-8 bg-black/70 backdrop-blur-md rounded-full px-8 py-4 text-white shadow-xl">
+      <span id="currentIndex" class="font-bold text-3xl"></span>
+      <span class="text-gray-300 text-2xl"> / </span>
+      <span id="totalReels" class="text-gray-300 text-2xl"></span>
+    </div>
+
+    <!-- Header Badge -->
+    <div class="absolute top-8 left-8 bg-gradient-to-r from-rose-500 to-pink-500 text-white px-6 py-3 rounded-full text-lg font-semibold shadow-xl">
+      Ladies Meet 2025 • Reels
+    </div>
   </div>
 
   <!-- Loading Overlay -->
@@ -53,21 +83,10 @@
     </div>
   </div>
 
-  <!-- Info Overlay (top) -->
-  <div id="infoOverlay" class="hidden fixed top-0 left-0 right-0 bg-gradient-to-b from-black/80 to-transparent p-8 z-40">
-    <div class="max-w-7xl mx-auto flex justify-between items-start">
-      <div>
-        <div class="inline-block bg-gradient-to-r from-rose-500 to-pink-500 text-white px-4 py-1 rounded-full text-sm font-semibold mb-2">
-          Ladies Meet 2025
-        </div>
-        <h1 class="text-4xl font-bold text-white">Future Ready Reels</h1>
-      </div>
-      <div class="text-right text-white">
-        <div class="text-3xl font-bold" id="reelCount">0</div>
-        <div class="text-sm text-gray-300">Reels Playing</div>
-      </div>
-    </div>
-  </div>
+  <!-- Footer -->
+  <footer class="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-lg py-3 text-center text-base text-gray-400">
+    Made with ❤️ by Ordnance Fraternity • Auto-rotating every 15 seconds
+  </footer>
 
   <script>
     const SUPABASE_URL = "https://jlzqdefinnwoazsqlunf.supabase.co";
@@ -76,15 +95,22 @@
     const { createClient } = window.supabase;
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const reelContainer = document.getElementById('reelContainer');
+    const mainVideo = document.getElementById('mainVideo');
+    const videoDisplay = document.getElementById('videoDisplay');
+    const infoCard = document.getElementById('infoCard');
     const loading = document.getElementById('loading');
     const empty = document.getElementById('empty');
-    const infoOverlay = document.getElementById('infoOverlay');
-    const reelCount = document.getElementById('reelCount');
+    const currentIndex = document.getElementById('currentIndex');
+    const totalReels = document.getElementById('totalReels');
+    const personName = document.getElementById('personName');
+    const personUnit = document.getElementById('personUnit');
+    const futureReadySection = document.getElementById('futureReadySection');
+    const futureReadyText = document.getElementById('futureReadyText');
 
-    let reels = [];
-    let currentIndex = 0;
-    let autoScrollInterval;
+    let allReels = [];
+    let currentReelIndex = 0;
+    const REEL_DURATION = 15000; // 15 seconds per reel
+    let rotationInterval;
 
     function escapeHtml(s) {
       if (s == null) return '';
@@ -96,134 +122,90 @@
         .replaceAll("'", '&#39;');
     }
 
-    function renderReels(participants) {
-      reelContainer.innerHTML = '';
-      
-      if (!participants || participants.length === 0) {
-        loading.classList.add('hidden');
-        empty.classList.remove('hidden');
-        infoOverlay.classList.add('hidden');
-        reelCount.textContent = '0';
-        return;
-      }
+    function showReel(index) {
+      if (!allReels || allReels.length === 0) return;
 
-      loading.classList.add('hidden');
-      empty.classList.add('hidden');
-      infoOverlay.classList.remove('hidden');
-      reelCount.textContent = participants.length;
+      const reel = allReels[index];
 
-      participants.forEach((p, index) => {
-        const slide = document.createElement('div');
-        slide.className = 'reel-slide h-screen w-screen relative flex items-center justify-center bg-black';
-        slide.dataset.index = index;
-        
-        slide.innerHTML = `
-          <video 
-            id="video-${index}"
-            class="max-h-screen max-w-screen object-contain"
-            ${index === 0 ? 'autoplay' : ''} 
-            muted 
-            loop 
-            playsinline
-            src="${escapeHtml(p.reel_url)}"
-            onerror="this.parentElement.innerHTML='<div class=\\'text-center\\'><div class=\\'text-6xl mb-4\\'>⚠️</div><p class=\\'text-white text-xl\\'>Failed to load reel</p></div>'">
-          </video>
-          
-          <!-- Info Card Overlay -->
-          <div class="absolute bottom-8 left-8 right-8 bg-gradient-to-r from-black/80 to-black/60 backdrop-blur-md rounded-3xl p-8 text-white max-w-2xl">
-            <h2 class="text-4xl font-bold mb-2">${escapeHtml(p.name)}</h2>
-            <p class="text-xl text-gray-300 mb-4">${escapeHtml(p.unit || 'Unit not specified')}</p>
-            ${p.future_ready ? `
-              <div class="border-l-4 border-rose-500 pl-4">
-                <p class="text-lg italic">"${escapeHtml(p.future_ready)}"</p>
-              </div>
-            ` : ''}
-          </div>
+      // Fade out current content
+      videoDisplay.classList.add('fade-out');
 
-          <!-- Progress indicator -->
-          <div class="absolute top-8 right-8 bg-black/60 backdrop-blur-md rounded-full px-6 py-3 text-white">
-            <span class="font-bold text-2xl">${index + 1}</span>
-            <span class="text-gray-300"> / ${participants.length}</span>
-          </div>
-        `;
-        
-        reelContainer.appendChild(slide);
-      });
+      setTimeout(() => {
+        // Update video source
+        mainVideo.src = reel.reel_url;
+        mainVideo.load();
+        mainVideo.play().catch(err => console.log('Play error:', err));
 
-      // Start auto-scroll
-      startAutoScroll();
+        // Update info card
+        personName.textContent = escapeHtml(reel.name);
+        personUnit.textContent = escapeHtml(reel.unit || 'Unit not specified');
+
+        if (reel.future_ready) {
+          futureReadyText.textContent = `"${escapeHtml(reel.future_ready)}"`;
+          futureReadySection.classList.remove('hidden');
+        } else {
+          futureReadySection.classList.add('hidden');
+        }
+
+        // Update progress
+        currentIndex.textContent = index + 1;
+
+        // Fade in new content
+        videoDisplay.classList.remove('fade-out');
+        videoDisplay.classList.add('fade-in');
+
+        setTimeout(() => {
+          videoDisplay.classList.remove('fade-in');
+        }, 1000);
+      }, 800);
     }
 
-    function startAutoScroll() {
-      // Clear existing interval
-      if (autoScrollInterval) {
-        clearInterval(autoScrollInterval);
-      }
-
-      // Auto-scroll every 15 seconds (adjust based on your reel duration)
-      autoScrollInterval = setInterval(() => {
-        currentIndex = (currentIndex + 1) % reels.length;
-        scrollToReel(currentIndex);
-      }, 15000);
+    function nextReel() {
+      currentReelIndex = (currentReelIndex + 1) % allReels.length;
+      showReel(currentReelIndex);
     }
 
-    function scrollToReel(index) {
-      const slides = document.querySelectorAll('.reel-slide');
-      if (slides[index]) {
-        slides[index].scrollIntoView({ behavior: 'smooth' });
-        
-        // Play current video and pause others
-        document.querySelectorAll('video').forEach((video, i) => {
-          if (i === index) {
-            video.play().catch(err => console.log('Play error:', err));
-          } else {
-            video.pause();
-          }
-        });
+    function startRotation() {
+      // Clear any existing interval
+      if (rotationInterval) {
+        clearInterval(rotationInterval);
       }
-    }
 
-    // Handle manual scrolling
-    let scrollTimeout;
-    reelContainer.addEventListener('scroll', () => {
-      clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(() => {
-        const slides = document.querySelectorAll('.reel-slide');
-        const scrollPosition = reelContainer.scrollTop;
-        const windowHeight = window.innerHeight;
-        
-        // Find which slide is currently visible
-        slides.forEach((slide, index) => {
-          const slideTop = slide.offsetTop;
-          if (Math.abs(scrollPosition - slideTop) < windowHeight / 2) {
-            currentIndex = index;
-            
-            // Play only the visible video
-            document.querySelectorAll('video').forEach((video, i) => {
-              if (i === index) {
-                video.play().catch(err => console.log('Play error:', err));
-              } else {
-                video.pause();
-              }
-            });
-          }
-        });
-      }, 100);
-    });
+      // Start auto-rotation
+      rotationInterval = setInterval(nextReel, REEL_DURATION);
+    }
 
     async function loadReels() {
       try {
         const { data, error } = await supabase
           .from('participants')
-          .select('name, unit, reel_url, future_ready')
+          .select('name, unit, reel_url, future_ready, created_at')
           .not('reel_url', 'is', null)
-          .order('created_at', { ascending: false })
-          .limit(50);
+          .order('created_at', { ascending: false });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Supabase error:', error);
+          throw error;
+        }
 
-        reels = data;
-        renderReels(data);
+        if (!data || data.length === 0) {
+          loading.classList.add('hidden');
+          empty.classList.remove('hidden');
+          return;
+        }
+
+        allReels = data;
+        totalReels.textContent = data.length;
+
+        loading.classList.add('hidden');
+        empty.classList.add('hidden');
+
+        // Show first reel
+        showReel(0);
+
+        // Start rotation
+        startRotation();
+
       } catch (err) {
         console.error('Error loading reels:', err);
         loading.classList.add('hidden');
@@ -231,24 +213,33 @@
       }
     }
 
+    // Handle video errors
+    mainVideo.addEventListener('error', (e) => {
+      console.error('Video error:', e);
+      // Skip to next reel on error
+      setTimeout(nextReel, 2000);
+    });
+
+    // Handle video end (in case loop fails)
+    mainVideo.addEventListener('ended', () => {
+      mainVideo.play().catch(err => console.log('Replay error:', err));
+    });
+
     // Initial load
     loadReels();
-
-    // Refresh every 60 seconds
-    setInterval(loadReels, 60000);
 
     // Handle visibility change
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
-        loadReels();
-        // Resume playing current video
-        const currentVideo = document.getElementById(`video-${currentIndex}`);
-        if (currentVideo) {
-          currentVideo.play().catch(err => console.log('Play error:', err));
+        if (allReels.length > 0) {
+          mainVideo.play().catch(err => console.log('Play error:', err));
+          startRotation();
         }
       } else {
-        // Pause all videos when page is hidden
-        document.querySelectorAll('video').forEach(v => v.pause());
+        mainVideo.pause();
+        if (rotationInterval) {
+          clearInterval(rotationInterval);
+        }
       }
     });
   </script>
