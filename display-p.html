@@ -7,65 +7,88 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <style>
+    @keyframes scroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .scroll-container {
+      animation: scroll 60s linear infinite;
+    }
+    .scroll-container:hover {
+      animation-play-state: paused;
+    }
     @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.95); }
+      from { opacity: 0; transform: scale(0.9); }
       to { opacity: 1; transform: scale(1); }
     }
     .selfie-card {
-      animation: fadeIn 0.6s ease-out;
-    }
-    .shimmer {
-      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.5s infinite;
-    }
-    @keyframes shimmer {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
+      animation: fadeIn 0.5s ease-out;
     }
   </style>
 </head>
 <body class="bg-gradient-to-br from-rose-100 via-pink-50 to-purple-100 min-h-screen overflow-hidden">
   
   <!-- Header -->
-  <header class="bg-white/90 backdrop-blur-lg shadow-lg py-6 px-8 sticky top-0 z-50">
+  <header class="bg-white/95 backdrop-blur-lg shadow-xl py-8 px-12 sticky top-0 z-50">
     <div class="max-w-[1920px] mx-auto flex justify-between items-center">
       <div>
-        <div class="inline-block bg-gradient-to-r from-rose-500 to-pink-500 text-white px-4 py-1 rounded-full text-sm font-semibold mb-2">
+        <div class="inline-block bg-gradient-to-r from-rose-500 to-pink-500 text-white px-6 py-2 rounded-full text-base font-semibold mb-3">
           Ladies Meet 2025
         </div>
-        <h1 class="text-5xl font-bold bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent">
+        <h1 class="text-6xl font-bold bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent">
           Selfie Gallery
         </h1>
       </div>
       <div class="text-right">
-        <div class="text-3xl font-bold text-rose-600" id="photoCount">0</div>
-        <div class="text-sm text-gray-600">Future Ready Faces</div>
+        <div class="text-5xl font-bold text-rose-600" id="photoCount">0</div>
+        <div class="text-lg text-gray-600">Future Ready Faces</div>
       </div>
     </div>
   </header>
 
-  <!-- Gallery Grid -->
-  <main class="max-w-[1920px] mx-auto p-8">
-    <div id="gallery" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6">
-      <!-- Cards will be inserted here -->
+  <!-- Scrolling Gallery Rows -->
+  <main class="py-8">
+    <!-- Row 1 -->
+    <div class="overflow-hidden mb-6">
+      <div id="row1" class="scroll-container flex gap-6 whitespace-nowrap">
+        <!-- Cards will be duplicated here for infinite scroll -->
+      </div>
     </div>
 
-    <!-- Loading State -->
-    <div id="loading" class="text-center py-20">
-      <div class="inline-block animate-spin rounded-full h-16 w-16 border-4 border-rose-200 border-t-rose-600"></div>
-      <p class="mt-4 text-gray-600 text-xl">Loading selfies...</p>
+    <!-- Row 2 -->
+    <div class="overflow-hidden mb-6">
+      <div id="row2" class="scroll-container flex gap-6 whitespace-nowrap" style="animation-direction: reverse;">
+        <!-- Cards will be duplicated here for infinite scroll -->
+      </div>
     </div>
 
-    <!-- Empty State -->
-    <div id="empty" class="hidden text-center py-20">
-      <div class="text-6xl mb-4">📸</div>
-      <p class="text-gray-600 text-xl">No selfies yet. Check back soon!</p>
+    <!-- Row 3 -->
+    <div class="overflow-hidden">
+      <div id="row3" class="scroll-container flex gap-6 whitespace-nowrap">
+        <!-- Cards will be duplicated here for infinite scroll -->
+      </div>
     </div>
   </main>
 
+  <!-- Loading State -->
+  <div id="loading" class="fixed inset-0 bg-white/95 flex items-center justify-center z-50">
+    <div class="text-center">
+      <div class="inline-block animate-spin rounded-full h-20 w-20 border-4 border-rose-200 border-t-rose-600 mb-4"></div>
+      <p class="text-gray-800 text-2xl">Loading selfies...</p>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div id="empty" class="hidden fixed inset-0 bg-gradient-to-br from-rose-100 via-pink-50 to-purple-100 flex items-center justify-center">
+    <div class="text-center">
+      <div class="text-8xl mb-6">📸</div>
+      <p class="text-gray-800 text-3xl font-bold mb-2">No selfies yet</p>
+      <p class="text-gray-600 text-xl">Check back soon!</p>
+    </div>
+  </div>
+
   <!-- Footer -->
-  <footer class="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg py-3 text-center text-sm text-gray-500">
+  <footer class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg py-4 text-center text-base text-gray-600 shadow-lg">
     Made with ❤️ by Ordnance Fraternity • Auto-refreshing every 30 seconds
   </footer>
 
@@ -76,7 +99,9 @@
     const { createClient } = window.supabase;
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const gallery = document.getElementById('gallery');
+    const row1 = document.getElementById('row1');
+    const row2 = document.getElementById('row2');
+    const row3 = document.getElementById('row3');
     const loading = document.getElementById('loading');
     const empty = document.getElementById('empty');
     const photoCount = document.getElementById('photoCount');
@@ -93,9 +118,54 @@
         .replaceAll("'", '&#39;');
     }
 
+    function createCard(p) {
+      return `
+        <div class="selfie-card inline-block w-96 bg-white rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
+          <div class="aspect-square relative bg-gray-100">
+            ${p.selfie_url ? `
+              <img src="${escapeHtml(p.selfie_url)}" 
+                   alt="${escapeHtml(p.name)}" 
+                   class="w-full h-full object-cover"
+                   onerror="this.parentElement.innerHTML='<div class=\'flex items-center justify-center h-full bg-gradient-to-br from-rose-200 to-pink-200\'><span class=\'text-8xl\'>👤</span></div>'" />
+            ` : `
+              <div class="flex items-center justify-center h-full bg-gradient-to-br from-rose-200 to-pink-200">
+                <span class="text-8xl">👤</span>
+              </div>
+            `}
+          </div>
+          <div class="p-6">
+            <h3 class="font-bold text-2xl text-gray-800 truncate mb-1">${escapeHtml(p.name)}</h3>
+            <p class="text-base text-gray-600 truncate mb-3">${escapeHtml(p.unit || 'Unit not specified')}</p>
+            ${p.future_ready ? `
+              <div class="bg-gradient-to-r from-rose-50 to-pink-50 rounded-xl p-3 border-l-4 border-rose-500">
+                <p class="text-sm text-gray-700 line-clamp-2 italic">"${escapeHtml(p.future_ready)}"</p>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    function distributeCards(participants) {
+      if (!participants || participants.length === 0) return;
+
+      const third = Math.ceil(participants.length / 3);
+      const row1Data = participants.slice(0, third);
+      const row2Data = participants.slice(third, third * 2);
+      const row3Data = participants.slice(third * 2);
+
+      // Create cards and duplicate for infinite scroll effect
+      const row1Cards = row1Data.map(p => createCard(p)).join('');
+      const row2Cards = row2Data.map(p => createCard(p)).join('');
+      const row3Cards = row3Data.map(p => createCard(p)).join('');
+
+      // Duplicate content for seamless infinite scroll
+      row1.innerHTML = row1Cards + row1Cards;
+      row2.innerHTML = row2Cards + row2Cards;
+      row3.innerHTML = row3Cards + row3Cards;
+    }
+
     function renderGallery(participants) {
-      gallery.innerHTML = '';
-      
       if (!participants || participants.length === 0) {
         loading.classList.add('hidden');
         empty.classList.remove('hidden');
@@ -107,63 +177,39 @@
       empty.classList.add('hidden');
       photoCount.textContent = participants.length;
 
-      participants.forEach((p, index) => {
-        const card = document.createElement('div');
-        card.className = 'selfie-card bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105';
-        card.style.animationDelay = `${(index % 12) * 0.05}s`;
-        
-        card.innerHTML = `
-          <div class="aspect-square relative bg-gray-100">
-            ${p.selfie_url ? `
-              <img src="${escapeHtml(p.selfie_url)}" 
-                   alt="${escapeHtml(p.name)}" 
-                   class="w-full h-full object-cover"
-                   onerror="this.parentElement.innerHTML='<div class=\'flex items-center justify-center h-full bg-gradient-to-br from-rose-200 to-pink-200\'><span class=\'text-6xl\'>👤</span></div>'" />
-            ` : `
-              <div class="flex items-center justify-center h-full bg-gradient-to-br from-rose-200 to-pink-200">
-                <span class="text-6xl">👤</span>
-              </div>
-            `}
-          </div>
-          <div class="p-4">
-            <h3 class="font-bold text-lg text-gray-800 truncate">${escapeHtml(p.name)}</h3>
-            <p class="text-sm text-gray-600 truncate">${escapeHtml(p.unit || 'Unit not specified')}</p>
-            ${p.future_ready ? `
-              <p class="text-xs text-rose-600 mt-2 line-clamp-2">"${escapeHtml(p.future_ready)}"</p>
-            ` : ''}
-          </div>
-        `;
-        
-        gallery.appendChild(card);
-      });
+      distributeCards(participants);
     }
 
     async function loadSelfies() {
       try {
         const { data, error } = await supabase
           .from('participants')
-          .select('name, unit, selfie_url, future_ready')
+          .select('name, unit, selfie_url, future_ready, created_at')
           .not('selfie_url', 'is', null)
           .order('created_at', { ascending: false })
           .limit(100);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Supabase error:', error);
+          throw error;
+        }
 
         // Only re-render if data has changed
-        if (JSON.stringify(data) !== JSON.stringify(currentData)) {
+        const dataString = JSON.stringify(data);
+        if (dataString !== JSON.stringify(currentData)) {
           currentData = data;
           renderGallery(data);
         }
       } catch (err) {
         console.error('Error loading selfies:', err);
         loading.classList.add('hidden');
-        gallery.innerHTML = `
-          <div class="col-span-full text-center py-20">
-            <div class="text-6xl mb-4">⚠️</div>
-            <p class="text-red-600 text-xl">Failed to load selfies</p>
-            <p class="text-gray-600 text-sm mt-2">Retrying in 30 seconds...</p>
-          </div>
-        `;
+        
+        // Show error state
+        if (!currentData || currentData.length === 0) {
+          empty.classList.remove('hidden');
+          empty.querySelector('.text-3xl').textContent = 'Error loading selfies';
+          empty.querySelector('.text-xl').textContent = 'Retrying in 30 seconds...';
+        }
       }
     }
 
@@ -171,11 +217,15 @@
     loadSelfies();
 
     // Auto-refresh every 30 seconds
-    setInterval(loadSelfies, 30000);
+    setInterval(() => {
+      console.log('Auto-refreshing selfies...');
+      loadSelfies();
+    }, 30000);
 
-    // Also refresh when page becomes visible (if hidden)
+    // Also refresh when page becomes visible
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
+        console.log('Page visible, refreshing selfies...');
         loadSelfies();
       }
     });
