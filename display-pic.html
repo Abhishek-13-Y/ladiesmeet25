@@ -47,10 +47,10 @@
     </div>
   </header>
 
-  <!-- Slideshow Grid (2x3 = 6 photos at once) -->
+  <!-- Slideshow Grid (2x4 = 8 photos at once) -->
   <main class="h-[calc(100vh-200px)] p-8">
-    <div id="gallery" class="grid grid-cols-3 grid-rows-2 gap-6 h-full">
-      <!-- 6 cards will be displayed here -->
+    <div id="gallery" class="grid grid-cols-4 grid-rows-2 gap-6 h-full">
+      <!-- 8 cards will be displayed here -->
     </div>
   </main>
 
@@ -73,7 +73,7 @@
 
   <!-- Footer -->
   <footer class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg py-3 text-center text-base text-gray-600 shadow-lg">
-    Made with ❤️ by Ordnance Fraternity • Rotating every 8 seconds
+    Made with ❤️ by Ordnance Fraternity • Rotating every 15 seconds
   </footer>
 
   <script>
@@ -91,8 +91,8 @@
 
     let allPhotos = [];
     let currentIndex = 0;
-    const PHOTOS_PER_SLIDE = 6;
-    const TRANSITION_TIME = 8000; // 8 seconds per slide
+    const PHOTOS_PER_SLIDE = 8;
+    const TRANSITION_TIME = 15000; // 8 seconds per slide
 
     function escapeHtml(s) {
       if (s == null) return '';
