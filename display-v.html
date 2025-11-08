@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reels - Ladies Meet 2025</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      overflow: hidden;
+    }
+    .reel-container {
+      scroll-snap-type: y mandatory;
+      scroll-behavior: smooth;
+    }
+    .reel-slide {
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .fade-in {
+      animation: fadeIn 0.5s ease-in;
+    }
+  </style>
+</head>
+<body class="bg-black">
+  
+  <!-- Reel Container -->
+  <div id="reelContainer" class="reel-container h-screen w-screen overflow-y-auto">
+    <!-- Reels will be inserted here -->
+  </div>
+
+  <!-- Loading Overlay -->
+  <div id="loading" class="fixed inset-0 bg-black flex items-center justify-center z-50">
+    <div class="text-center">
+      <div class="inline-block animate-spin rounded-full h-20 w-20 border-4 border-pink-200 border-t-pink-600 mb-4"></div>
+      <p class="text-white text-2xl">Loading Reels...</p>
+      <p class="text-gray-400 text-sm mt-2">Made with ❤️ by Ordnance Fraternity</p>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div id="empty" class="hidden fixed inset-0 bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
+    <div class="text-center">
+      <div class="text-8xl mb-6">🎥</div>
+      <p class="text-white text-3xl mb-2">No Reels Yet</p>
+      <p class="text-gray-400 text-lg">Check back soon for amazing content!</p>
+      <p class="text-gray-500 text-sm mt-8">Made with ❤️ by Ordnance Fraternity</p>
+    </div>
+  </div>
+
+  <!-- Info Overlay (top) -->
+  <div id="infoOverlay" class="hidden fixed top-0 left-0 right-0 bg-gradient-to-b from-black/80 to-transparent p-8 z-40">
+    <div class="max-w-7xl mx-auto flex justify-between items-start">
+      <div>
+        <div class="inline-block bg-gradient-to-r from-rose-500 to-pink-500 text-white px-4 py-1 rounded-full text-sm font-semibold mb-2">
+          Ladies Meet 2025
+        </div>
+        <h1 class="text-4xl font-bold text-white">Future Ready Reels</h1>
+      </div>
+      <div class="text-right text-white">
+        <div class="text-3xl font-bold" id="reelCount">0</div>
+        <div class="text-sm text-gray-300">Reels Playing</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://jlzqdefinnwoazsqlunf.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsenFkZWZpbm53b2F6c3FsdW5mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI0NTgwOTksImV4cCI6MjA3ODAzNDA5OX0.ZPfFVDqJgZkuhPGO9WNlYHKDwKgQ9SZoGjSIypgaDIE";
+    
+    const { createClient } = window.supabase;
+    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const reelContainer = document.getElementById('reelContainer');
+    const loading = document.getElementById('loading');
+    const empty = document.getElementById('empty');
+    const infoOverlay = document.getElementById('infoOverlay');
+    const reelCount = document.getElementById('reelCount');
+
+    let reels = [];
+    let currentIndex = 0;
+    let autoScrollInterval;
+
+    function escapeHtml(s) {
+      if (s == null) return '';
+      return String(s)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function renderReels(participants) {
+      reelContainer.innerHTML = '';
+      
+      if (!participants || participants.length === 0) {
+        loading.classList.add('hidden');
+        empty.classList.remove('hidden');
+        infoOverlay.classList.add('hidden');
+        reelCount.textContent = '0';
+        return;
+      }
+
+      loading.classList.add('hidden');
+      empty.classList.add('hidden');
+      infoOverlay.classList.remove('hidden');
+      reelCount.textContent = participants.length;
+
+      participants.forEach((p, index) => {
+        const slide = document.createElement('div');
+        slide.className = 'reel-slide h-screen w-screen relative flex items-center justify-center bg-black';
+        slide.dataset.index = index;
+        
+        slide.innerHTML = `
+          <video 
+            id="video-${index}"
+            class="max-h-screen max-w-screen object-contain"
+            ${index === 0 ? 'autoplay' : ''} 
+            muted 
+            loop 
+            playsinline
+            src="${escapeHtml(p.reel_url)}"
+            onerror="this.parentElement.innerHTML='<div class=\\'text-center\\'><div class=\\'text-6xl mb-4\\'>⚠️</div><p class=\\'text-white text-xl\\'>Failed to load reel</p></div>'">
+          </video>
+          
+          <!-- Info Card Overlay -->
+          <div class="absolute bottom-8 left-8 right-8 bg-gradient-to-r from-black/80 to-black/60 backdrop-blur-md rounded-3xl p-8 text-white max-w-2xl">
+            <h2 class="text-4xl font-bold mb-2">${escapeHtml(p.name)}</h2>
+            <p class="text-xl text-gray-300 mb-4">${escapeHtml(p.unit || 'Unit not specified')}</p>
+            ${p.future_ready ? `
+              <div class="border-l-4 border-rose-500 pl-4">
+                <p class="text-lg italic">"${escapeHtml(p.future_ready)}"</p>
+              </div>
+            ` : ''}
+          </div>
+
+          <!-- Progress indicator -->
+          <div class="absolute top-8 right-8 bg-black/60 backdrop-blur-md rounded-full px-6 py-3 text-white">
+            <span class="font-bold text-2xl">${index + 1}</span>
+            <span class="text-gray-300"> / ${participants.length}</span>
+          </div>
+        `;
+        
+        reelContainer.appendChild(slide);
+      });
+
+      // Start auto-scroll
+      startAutoScroll();
+    }
+
+    function startAutoScroll() {
+      // Clear existing interval
+      if (autoScrollInterval) {
+        clearInterval(autoScrollInterval);
+      }
+
+      // Auto-scroll every 15 seconds (adjust based on your reel duration)
+      autoScrollInterval = setInterval(() => {
+        currentIndex = (currentIndex + 1) % reels.length;
+        scrollToReel(currentIndex);
+      }, 15000);
+    }
+
+    function scrollToReel(index) {
+      const slides = document.querySelectorAll('.reel-slide');
+      if (slides[index]) {
+        slides[index].scrollIntoView({ behavior: 'smooth' });
+        
+        // Play current video and pause others
+        document.querySelectorAll('video').forEach((video, i) => {
+          if (i === index) {
+            video.play().catch(err => console.log('Play error:', err));
+          } else {
+            video.pause();
+          }
+        });
+      }
+    }
+
+    // Handle manual scrolling
+    let scrollTimeout;
+    reelContainer.addEventListener('scroll', () => {
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        const slides = document.querySelectorAll('.reel-slide');
+        const scrollPosition = reelContainer.scrollTop;
+        const windowHeight = window.innerHeight;
+        
+        // Find which slide is currently visible
+        slides.forEach((slide, index) => {
+          const slideTop = slide.offsetTop;
+          if (Math.abs(scrollPosition - slideTop) < windowHeight / 2) {
+            currentIndex = index;
+            
+            // Play only the visible video
+            document.querySelectorAll('video').forEach((video, i) => {
+              if (i === index) {
+                video.play().catch(err => console.log('Play error:', err));
+              } else {
+                video.pause();
+              }
+            });
+          }
+        });
+      }, 100);
+    });
+
+    async function loadReels() {
+      try {
+        const { data, error } = await supabase
+          .from('participants')
+          .select('name, unit, reel_url, future_ready')
+          .not('reel_url', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        if (error) throw error;
+
+        reels = data;
+        renderReels(data);
+      } catch (err) {
+        console.error('Error loading reels:', err);
+        loading.classList.add('hidden');
+        empty.classList.remove('hidden');
+      }
+    }
+
+    // Initial load
+    loadReels();
+
+    // Refresh every 60 seconds
+    setInterval(loadReels, 60000);
+
+    // Handle visibility change
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        loadReels();
+        // Resume playing current video
+        const currentVideo = document.getElementById(`video-${currentIndex}`);
+        if (currentVideo) {
+          currentVideo.play().catch(err => console.log('Play error:', err));
+        }
+      } else {
+        // Pause all videos when page is hidden
+        document.querySelectorAll('video').forEach(v => v.pause());
+      }
+    });
+  </script>
+</body>
+</html>
