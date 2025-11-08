@@ -13,6 +13,8 @@
     }
     .scroll-container {
       animation: scroll 60s linear infinite;
+      display: flex;
+      gap: 1.5rem;
     }
     .scroll-container:hover {
       animation-play-state: paused;
@@ -23,6 +25,9 @@
     }
     .selfie-card {
       animation: fadeIn 0.5s ease-out;
+      flex-shrink: 0;
+      width: 500px !important;
+      min-width: 500px !important;
     }
   </style>
 </head>
@@ -50,21 +55,21 @@
   <main class="py-8">
     <!-- Row 1 -->
     <div class="overflow-hidden mb-6">
-      <div id="row1" class="scroll-container flex gap-6 whitespace-nowrap">
+      <div id="row1" class="scroll-container">
         <!-- Cards will be duplicated here for infinite scroll -->
       </div>
     </div>
 
     <!-- Row 2 -->
     <div class="overflow-hidden mb-6">
-      <div id="row2" class="scroll-container flex gap-6 whitespace-nowrap" style="animation-direction: reverse;">
+      <div id="row2" class="scroll-container" style="animation-direction: reverse;">
         <!-- Cards will be duplicated here for infinite scroll -->
       </div>
     </div>
 
     <!-- Row 3 -->
     <div class="overflow-hidden">
-      <div id="row3" class="scroll-container flex gap-6 whitespace-nowrap">
+      <div id="row3" class="scroll-container">
         <!-- Cards will be duplicated here for infinite scroll -->
       </div>
     </div>
@@ -120,8 +125,8 @@
 
     function createCard(p) {
       return `
-        <div class="selfie-card inline-block w-96 bg-white rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
-          <div class="aspect-square relative bg-gray-100">
+        <div class="selfie-card bg-white rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
+          <div class="relative bg-gray-100" style="width: 500px; height: 500px;">
             ${p.selfie_url ? `
               <img src="${escapeHtml(p.selfie_url)}" 
                    alt="${escapeHtml(p.name)}" 
