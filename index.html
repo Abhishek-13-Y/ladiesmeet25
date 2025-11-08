@@ -7,77 +7,130 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-gradient-to-b from-rose-50 to-pink-100 min-h-screen flex items-center justify-center font-sans p-4">
-  <div class="bg-white/90 backdrop-blur-lg shadow-2xl rounded-2xl p-8 w-full max-w-lg">
-    <h1 class="text-3xl font-semibold text-center text-rose-700 mb-4">Ladies Meet 2025</h1>
-    <p class="text-center text-gray-600 mb-6">Register & share how you're <b>Future Ready for 2026</b></p>
+<body class="bg-gradient-to-br from-rose-100 via-pink-50 to-purple-100 min-h-screen flex items-center justify-center font-sans p-4">
+  <div class="bg-white/95 backdrop-blur-xl shadow-2xl rounded-3xl p-8 w-full max-w-2xl border border-rose-200">
     
-    <!-- Instructions Box -->
-    <div class="bg-rose-50 border-l-4 border-rose-500 p-4 mb-6 rounded">
-      <h3 class="font-semibold text-rose-800 mb-2">📋 Instructions:</h3>
-      <ul class="text-sm text-gray-700 space-y-1">
-        <li>• Mobile number must be exactly 10 digits</li>
-        <li>• Selfie: Images only (JPG, PNG, max 5MB)</li>
-        <li>• Reel: Videos only (MP4, MOV, max 10MB, 10 seconds)</li>
-        <li>• You can edit your entry anytime using the same mobile number</li>
-      </ul>
+    <!-- Header -->
+    <div class="text-center mb-6">
+      <div class="inline-block bg-gradient-to-r from-rose-500 to-pink-500 text-white px-6 py-2 rounded-full text-sm font-semibold mb-3">
+        Ladies Meet 2025
+      </div>
+      <h1 class="text-4xl font-bold bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent mb-2">
+        Registration Portal
+      </h1>
+      <p class="text-gray-600">Share how you're <span class="font-semibold text-rose-600">Future Ready for 2026</span></p>
+    </div>
+
+    <!-- Welcome Back Message (Hidden initially) -->
+    <div id="welcomeMessage" class="hidden mb-6 bg-gradient-to-r from-rose-50 to-pink-50 border-2 border-rose-300 rounded-2xl p-6 text-center shadow-md">
+      <div class="text-5xl mb-3">👋</div>
+      <h2 class="text-2xl font-bold text-rose-700 mb-2">Welcome back, <span id="welcomeName"></span>!</h2>
+      <p class="text-gray-600">Mobile: <span id="welcomeMobile" class="font-semibold text-rose-600"></span></p>
+      <p class="text-sm text-gray-500 mt-2">You can update your Future Ready vision, selfie, or reel below</p>
     </div>
 
     <!-- Success Message (Hidden by default) -->
-    <div id="successMessage" class="hidden bg-green-100 border-2 border-green-500 rounded-xl p-6 mb-6 text-center">
-      <div class="text-6xl mb-3">✅</div>
-      <h2 class="text-2xl font-bold text-green-800 mb-2">Registration Successful!</h2>
-      <p class="text-green-700">Your details have been saved. You can update anytime using your mobile number.</p>
+    <div id="successMessage" class="hidden bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-400 rounded-2xl p-8 mb-6 text-center shadow-lg">
+      <div class="text-7xl mb-4 animate-bounce">✅</div>
+      <h2 class="text-3xl font-bold text-green-800 mb-3">Registration Successful!</h2>
+      <p class="text-green-700 text-lg">Your details have been saved successfully.</p>
+      <p class="text-green-600 text-sm mt-2">You can update anytime using your mobile number.</p>
     </div>
 
-    <form id="participantForm" class="space-y-4">
+    <form id="participantForm" class="space-y-5">
+      <!-- Mobile Number -->
       <div>
-        <input id="mobile" type="tel" placeholder="Mobile Number (10 digits)" maxlength="10" required 
-          class="w-full p-3 rounded-lg border focus:ring-2 focus:ring-rose-400" />
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Mobile Number</label>
+        <div class="relative">
+          <input id="mobile" type="tel" placeholder="Enter 10-digit mobile number" maxlength="10" required 
+            class="w-full p-4 pr-12 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all" />
+          <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">📱</span>
+        </div>
         <p id="mobileError" class="text-red-600 text-sm mt-1 hidden"></p>
+        <p class="text-xs text-gray-500 mt-1.5 flex items-center gap-1">
+          <span class="text-blue-500">ℹ️</span> Must be exactly 10 digits
+        </p>
       </div>
 
-      <button type="button" id="checkBtn" class="w-full bg-rose-500 text-white py-2 rounded-lg font-semibold hover:bg-rose-600 transition">
-        Check / Continue
+      <button type="button" id="checkBtn" class="w-full bg-gradient-to-r from-rose-500 to-pink-500 text-white py-4 rounded-xl font-semibold hover:from-rose-600 hover:to-pink-600 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+        Continue →
       </button>
 
-      <div id="formFields" class="space-y-4 hidden">
-        <input id="name" type="text" placeholder="Full Name" required 
-          class="w-full p-3 rounded-lg border focus:ring-2 focus:ring-rose-400" />
-        
-        <input id="unit" type="text" placeholder="Unit / Directorate" required 
-          class="w-full p-3 rounded-lg border focus:ring-2 focus:ring-rose-400" />
-        
-        <textarea id="futureReady" rows="3" placeholder="What makes you Future Ready for 2026?" 
-          class="w-full p-3 rounded-lg border focus:ring-2 focus:ring-rose-400"></textarea>
-        
+      <div id="formFields" class="space-y-5 hidden">
+        <!-- Name -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Upload Selfie (optional)</label>
-          <input id="selfie" type="file" accept="image/jpeg,image/png,image/jpg" 
-            class="w-full p-2 border rounded-lg bg-white" />
-          <p class="text-xs text-gray-500 mt-1">Max 5MB • JPG, PNG only</p>
-          <p id="selfieError" class="text-red-600 text-sm mt-1 hidden"></p>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
+          <input id="name" type="text" placeholder="Enter your full name" required 
+            class="w-full p-4 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed" />
         </div>
         
+        <!-- Unit -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Upload Reel (optional, max 10s)</label>
-          <input id="reel" type="file" accept="video/mp4,video/quicktime" 
-            class="w-full p-2 border rounded-lg bg-white" />
-          <p class="text-xs text-gray-500 mt-1">Max 10MB • MP4, MOV only</p>
-          <p id="reelError" class="text-red-600 text-sm mt-1 hidden"></p>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Unit / Directorate</label>
+          <input id="unit" type="text" placeholder="Enter your unit or directorate" required 
+            class="w-full p-4 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed" />
+        </div>
+        
+        <!-- Future Ready (Always Editable) -->
+        <div class="bg-gradient-to-br from-rose-50 to-pink-50 p-5 rounded-xl border-2 border-rose-200">
+          <label class="block text-sm font-semibold text-rose-700 mb-2 flex items-center gap-2">
+            <span>✨</span> What makes you Future Ready for 2026?
+          </label>
+          <textarea id="futureReady" rows="4" placeholder="Share your vision, goals, and what you're preparing for 2026..." 
+            class="w-full p-4 rounded-xl border-2 border-rose-200 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all resize-none"></textarea>
+          <p class="text-xs text-rose-600 mt-2 flex items-center gap-1">
+            <span>💡</span> This field can always be updated
+          </p>
+        </div>
+        
+        <!-- Selfie Upload (Always Editable) -->
+        <div class="bg-gradient-to-br from-purple-50 to-pink-50 p-5 rounded-xl border-2 border-purple-200">
+          <label class="block text-sm font-semibold text-purple-700 mb-2 flex items-center gap-2">
+            <span>📸</span> Upload Selfie (Optional)
+          </label>
+          <div class="relative">
+            <input id="selfie" type="file" accept="image/jpeg,image/png,image/jpg" 
+              class="w-full p-3 border-2 border-purple-200 rounded-xl bg-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-purple-500 file:text-white file:font-semibold hover:file:bg-purple-600 file:cursor-pointer cursor-pointer transition-all" />
+          </div>
+          <p id="selfieError" class="text-red-600 text-sm mt-2 hidden"></p>
+          <div class="flex items-start gap-2 mt-2 text-xs text-purple-600">
+            <span class="mt-0.5">ℹ️</span>
+            <div>
+              <div>• Max size: 5MB</div>
+              <div>• Formats: JPG, PNG</div>
+              <div>• Can be updated anytime</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Reel Upload (Always Editable) -->
+        <div class="bg-gradient-to-br from-blue-50 to-cyan-50 p-5 rounded-xl border-2 border-blue-200">
+          <label class="block text-sm font-semibold text-blue-700 mb-2 flex items-center gap-2">
+            <span>🎥</span> Upload Reel (Optional)
+          </label>
+          <div class="relative">
+            <input id="reel" type="file" accept="video/mp4,video/quicktime" 
+              class="w-full p-3 border-2 border-blue-200 rounded-xl bg-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-500 file:text-white file:font-semibold hover:file:bg-blue-600 file:cursor-pointer cursor-pointer transition-all" />
+          </div>
+          <p id="reelError" class="text-red-600 text-sm mt-2 hidden"></p>
+          <div class="flex items-start gap-2 mt-2 text-xs text-blue-600">
+            <span class="mt-0.5">ℹ️</span>
+            <div>
+              <div>• Max size: 10MB</div>
+              <div>• Max duration: 10 seconds</div>
+              <div>• Formats: MP4, MOV</div>
+              <div>• Can be updated anytime</div>
+            </div>
+          </div>
         </div>
 
-        <div id="existingData" class="bg-blue-50 border border-blue-300 rounded-lg p-3 hidden">
-          <p class="text-sm text-blue-800"><strong>Note:</strong> Existing registration found. Update any fields you want to change.</p>
-        </div>
-
-        <button type="submit" id="submitBtn" class="w-full bg-rose-600 text-white py-3 rounded-lg font-semibold hover:bg-rose-700 transition">
-          Submit Registration
+        <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-rose-600 to-pink-600 text-white py-4 rounded-xl font-bold text-lg hover:from-rose-700 hover:to-pink-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+          Submit Registration ✓
         </button>
       </div>
     </form>
     
-    <div id="status" class="mt-4 text-center text-sm text-gray-700"></div>
+    <div id="status" class="mt-5 text-center text-sm font-medium"></div>
   </div>
 
 <script>
@@ -93,7 +146,7 @@
   function validateMobile(mobile) {
     const mobileError = document.getElementById("mobileError");
     if (!/^[0-9]{10}$/.test(mobile)) {
-      mobileError.textContent = "Mobile number must be exactly 10 digits";
+      mobileError.textContent = "⚠️ Mobile number must be exactly 10 digits";
       mobileError.classList.remove("hidden");
       return false;
     }
@@ -105,17 +158,17 @@
   function validateFile(file, type) {
     if (!file) return { valid: true };
     
-    const maxSize = type === 'image' ? 5 * 1024 * 1024 : 10 * 1024 * 1024; // 5MB for images, 10MB for videos
+    const maxSize = type === 'image' ? 5 * 1024 * 1024 : 10 * 1024 * 1024;
     const allowedTypes = type === 'image' 
       ? ['image/jpeg', 'image/png', 'image/jpg']
       : ['video/mp4', 'video/quicktime'];
     
     if (file.size > maxSize) {
-      return { valid: false, error: `File too large. Max ${type === 'image' ? '5MB' : '10MB'}` };
+      return { valid: false, error: `❌ File too large. Max ${type === 'image' ? '5MB' : '10MB'} allowed` };
     }
     
     if (!allowedTypes.includes(file.type)) {
-      return { valid: false, error: `Invalid file type. Only ${type === 'image' ? 'JPG/PNG' : 'MP4/MOV'} allowed` };
+      return { valid: false, error: `❌ Invalid file type. Only ${type === 'image' ? 'JPG/PNG' : 'MP4/MOV'} allowed` };
     }
     
     return { valid: true };
@@ -130,7 +183,7 @@
     const filePath = `${folder}/${fileName}`;
     
     const { data, error } = await supabaseClient.storage
-      .from('ladies-meet-2025') // Make sure this bucket exists in Supabase
+      .from('ladies-meet-2025')
       .upload(filePath, file, {
         cacheControl: '3600',
         upsert: true
@@ -141,7 +194,6 @@
       throw error;
     }
     
-    // Get public URL
     const { data: urlData } = supabaseClient.storage
       .from('ladies-meet-2025')
       .getPublicUrl(filePath);
@@ -156,8 +208,12 @@
     if (!validateMobile(mobile)) return;
     
     const statusDiv = document.getElementById("status");
-    statusDiv.textContent = "⏳ Checking...";
-    statusDiv.className = "mt-4 text-center text-sm text-gray-700";
+    const checkBtn = document.getElementById("checkBtn");
+    
+    checkBtn.disabled = true;
+    checkBtn.textContent = "Checking...";
+    statusDiv.textContent = "⏳ Please wait...";
+    statusDiv.className = "mt-5 text-center text-sm font-medium text-gray-600";
     
     try {
       const { data, error } = await supabaseClient
@@ -169,31 +225,41 @@
       if (data) {
         // Existing record found
         existingRecord = data;
+        
+        // Show welcome message
+        document.getElementById("welcomeName").textContent = data.name;
+        document.getElementById("welcomeMobile").textContent = mobile;
+        document.getElementById("welcomeMessage").classList.remove("hidden");
+        
+        // Fill form with existing data
         document.getElementById("name").value = data.name || '';
         document.getElementById("unit").value = data.unit || '';
         document.getElementById("futureReady").value = data.future_ready || '';
-        document.getElementById("existingData").classList.remove("hidden");
-        statusDiv.textContent = "✏️ Record found! You can update your details below.";
-        statusDiv.className = "mt-4 text-center text-sm text-blue-600 font-semibold";
+        
+        // Disable name and unit (can't be edited)
+        document.getElementById("name").disabled = true;
+        document.getElementById("unit").disabled = true;
+        
+        statusDiv.textContent = "";
       } else {
         // New registration
         existingRecord = null;
-        document.getElementById("existingData").classList.add("hidden");
-        statusDiv.textContent = "✨ New registration! Please fill all details.";
-        statusDiv.className = "mt-4 text-center text-sm text-green-600 font-semibold";
+        document.getElementById("welcomeMessage").classList.add("hidden");
+        statusDiv.textContent = "";
       }
       
       document.getElementById("formFields").classList.remove("hidden");
       document.getElementById("mobile").readOnly = true;
+      checkBtn.classList.add("hidden");
       
     } catch (error) {
-      // No record found (which is fine for new registrations)
+      // No record found (new registration)
       existingRecord = null;
-      document.getElementById("existingData").classList.add("hidden");
+      document.getElementById("welcomeMessage").classList.add("hidden");
       document.getElementById("formFields").classList.remove("hidden");
       document.getElementById("mobile").readOnly = true;
-      statusDiv.textContent = "✨ New registration! Please fill all details.";
-      statusDiv.className = "mt-4 text-center text-sm text-green-600 font-semibold";
+      checkBtn.classList.add("hidden");
+      statusDiv.textContent = "";
     }
   });
 
@@ -204,10 +270,9 @@
     const statusDiv = document.getElementById("status");
     const submitBtn = document.getElementById("submitBtn");
     
-    statusDiv.textContent = "⏳ Submitting...";
-    statusDiv.className = "mt-4 text-center text-sm text-gray-700";
     submitBtn.disabled = true;
-    submitBtn.textContent = "Please wait...";
+    submitBtn.textContent = "⏳ Submitting...";
+    statusDiv.className = "mt-5 text-center text-sm font-medium text-gray-600";
     
     const mobile = document.getElementById("mobile").value.trim();
     const name = document.getElementById("name").value.trim();
@@ -222,8 +287,7 @@
       document.getElementById("selfieError").textContent = selfieValidation.error;
       document.getElementById("selfieError").classList.remove("hidden");
       submitBtn.disabled = false;
-      submitBtn.textContent = "Submit Registration";
-      statusDiv.textContent = "";
+      submitBtn.textContent = "Submit Registration ✓";
       return;
     }
     
@@ -232,13 +296,11 @@
       document.getElementById("reelError").textContent = reelValidation.error;
       document.getElementById("reelError").classList.remove("hidden");
       submitBtn.disabled = false;
-      submitBtn.textContent = "Submit Registration";
-      statusDiv.textContent = "";
+      submitBtn.textContent = "Submit Registration ✓";
       return;
     }
     
     try {
-      // Upload files if provided
       let selfieUrl = existingRecord?.selfie_url || null;
       let reelUrl = existingRecord?.reel_url || null;
       
@@ -252,21 +314,23 @@
         reelUrl = await uploadFile(reelFile, 'reels', mobile);
       }
       
-      statusDiv.textContent = "💾 Saving data...";
+      statusDiv.textContent = "💾 Saving your registration...";
       
-      // Upsert data
+      const participantData = {
+        mobile: mobile,
+        name: name,
+        unit: unit,
+        future_ready: futureReady,
+        selfie_url: selfieUrl,
+        reel_url: reelUrl,
+        created_at: new Date().toISOString()
+      };
+
       const { data, error } = await supabaseClient
         .from('participants')
-        .upsert({
-          mobile: mobile,
-          name: name,
-          unit: unit,
-          future_ready: futureReady,
-          selfie_url: selfieUrl,
-          reel_url: reelUrl,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'mobile'
+        .upsert(participantData, {
+          onConflict: 'mobile',
+          ignoreDuplicates: false
         })
         .select();
 
@@ -274,6 +338,7 @@
 
       // Show success message
       document.getElementById("participantForm").classList.add("hidden");
+      document.getElementById("welcomeMessage").classList.add("hidden");
       document.getElementById("successMessage").classList.remove("hidden");
       statusDiv.textContent = "";
       
@@ -284,10 +349,10 @@
       
     } catch (error) {
       console.error("Error:", error);
-      statusDiv.textContent = "❌ Error: " + error.message;
-      statusDiv.className = "mt-4 text-center text-sm text-red-600 font-semibold";
+      statusDiv.textContent = "❌ " + error.message;
+      statusDiv.className = "mt-5 text-center text-sm font-medium text-red-600";
       submitBtn.disabled = false;
-      submitBtn.textContent = "Submit Registration";
+      submitBtn.textContent = "Submit Registration ✓";
     }
   });
 
