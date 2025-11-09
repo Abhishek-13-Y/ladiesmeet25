@@ -3,490 +3,64 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ladies Meet 2025 – Registration</title>
+  <title>Ladies Meet 2025 - Resolution Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-gradient-to-br from-rose-100 via-pink-50 to-purple-100 min-h-screen flex items-center justify-center font-sans p-4">
-  <div class="bg-white/95 backdrop-blur-xl shadow-2xl rounded-3xl p-8 w-full max-w-2xl border border-rose-200">
-    
+<body class="min-h-screen bg-gradient-to-br from-rose-100 via-pink-50 to-rose-200 flex items-center justify-center p-4">
+
+  <div class="bg-white/95 backdrop-blur-xl shadow-2xl rounded-3xl p-4 sm:p-8 w-full max-w-full sm:max-w-2xl border border-rose-200">
     <!-- Header -->
-    <div class="text-center mb-6">
-      <div class="inline-block bg-gradient-to-r from-rose-500 to-pink-500 text-white px-6 py-2 rounded-full text-sm font-semibold mb-3">
-        Ladies Meet 2025
-      </div>
-      <h1 class="text-4xl font-bold bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent mb-2">
-        Registration Portal
-      </h1>
-      <p class="text-gray-600">Share how you're <span class="font-semibold text-rose-600">Future Ready for 2026</span></p>
-      <p class="text-xs text-gray-400 mt-3">Made with ❤️ by Ordnance Fraternity</p>
+    <div class="text-center mb-6 sm:mb-8">
+      <h1 class="text-3xl sm:text-4xl font-bold text-rose-600 mb-1">Ladies Meet 2025</h1>
+      <p class="text-gray-500 text-sm sm:text-base">Resolution Dashboard</p>
     </div>
 
-    <!-- Welcome Back Message (Hidden initially) -->
-    <div id="welcomeMessage" class="hidden mb-6 bg-gradient-to-r from-rose-50 to-pink-50 border-2 border-rose-300 rounded-2xl p-6 text-center shadow-md">
-      <div class="text-5xl mb-3">👋</div>
-      <h2 class="text-2xl font-bold text-rose-700 mb-2">Welcome back, <span id="welcomeName"></span>!</h2>
-      <p class="text-gray-600">Mobile: <span id="welcomeMobile" class="font-semibold text-rose-600"></span></p>
-      <p class="text-sm text-gray-500 mt-2">You can update your Future Ready vision, selfie, or reel below</p>
-    </div>
-
-    <!-- Success Message (Hidden by default) -->
-    <div id="successMessage" class="hidden bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-400 rounded-2xl p-8 mb-6 text-center shadow-lg">
-      <div class="text-7xl mb-4 animate-bounce">✅</div>
-      <h2 class="text-3xl font-bold text-green-800 mb-3">Registration Successful!</h2>
-      <p class="text-green-700 text-lg">Your details have been saved successfully.</p>
-      <p class="text-green-600 text-sm mt-2">You can update anytime using your mobile number.</p>
-    </div>
-
-    <form id="participantForm" class="space-y-5">
-      <!-- Mobile Number -->
+    <!-- Form -->
+    <form class="space-y-5 sm:space-y-6">
+      <!-- Name -->
       <div>
-        <label class="block text-sm font-semibold text-gray-700 mb-2">Mobile Number</label>
-        <div class="relative">
-          <input id="mobile" type="tel" placeholder="Enter 10-digit mobile number" maxlength="10" required 
-            class="w-full p-4 pr-12 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all" />
-          <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">📱</span>
-        </div>
-        <p id="mobileError" class="text-red-600 text-sm mt-1 hidden"></p>
-        <p class="text-xs text-gray-500 mt-1.5 flex items-center gap-1">
-          <span class="text-blue-500">ℹ️</span> Must be exactly 10 digits
-        </p>
+        <label class="block text-sm font-medium text-gray-600 mb-1">Name</label>
+        <input type="text" placeholder="Enter your name"
+          class="w-full rounded-xl border border-gray-300 p-3 text-sm focus:ring-2 focus:ring-rose-400 focus:outline-none" />
       </div>
 
-      <button type="button" id="checkBtn" class="w-full bg-gradient-to-r from-rose-500 to-pink-500 text-white py-4 rounded-xl font-semibold hover:from-rose-600 hover:to-pink-600 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-        Continue →
-      </button>
+      <!-- Unit -->
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">Unit</label>
+        <input type="text" placeholder="Enter your unit"
+          class="w-full rounded-xl border border-gray-300 p-3 text-sm focus:ring-2 focus:ring-rose-400 focus:outline-none" />
+      </div>
 
-      <div id="formFields" class="space-y-5 hidden">
-        <!-- Name -->
-        <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
-          <input id="name" type="text" placeholder="Enter your full name" required 
-            class="w-full p-4 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed" />
-        </div>
-        
-        <!-- Unit -->
-        <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-2">Unit / Directorate</label>
-          <input id="unit" type="text" placeholder="Enter your unit or directorate" required 
-            class="w-full p-4 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed" />
-        </div>
-        
-        <!-- Future Ready (Always Editable) -->
-        <div class="bg-gradient-to-br from-rose-50 to-pink-50 p-5 rounded-xl border-2 border-rose-200">
-          <label class="block text-sm font-semibold text-rose-700 mb-2 flex items-center gap-2">
-            <span>✨</span> What makes you Future Ready for 2026?
-          </label>
-          <textarea id="futureReady" rows="4" placeholder="Share your vision, goals, and what you're preparing for 2026..." 
-            class="w-full p-4 rounded-xl border-2 border-rose-200 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 transition-all resize-none"></textarea>
-          <p class="text-xs text-rose-600 mt-2 flex items-center gap-1">
-            <span>💡</span> This field can always be updated
-          </p>
-        </div>
-        
-                    <!-- Selfie Upload (Always Editable) -->
-        <div class="bg-gradient-to-br from-purple-50 to-pink-50 p-5 rounded-xl border-2 border-purple-200">
-          <label class="block text-sm font-semibold text-purple-700 mb-2 flex items-center gap-2">
-            <span>📸</span> Upload Selfie (Optional)
-          </label>
-          
-          <!-- Existing Selfie Preview -->
-          <div id="existingSelfiePreview" class="hidden mb-4 relative">
-            <div class="bg-white rounded-xl p-3 border-2 border-green-300">
-              <div class="flex items-center gap-3 mb-2">
-                <span class="text-green-600 text-lg">✅</span>
-                <span class="text-sm font-semibold text-green-700">Selfie Already Uploaded</span>
-              </div>
-              <img id="existingSelfieImg" src="" alt="Current selfie" class="w-32 h-32 object-cover rounded-lg" />
-            </div>
-          </div>
+      <!-- Selfie Upload -->
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">Upload Selfie</label>
+        <input type="file" accept="image/*"
+          class="block w-full text-sm text-gray-700 border border-gray-300 rounded-xl cursor-pointer focus:ring-2 focus:ring-rose-400 focus:outline-none" />
+      </div>
 
-          <!-- New Selfie Preview -->
-          <div id="newSelfiePreview" class="hidden mb-4 relative">
-            <div class="bg-white rounded-xl p-3 border-2 border-blue-300">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-sm font-semibold text-blue-700">Preview (Not saved yet)</span>
-                <button type="button" id="clearSelfieBtn" class="text-red-600 hover:text-red-800 text-sm font-semibold">✕ Remove</button>
-              </div>
-              <img id="newSelfieImg" src="" alt="Preview" class="w-32 h-32 object-cover rounded-lg" />
-            </div>
-          </div>
+      <!-- 10-Sec Reel Upload -->
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">Upload 10-sec Video</label>
+        <input type="file" accept="video/*"
+          class="block w-full text-sm text-gray-700 border border-gray-300 rounded-xl cursor-pointer focus:ring-2 focus:ring-rose-400 focus:outline-none" />
+      </div>
 
-          <div class="relative">
-            <input id="selfie" type="file" accept="image/jpeg,image/png,image/jpg" 
-              class="w-full p-3 border-2 border-purple-200 rounded-xl bg-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-purple-500 file:text-white file:font-semibold hover:file:bg-purple-600 file:cursor-pointer cursor-pointer transition-all" />
-          </div>
-          <p id="selfieError" class="text-red-600 text-sm mt-2 hidden"></p>
-          <div class="flex items-start gap-2 mt-2 text-xs text-purple-600">
-            <span class="mt-0.5">ℹ️</span>
-            <div>
-              <div>• Max size: 5MB</div>
-              <div>• Formats: JPG, PNG</div>
-              <div>• Can be updated anytime</div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Reel Upload (Always Editable) -->
-        <div class="bg-gradient-to-br from-blue-50 to-cyan-50 p-5 rounded-xl border-2 border-blue-200">
-          <label class="block text-sm font-semibold text-blue-700 mb-2 flex items-center gap-2">
-            <span>🎥</span> Upload Reel (Optional)
-          </label>
-          
-          <!-- Existing Reel Preview -->
-          <div id="existingReelPreview" class="hidden mb-4 relative">
-            <div class="bg-white rounded-xl p-3 border-2 border-green-300">
-              <div class="flex items-center gap-3 mb-2">
-                <span class="text-green-600 text-lg">✅</span>
-                <span class="text-sm font-semibold text-green-700">Reel Already Uploaded</span>
-              </div>
-              <video id="existingReelVideo" src="" controls class="w-48 h-32 object-cover rounded-lg bg-black"></video>
-            </div>
-          </div>
+      <!-- New Year Resolution -->
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">Your Resolution for 2025</label>
+        <textarea rows="3" placeholder="Write your New Year resolution..."
+          class="w-full rounded-xl border border-gray-300 p-3 text-sm focus:ring-2 focus:ring-rose-400 focus:outline-none"></textarea>
+      </div>
 
-          <!-- New Reel Preview -->
-          <div id="newReelPreview" class="hidden mb-4 relative">
-            <div class="bg-white rounded-xl p-3 border-2 border-blue-300">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-sm font-semibold text-blue-700">Preview (Not saved yet)</span>
-                <button type="button" id="clearReelBtn" class="text-red-600 hover:text-red-800 text-sm font-semibold">✕ Remove</button>
-              </div>
-              <video id="newReelVideo" src="" controls class="w-48 h-32 object-cover rounded-lg bg-black"></video>
-            </div>
-          </div>
-
-          <div class="relative">
-            <input id="reel" type="file" accept="video/mp4,video/quicktime" 
-              class="w-full p-3 border-2 border-blue-200 rounded-xl bg-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-500 file:text-white file:font-semibold hover:file:bg-blue-600 file:cursor-pointer cursor-pointer transition-all" />
-          </div>
-          <p id="reelError" class="text-red-600 text-sm mt-2 hidden"></p>
-          <div class="flex items-start gap-2 mt-2 text-xs text-blue-600">
-            <span class="mt-0.5">ℹ️</span>
-            <div>
-              <div>• Max size: 10MB</div>
-              <div>• Max duration: 10 seconds</div>
-              <div>• Formats: MP4, MOV</div>
-              <div>• Can be updated anytime</div>
-            </div>
-          </div>
-        </div>
-
-        <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-rose-600 to-pink-600 text-white py-4 rounded-xl font-bold text-lg hover:from-rose-700 hover:to-pink-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
-          Submit Registration ✓
+      <!-- Submit -->
+      <div class="text-center pt-2">
+        <button type="submit"
+          class="bg-rose-500 hover:bg-rose-600 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-full text-sm sm:text-base shadow-md hover:shadow-lg transition">
+          Submit
         </button>
       </div>
     </form>
-    
-    <div id="status" class="mt-5 text-center text-sm font-medium"></div>
   </div>
 
-<script>
-  const SUPABASE_URL = "https://jlzqdefinnwoazsqlunf.supabase.co";
-  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsenFkZWZpbm53b2F6c3FsdW5mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI0NTgwOTksImV4cCI6MjA3ODAzNDA5OX0.ZPfFVDqJgZkuhPGO9WNlYHKDwKgQ9SZoGjSIypgaDIE";
-
-  const { createClient } = window.supabase;
-  const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-  let existingRecord = null;
-  
-  // --- NEW --- Get all the DOM elements we'll need
-  const selfieInput = document.getElementById("selfie");
-  const reelInput = document.getElementById("reel");
-  const newSelfiePreview = document.getElementById("newSelfiePreview");
-  const newSelfieImg = document.getElementById("newSelfieImg");
-  const existingSelfiePreview = document.getElementById("existingSelfiePreview");
-  const existingSelfieImg = document.getElementById("existingSelfieImg");
-  const clearSelfieBtn = document.getElementById("clearSelfieBtn");
-
-  const newReelPreview = document.getElementById("newReelPreview");
-  const newReelVideo = document.getElementById("newReelVideo");
-  const existingReelPreview = document.getElementById("existingReelPreview");
-  const existingReelVideo = document.getElementById("existingReelVideo");
-
-  // Validate mobile number
-  function validateMobile(mobile) {
-    const mobileError = document.getElementById("mobileError");
-    if (!/^[0-9]{10}$/.test(mobile)) {
-      mobileError.textContent = "⚠️ Mobile number must be exactly 10 digits";
-      mobileError.classList.remove("hidden");
-      return false;
-    }
-    mobileError.classList.add("hidden");
-    return true;
-  }
-
-  // Validate file size and type
-  function validateFile(file, type) {
-    if (!file) return { valid: true };
-
-    const maxSize = type === 'image' ? 5 * 1024 * 1024 : 10 * 1024 * 1024;
-    const allowedTypes = type === 'image'
-      ? ['image/jpeg', 'image/png', 'image/jpg']
-      : ['video/mp4', 'video/quicktime'];
-
-    if (file.size > maxSize) {
-      return { valid: false, error: `❌ File too large. Max ${type === 'image' ? '5MB' : '10MB'} allowed` };
-    }
-
-    if (!allowedTypes.includes(file.type)) {
-      return { valid: false, error: `❌ Invalid file type. Only ${type === 'image' ? 'JPG/PNG' : 'MP4/MOV'} allowed` };
-    }
-
-    return { valid: true };
-  }
-
-  // Upload file to Supabase Storage
-  async function uploadFile(file, folder, mobile) {
-    if (!file) return null;
-
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${mobile}_${Date.now()}.${fileExt}`;
-    const filePath = `${folder}/${fileName}`;
-
-    const { data, error } = await supabaseClient.storage
-      .from('ladies-meet-2025')
-      .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: true
-      });
-
-    if (error) {
-      console.error('Upload error:', error);
-      throw error;
-    }
-
-    const { data: urlData } = supabaseClient.storage
-      .from('ladies-meet-2025')
-      .getPublicUrl(filePath);
-
-    return urlData.publicUrl;
-  }
-
-  // Check if mobile exists
-  document.getElementById("checkBtn").addEventListener("click", async () => {
-    const mobile = document.getElementById("mobile").value.trim();
-
-    if (!validateMobile(mobile)) return;
-
-    const statusDiv = document.getElementById("status");
-    const checkBtn = document.getElementById("checkBtn");
-
-    checkBtn.disabled = true;
-    checkBtn.textContent = "Checking...";
-    statusDiv.textContent = "⏳ Please wait...";
-    statusDiv.className = "mt-5 text-center text-sm font-medium text-gray-600";
-
-    try {
-      const { data, error } = await supabaseClient
-        .from('participants')
-        .select('*')
-        .eq('mobile', mobile)
-        .single();
-
-      if (data) {
-        // Existing record found
-        existingRecord = data;
-
-        // Show welcome message
-        document.getElementById("welcomeName").textContent = data.name;
-        document.getElementById("welcomeMobile").textContent = mobile;
-        document.getElementById("welcomeMessage").classList.remove("hidden");
-
-        // Fill form with existing data
-        document.getElementById("name").value = data.name || '';
-        document.getElementById("unit").value = data.unit || '';
-        document.getElementById("futureReady").value = data.future_ready || '';
-
-        // Disable name and unit (can't be edited)
-        document.getElementById("name").disabled = true;
-        document.getElementById("unit").disabled = true;
-
-        // --- NEW --- Show existing selfie preview
-        if (data.selfie_url) {
-          existingSelfieImg.src = data.selfie_url;
-          existingSelfiePreview.classList.remove("hidden");
-        }
-
-        // --- NEW --- Show existing reel preview
-        if (data.reel_url) {
-          existingReelVideo.src = data.reel_url;
-          existingReelPreview.classList.remove("hidden");
-        }
-        
-        statusDiv.textContent = "";
-      } else {
-        // New registration
-        existingRecord = null;
-        document.getElementById("welcomeMessage").classList.add("hidden");
-        statusDiv.textContent = "";
-      }
-
-      document.getElementById("formFields").classList.remove("hidden");
-      document.getElementById("mobile").readOnly = true;
-      checkBtn.classList.add("hidden");
-
-    } catch (error) {
-      // No record found (new registration)
-      existingRecord = null;
-      document.getElementById("welcomeMessage").classList.add("hidden");
-      document.getElementById("formFields").classList.remove("hidden");
-      document.getElementById("mobile").readOnly = true;
-      checkBtn.classList.add("hidden");
-      statusDiv.textContent = "";
-    }
-  });
-
-  // Form submission
-  document.getElementById("participantForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const statusDiv = document.getElementById("status");
-    const submitBtn = document.getElementById("submitBtn");
-
-    submitBtn.disabled = true;
-    submitBtn.textContent = "⏳ Submitting...";
-    statusDiv.className = "mt-5 text-center text-sm font-medium text-gray-600";
-
-    const mobile = document.getElementById("mobile").value.trim();
-    const name = document.getElementById("name").value.trim();
-    const unit = document.getElementById("unit").value.trim();
-    const futureReady = document.getElementById("futureReady").value.trim();
-    const selfieFile = selfieInput.files[0];
-    const reelFile = reelInput.files[0];
-
-    // Validate files
-    const selfieValidation = validateFile(selfieFile, 'image');
-    if (!selfieValidation.valid) {
-      document.getElementById("selfieError").textContent = selfieValidation.error;
-      document.getElementById("selfieError").classList.remove("hidden");
-      submitBtn.disabled = false;
-      submitBtn.textContent = "Submit Registration ✓";
-      return;
-    }
-
-    const reelValidation = validateFile(reelFile, 'video');
-    if (!reelValidation.valid) {
-      document.getElementById("reelError").textContent = reelValidation.error;
-      document.getElementById("reelError").classList.remove("hidden");
-      submitBtn.disabled = false;
-      submitBtn.textContent = "Submit Registration ✓";
-      return;
-    }
-
-    try {
-      let selfieUrl = existingRecord?.selfie_url || null;
-      let reelUrl = existingRecord?.reel_url || null;
-
-      if (selfieFile) {
-        statusDiv.textContent = "📤 Uploading selfie...";
-        selfieUrl = await uploadFile(selfieFile, 'selfies', mobile);
-      }
-
-      if (reelFile) {
-        statusDiv.textContent = "📤 Uploading reel...";
-        reelUrl = await uploadFile(reelFile, 'reels', mobile);
-      }
-
-      statusDiv.textContent = "💾 Saving your registration...";
-
-      const participantData = {
-        mobile: mobile,
-        name: name,
-        unit: unit,
-        future_ready: futureReady,
-        selfie_url: selfieUrl,
-        reel_url: reelUrl,
-        // --- MODIFIED --- Only set created_at if it's a new record
-        created_at: existingRecord ? existingRecord.created_at : new Date().toISOString()
-      };
-
-      const { data, error } = await supabaseClient
-        .from('participants')
-        .upsert(participantData, {
-          onConflict: 'mobile',
-          ignoreDuplicates: false
-        })
-        .select();
-
-      if (error) throw error;
-
-      // Show success message
-      document.getElementById("participantForm").classList.add("hidden");
-      document.getElementById("welcomeMessage").classList.add("hidden");
-      document.getElementById("successMessage").classList.remove("hidden");
-      statusDiv.textContent = "";
-
-      // Reset after 5 seconds
-      setTimeout(() => {
-        location.reload();
-      }, 5000);
-
-    } catch (error) {
-      console.error("Error:", error);
-      statusDiv.textContent = "❌ " + error.message;
-      statusDiv.className = "mt-5 text-center text-sm font-medium text-red-600";
-      submitBtn.disabled = false;
-      submitBtn.textContent = "Submit Registration ✓";
-    }
-  });
-
-  // Real-time mobile validation
-  document.getElementById("mobile").addEventListener("input", (e) => {
-    e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 10);
-  });
-
-  // --- NEW --- Function to clear the selfie preview
-  function clearSelfiePreview() {
-    selfieInput.value = null; // Clear the file input
-    newSelfiePreview.classList.add("hidden"); // Hide the preview box
-    newSelfieImg.src = ""; // Clear the image source
-    URL.revokeObjectURL(newSelfieImg.src); // Revoke the object URL to free memory
-  }
-  
-  // --- NEW --- Function to clear the reel preview (this is called by your HTML's onclick)
-  function clearReelPreview() {
-    reelInput.value = null; // Clear the file input
-    newReelPreview.classList.add("hidden"); // Hide the preview box
-    newReelVideo.src = ""; // Clear the video source
-    URL.revokeObjectURL(newReelVideo.src); // Revoke the object URL
-  }
-
-  // --- NEW --- Add listener for the "Remove" button for selfies
-  clearSelfieBtn.addEventListener("click", clearSelfiePreview);
-  
-  // --- MODIFIED --- Selfie change listener
-  selfieInput.addEventListener("change", (e) => {
-    document.getElementById("selfieError").classList.add("hidden");
-    const file = e.target.files[0];
-    if (file) {
-      const validation = validateFile(file, 'image');
-      if (validation.valid) {
-        newSelfieImg.src = URL.createObjectURL(file); // Create a local URL for the preview
-        newSelfiePreview.classList.remove("hidden"); // Show the preview box
-      } else {
-        document.getElementById("selfieError").textContent = validation.error;
-        document.getElementById("selfieError").classList.remove("hidden");
-        clearSelfiePreview();
-      }
-    }
-  });
-
-  // --- MODIFIED --- Reel change listener
-  reelInput.addEventListener("change", (e) => {
-    document.getElementById("reelError").classList.add("hidden");
-    const file = e.target.files[0];
-    if (file) {
-      const validation = validateFile(file, 'video');
-      if (validation.valid) {
-        newReelVideo.src = URL.createObjectURL(file); // Create a local URL for the preview
-        newReelPreview.classList.remove("hidden"); // Show the preview box
-      } else {
-        document.getElementById("reelError").textContent = validation.error;
-        document.getElementById("reelError").classList.remove("hidden");
-        clearReelPreview();
-      }
-    }
-  });
-</script>
 </body>
 </html>
