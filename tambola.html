@@ -53,9 +53,21 @@
     /* small tweaks */
     .badge { display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; font-weight:600; }
     .small { font-size:.85rem; }
+
+    /* confetti canvas */
+    #confettiCanvas { position:fixed; inset:0; pointer-events:none; z-index:2000; display:none; }
+
+    /* prize row on player - single horizontal row */
+    #prizeRow { display:flex; gap:8px; align-items:center; flex-wrap:nowrap; overflow-x:auto; padding-bottom:4px; }
+
+    /* last 10 area larger */
+    .last10Wrap { min-width:260px; max-width:60%; }
   </style>
 </head>
 <body>
+
+  <!-- Confetti Canvas -->
+  <canvas id="confettiCanvas"></canvas>
 
   <!-- Toast container -->
   <div id="toastContainer" class="pointer-events-none"></div>
@@ -76,31 +88,37 @@
   <main id="playerScreen" class="screen active">
     <div class="max-w-7xl mx-auto">
 
-      <!-- Top row: left current+last10, right prizes -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <!-- Top row: left current+last10 (larger), prize row below current -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <!-- Left: Current + Last10 -->
-        <div class="md:col-span-2 glass rounded-3xl p-6 shadow-lg">
-          <div class="flex flex-col sm:flex-row items-stretch gap-6">
-            <!-- Current Number -->
-            <div class="flex-1 flex items-center justify-center bg-white/30 rounded-2xl p-4">
-              <div class="text-center">
-                <div class="text-sm text-purple-700 font-semibold mb-2">Current Number</div>
-                <div id="currentNumberDisplay" class="text-6xl sm:text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-orange-500">--</div>
+        <div class="lg:col-span-2 glass rounded-3xl p-6 shadow-lg">
+          <div class="flex flex-col gap-4">
+            <div class="flex flex-col md:flex-row items-stretch gap-4">
+              <!-- Current Number -->
+              <div class="flex-1 flex items-center justify-center bg-white/30 rounded-2xl p-4">
+                <div class="text-center w-full">
+                  <div class="text-sm text-purple-700 font-semibold mb-2">Current Number</div>
+                  <div id="currentNumberDisplay" class="text-6xl sm:text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-orange-500">--</div>
+                </div>
+              </div>
+
+              <!-- Last 10 (bigger area) -->
+              <div class="last10Wrap glass rounded-2xl p-4">
+                <div class="text-sm text-purple-700 font-semibold mb-2">Last 10 Called</div>
+                <div id="lastNumbers" class="flex flex-wrap gap-2"></div>
               </div>
             </div>
 
-            <!-- Last 10 -->
-            <div class="w-full sm:w-72 glass rounded-2xl p-4">
-              <div class="text-sm text-purple-700 font-semibold mb-2">Last 10 Called</div>
-              <div id="lastNumbers" class="flex flex-wrap gap-2"></div>
-            </div>
+            <!-- Prize status single horizontal row under current -->
+            <div id="prizeRow" class="glass rounded-xl p-3"></div>
           </div>
         </div>
 
-        <!-- Right: Prize Status -->
+        <!-- Right: compact placeholder (optional info) -->
         <div class="glass rounded-3xl p-6 shadow-lg">
-          <div class="text-sm text-purple-700 font-semibold mb-2">Prize Status</div>
-          <div id="prizeStatusPlayer" class="space-y-3"></div>
+          <div class="text-sm text-purple-700 font-semibold mb-2">Event Info</div>
+          <div class="text-sm text-gray-700">Ladies Meet · Tambola · Ordnance Fraternity</div>
+          <div class="mt-4 text-xs text-gray-600">Players see current numbers live; host controls drawing.</div>
         </div>
       </div>
 
@@ -142,23 +160,20 @@
 
             <div class="mt-6">
               <div class="text-sm text-purple-700 font-semibold mb-2">Prize Management</div>
-              <div id="prizeManagement" class="space-y-2"></div>
+              <div id="prizeManagement" class="space-y-3"></div>
             </div>
           </div>
 
-          <!-- Host board preview -->
+          <!-- Host board small preview -->
           <div class="bg-white/40 p-4 rounded-2xl">
-            <div class="text-sm text-purple-700 font-semibold mb-2">Host Board</div>
+            <div class="text-sm text-purple-700 font-semibold mb-2">Host Board (small)</div>
             <div id="hostBoard" class="pb-4"></div>
           </div>
         </div>
       </div>
 
-      <!-- Host: full-board below -->
-      <div class="glass rounded-3xl p-6 shadow-xl">
-        <h3 class="text-lg font-bold text-purple-800 mb-3">Full Board (Host View)</h3>
-        <div id="hostBoardLarge" class="grid gap-2"></div>
-      </div>
+      <!-- Removed: host full-board large (as requested) -->
+
     </div>
   </main>
 
@@ -166,7 +181,7 @@
   <div id="resetModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50">
     <div class="glass rounded-3xl p-6 max-w-sm w-full">
       <h3 class="text-xl font-bold text-purple-800 mb-2">Confirm Reset</h3>
-      <p class="mb-4">Reset clears all called numbers and prize statuses.</p>
+      <p class="mb-4">Reset clears all called numbers and prize statuses (and claimant names).</p>
       <div class="flex gap-3">
         <button id="confirmResetBtn" class="flex-1 bg-red-500 text-white py-2 rounded-xl font-semibold">Yes, reset</button>
         <button id="cancelResetBtn" class="flex-1 bg-gray-200 text-gray-800 py-2 rounded-xl font-semibold">Cancel</button>
@@ -192,11 +207,11 @@
     drawnNumber: null,
     lastNumbers: [],
     prizes: [
-      { id: 'top_line', name: 'Top Line', status: 'OPEN' },
-      { id: 'middle_line', name: 'Middle Line', status: 'OPEN' },
-      { id: 'bottom_line', name: 'Bottom Line', status: 'OPEN' },
-      { id: 'early_five', name: 'Early Five', status: 'OPEN' },
-      { id: 'full_house', name: 'Full House', status: 'OPEN' }
+      { id: 'top_line', name: 'Top Line', status: 'OPEN', claimant: '' },
+      { id: 'middle_line', name: 'Middle Line', status: 'OPEN', claimant: '' },
+      { id: 'bottom_line', name: 'Bottom Line', status: 'OPEN', claimant: '' },
+      { id: 'early_five', name: 'Early Five', status: 'OPEN', claimant: '' },
+      { id: 'full_house', name: 'Full House', status: 'OPEN', claimant: '' }
     ]
   };
 
@@ -212,8 +227,8 @@
   const currentNumberDisplay = document.getElementById('currentNumberDisplay');
   const mainBoard = document.getElementById('mainBoard');
   const hostBoard = document.getElementById('hostBoard');
-  const hostBoardLarge = document.getElementById('hostBoardLarge');
   const lastNumbersDiv = document.getElementById('lastNumbers');
+  const prizeRow = document.getElementById('prizeRow');
   const prizeStatusPlayer = document.getElementById('prizeStatusPlayer');
   const prizeManagement = document.getElementById('prizeManagement');
   const drawnNumberDiv = document.getElementById('drawnNumber');
@@ -231,8 +246,12 @@
   const confirmResetBtn = document.getElementById('confirmResetBtn');
   const cancelResetBtn = document.getElementById('cancelResetBtn');
 
+  // confetti
+  const confettiCanvas = document.getElementById('confettiCanvas');
+  const confettiCtx = confettiCanvas.getContext('2d');
+
   // -------------------------
-  // Audio (WebAudio) - small effects
+  // Audio (WebAudio)
   // -------------------------
   const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   function playBeep(frequency = 880, duration = 0.12, type = 'sine', gain = 0.08){
@@ -250,6 +269,66 @@
   }
   function playDrawSound(){ playBeep(720,0.12,'sawtooth',0.09); playBeep(1100,0.08,'sine',0.06); }
   function playFlashSound(){ playBeep(1100,0.08,'square',0.08); playBeep(1550,0.06,'sine',0.06); }
+
+  // -------------------------
+  // Confetti implementation
+  // -------------------------
+  let confettiParticles = [];
+  let confettiRunning = false;
+  function resizeConfetti(){
+    confettiCanvas.width = window.innerWidth;
+    confettiCanvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resizeConfetti);
+  resizeConfetti();
+
+  function spawnConfettiBurst(duration = 2500){
+    // show canvas
+    confettiCanvas.style.display = 'block';
+    confettiParticles = [];
+    const count = 120;
+    for(let i=0;i<count;i++){
+      confettiParticles.push({
+        x: Math.random()*confettiCanvas.width,
+        y: Math.random()*confettiCanvas.height - confettiCanvas.height*0.2,
+        vx: (Math.random()-0.5)*8,
+        vy: Math.random()*6 + 2,
+        size: Math.random()*6 + 4,
+        rot: Math.random()*360,
+        color: ['#FF6B6B','#F093FB','#F6D365','#96E6A1','#FFD166'][Math.floor(Math.random()*5)],
+        spin: (Math.random()-0.5)*0.2
+      });
+    }
+    confettiRunning = true;
+    const start = performance.now();
+    function step(ts){
+      const t = ts - start;
+      confettiCtx.clearRect(0,0,confettiCanvas.width, confettiCanvas.height);
+      confettiParticles.forEach(p=>{
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.08; // gravity
+        p.rot += p.spin;
+        confettiCtx.save();
+        confettiCtx.translate(p.x,p.y);
+        confettiCtx.rotate(p.rot);
+        confettiCtx.fillStyle = p.color;
+        confettiCtx.fillRect(-p.size/2, -p.size/2, p.size, p.size*0.6);
+        confettiCtx.restore();
+      });
+      if(t < duration){
+        requestAnimationFrame(step);
+      } else {
+        // fade out for 400ms
+        setTimeout(()=> {
+          confettiCtx.clearRect(0,0,confettiCanvas.width, confettiCanvas.height);
+          confettiCanvas.style.display = 'none';
+          confettiRunning = false;
+        }, 400);
+      }
+    }
+    requestAnimationFrame(step);
+  }
 
   // -------------------------
   // Routing: #player / #host with password prompt
@@ -302,7 +381,6 @@
     // clear
     mainBoard.innerHTML = '';
     hostBoard.innerHTML = '';
-    hostBoardLarge.innerHTML = '';
 
     for(let i=1;i<=90;i++){
       // main
@@ -312,10 +390,6 @@
       // host small
       const hs = makeCell(i,'uncalled text-sm py-2');
       hostBoard.appendChild(hs);
-
-      // host large (preview)
-      const hl = makeCell(i,'uncalled');
-      hostBoardLarge.appendChild(hl);
     }
   }
 
@@ -353,40 +427,99 @@
       lastNumbersDiv.appendChild(d);
     });
 
-    // prizes - player
-    prizeStatusPlayer.innerHTML = '';
+    // prize row on player (single row)
+    prizeRow.innerHTML = '';
     gameState.prizes.forEach(prize => {
-      const el = document.createElement('div');
-      el.className = 'px-3 py-3 rounded-xl font-semibold';
+      const card = document.createElement('div');
+      card.className = 'px-3 py-2 rounded-xl font-semibold flex items-center gap-3 whitespace-nowrap';
       if(prize.status === 'OPEN'){
-        el.classList.add('prize-open');
-        el.style.background = 'linear-gradient(135deg,#d4fc79 0%,#96e6a1 100%)';
-        el.style.color = '#274016';
+        card.style.background = 'linear-gradient(135deg,#d4fc79 0%,#96e6a1 100%)';
+        card.style.color = '#274016';
       } else {
-        el.classList.add('prize-won');
-        el.style.background = 'linear-gradient(135deg,#f093fb 0%,#f5576c 100%)';
-        el.style.color = '#fff';
-        el.style.textDecoration = 'line-through';
+        card.style.background = 'linear-gradient(135deg,#f093fb 0%,#f5576c 100%)';
+        card.style.color = '#fff';
       }
-      el.textContent = `${prize.name}: ${prize.status}`;
-      prizeStatusPlayer.appendChild(el);
+      // display claimant if present
+      const label = document.createElement('div');
+      label.textContent = prize.claimant ? `${prize.name} — ${prize.status} by ${prize.claimant}` : `${prize.name} — ${prize.status}`;
+      if(prize.status === 'OPEN') label.textContent = `${prize.name} — OPEN`;
+      card.appendChild(label);
+      prizeRow.appendChild(card);
     });
 
-    // prize management (host)
+    // prize management (host): re-render inputs
     prizeManagement.innerHTML = '';
     gameState.prizes.forEach(prize => {
-      const btn = document.createElement('button');
-      btn.className = 'w-full px-4 py-2 rounded-xl font-semibold hover:opacity-90';
-      btn.textContent = `${prize.name}: ${prize.status}`;
-      if(prize.status === 'OPEN'){
-        btn.style.background = 'linear-gradient(135deg,#d4fc79 0%,#96e6a1 100%)';
-        btn.style.color = '#274016';
-      } else {
-        btn.style.background = 'linear-gradient(135deg,#f093fb 0%,#f5576c 100%)';
-        btn.style.color = '#fff';
-      }
-      btn.onclick = () => togglePrize(prize.id);
-      prizeManagement.appendChild(btn);
+      const wrap = document.createElement('div');
+      wrap.className = 'p-2 rounded-lg bg-white/60';
+
+      const label = document.createElement('div');
+      label.className = 'text-sm font-semibold text-purple-800 mb-2';
+      label.textContent = `${prize.name} · ${prize.status}`;
+      wrap.appendChild(label);
+
+      const row = document.createElement('div');
+      row.className = 'flex gap-2';
+
+      // claimant input
+      const inp = document.createElement('input');
+      inp.type = 'text';
+      inp.placeholder = 'Claimant name';
+      inp.value = prize.claimant || '';
+      inp.className = 'flex-1 px-3 py-2 rounded-lg border';
+      inp.oninput = (e) => { prize.claimant = e.target.value; };
+
+      // toggle button (open/won)
+      const toggleBtn = document.createElement('button');
+      toggleBtn.className = 'px-3 py-2 rounded-lg font-semibold';
+      toggleBtn.textContent = prize.status === 'OPEN' ? 'Mark WON' : 'Reopen';
+      toggleBtn.style.background = prize.status === 'OPEN' ? 'linear-gradient(135deg,#f093fb 0%,#f5576c 100%)' : 'linear-gradient(135deg,#d4fc79 0%,#96e6a1 100%)';
+      toggleBtn.style.color = '#fff';
+      toggleBtn.onclick = async () => {
+        // If marking WON and no claimant entered, ask (small validation)
+        if(prize.status === 'OPEN'){
+          if(!prize.claimant || prize.claimant.trim().length === 0){
+            const name = prompt(`Enter claimant name for ${prize.name}: (recommended)`, '');
+            if(name !== null) prize.claimant = name.trim();
+          }
+        } else {
+          // reopening -> clear claimant? we'll keep claimant but status reopens
+        }
+
+        prize.status = prize.status === 'OPEN' ? 'WON' : 'OPEN';
+        // if full_house won -> confetti
+        if(prize.id === 'full_house' && prize.status === 'WON'){
+          spawnConfettiBurst(2800);
+          showToast(`🎉 Full House WON by ${prize.claimant || 'Unknown'}`);
+        } else {
+          showToast(`${prize.name} is now ${prize.status}`);
+        }
+
+        // play sound for big prize
+        if(prize.id === 'full_house' && prize.status === 'WON'){
+          playBeep(520,0.14,'sine',0.12);
+          playBeep(840,0.09,'sine',0.09);
+        }
+
+        await syncToDatabase();
+        updateUI();
+      };
+
+      // save claimant button
+      const saveBtn = document.createElement('button');
+      saveBtn.className = 'px-3 py-2 rounded-lg bg-blue-500 text-white font-semibold';
+      saveBtn.textContent = 'Save';
+      saveBtn.onclick = async () => {
+        await syncToDatabase();
+        showToast(`${prize.name} claimant saved`);
+      };
+
+      row.appendChild(inp);
+      row.appendChild(toggleBtn);
+      row.appendChild(saveBtn);
+
+      wrap.appendChild(row);
+      prizeManagement.appendChild(wrap);
     });
 
     // drawn number (private display)
@@ -394,17 +527,16 @@
   }
 
   // -------------------------
-  // Toggle prize (host)
+  // Toggle prize wrapper (for direct toggle if needed)
   // -------------------------
   async function togglePrize(prizeId){
     const prize = gameState.prizes.find(p=>p.id===prizeId);
     if(!prize) return;
     prize.status = prize.status === 'OPEN' ? 'WON' : 'OPEN';
-    showToast(`${prize.name} ${prize.status === 'WON' ? 'claimed 🎉' : 'reopened'}`);
     await syncToDatabase();
     updateUI();
   }
-  window.togglePrize = togglePrize; // expose for in-console if needed
+  window.togglePrize = togglePrize;
 
   // -------------------------
   // Draw / Flash logic
@@ -432,8 +564,7 @@
     if(gameState.currentNumber){
       gameState.calledNumbers.push(gameState.currentNumber);
       gameState.lastNumbers.unshift(gameState.currentNumber);
-      // keep lastNumbers trimmed
-      if(gameState.lastNumbers.length>50) gameState.lastNumbers = gameState.lastNumbers.slice(0,50);
+      if(gameState.lastNumbers.length>200) gameState.lastNumbers = gameState.lastNumbers.slice(0,200);
     }
     // set current
     gameState.currentNumber = gameState.drawnNumber;
@@ -465,11 +596,11 @@
       drawnNumber: null,
       lastNumbers: [],
       prizes: [
-        { id: 'top_line', name: 'Top Line', status: 'OPEN' },
-        { id: 'middle_line', name: 'Middle Line', status: 'OPEN' },
-        { id: 'bottom_line', name: 'Bottom Line', status: 'OPEN' },
-        { id: 'early_five', name: 'Early Five', status: 'OPEN' },
-        { id: 'full_house', name: 'Full House', status: 'OPEN' }
+        { id: 'top_line', name: 'Top Line', status: 'OPEN', claimant: '' },
+        { id: 'middle_line', name: 'Middle Line', status: 'OPEN', claimant: '' },
+        { id: 'bottom_line', name: 'Bottom Line', status: 'OPEN', claimant: '' },
+        { id: 'early_five', name: 'Early Five', status: 'OPEN', claimant: '' },
+        { id: 'full_house', name: 'Full House', status: 'OPEN', claimant: '' }
       ]
     };
     await syncToDatabase();
@@ -488,7 +619,7 @@
   // -------------------------
   // Toasts
   // -------------------------
-  function showToast(text, timeout=3000){
+  function showToast(text, timeout=3200){
     const t = document.createElement('div');
     t.className = 'toast glass rounded-lg p-3 shadow-md';
     t.innerHTML = `<div class="font-semibold text-sm">${text}</div>`;
@@ -502,7 +633,7 @@
   }
 
   // -------------------------
-  // Database sync (same logic: upsert + realtime)
+  // Database sync (upsert + realtime)
   // -------------------------
   async function syncToDatabase(){
     try {
@@ -527,6 +658,10 @@
         .single();
 
       if(data && data.game_state){
+        // ensure prizes have claimant field (backwards compat)
+        if(data.game_state.prizes && Array.isArray(data.game_state.prizes)){
+          data.game_state.prizes = data.game_state.prizes.map(p => ({ claimant:'', ...p }));
+        }
         gameState = data.game_state;
         updateUI();
       } else {
@@ -539,12 +674,16 @@
     }
   }
 
-  // Realtime subscription (preserve exactly same behavior)
+  // Realtime subscription (preserve behavior)
   supabase
     .channel('tambola_updates')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'tambola_game' },
       (payload) => {
         if(payload.new && payload.new.game_state){
+          // ensure claimant field exists for prizes
+          if(payload.new.game_state.prizes && Array.isArray(payload.new.game_state.prizes)){
+            payload.new.game_state.prizes = payload.new.game_state.prizes.map(p => ({ claimant:'', ...p }));
+          }
           gameState = payload.new.game_state;
           updateUI();
         }
@@ -556,19 +695,35 @@
   // -------------------------
   initializeBoards();
   loadFromDatabase();
-
-  // ensure UI updates on load
   updateUI();
 
-  // small accessibility: navigate buttons set hash
+  // ensure UI updates on load
   document.getElementById('navPlayer').addEventListener('click', (e)=>{ e.preventDefault(); location.hash='#player'; });
   document.getElementById('navHost').addEventListener('click', (e)=>{ e.preventDefault(); location.hash='#host'; });
 
-  // keyboard shortcuts (optional)
+  // keyboard shortcuts
   window.addEventListener('keydown', (e)=>{
-    if(e.key === 'd' && hostUnlocked && document.querySelector('#drawNumberBtn')) drawNumberBtn.click();
+    if(e.key === 'd' && hostUnlocked) drawNumberBtn.click();
     if(e.key === 'f' && hostUnlocked && !flashNumberBtn.disabled) flashNumberBtn.click();
   });
+
+  // -------------------------
+  // Confetti spawn helper wrapper (for external calls)
+  // -------------------------
+  function spawnConfettiBurst(duration = 2500) {
+    try {
+      spawnConfettiBurstInner(duration);
+    } catch(e) {
+      // fallback: simple visual toast
+      showToast('🎉 Confetti!');
+    }
+  }
+
+  // define inner function with different name to avoid hoisting conflict
+  function spawnConfettiBurstInner(duration = 2500){
+    // small wrapper to call existing function defined earlier
+    spawnConfettiBurst(duration);
+  }
 
 </script>
 </body>
