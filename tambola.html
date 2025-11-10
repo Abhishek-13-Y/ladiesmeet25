@@ -1,227 +1,191 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tambola Game - Ladies Meet 2025</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tambola - Ladies Meet 2025</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <style>
+    :root{
+      --glass-bg: rgba(255,255,255,0.22);
+      --glass-border: rgba(255,255,255,0.35);
+    }
     body {
-      background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
-      min-height: 100vh;
-      overflow-x: hidden;
+      background: linear-gradient(135deg,#e0c3fc 0%,#8ec5fc 100%);
+      min-height:100vh;
+      margin:0;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     }
     .glass {
-      background: rgba(255, 255, 255, 0.25);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: var(--glass-bg);
+      backdrop-filter: blur(8px) saturate(120%);
+      border: 1px solid var(--glass-border);
     }
-    .number-cell {
-      transition: all 0.3s ease;
+    .number-cell { transition: all .28s ease; user-select:none; }
+    .uncalled { background: rgba(200,200,200,0.25); color:#6b7280; }
+    .called { background: linear-gradient(135deg,#f093fb 0%,#f5576c 100%); color:#fff; font-weight:700; }
+    .current { background: linear-gradient(135deg,#fad0c4 0%,#ffd1ff 100%); color:#ff3b6b; font-weight:800; border:3px solid rgba(255,107,107,0.15); transform:scale(1.03); box-shadow:0 6px 18px rgba(0,0,0,0.08); }
+    .flash-in { animation: flashIn .7s ease-out; }
+    @keyframes flashIn { 0%{transform:scale(.6);opacity:0} 60%{transform:scale(1.08)} 100%{transform:scale(1);opacity:1} }
+
+    /* responsive board: auto-fit */
+    #mainBoard, #hostBoard { display:grid; gap:8px; grid-template-columns: repeat(auto-fit, minmax(46px, 1fr)); align-items:center; }
+
+    /* toasts */
+    .toast {
+      position:fixed;
+      right:16px;
+      top:16px;
+      z-index:9999;
+      pointer-events:auto;
+      transform-origin:top right;
+      animation: slideIn .28s ease-out;
     }
-    .uncalled {
-      background: rgba(200, 200, 200, 0.3);
-      color: #888;
-    }
-    .called {
-      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-      color: white;
-      font-weight: bold;
-    }
-    .current {
-      background: linear-gradient(135deg, #fad0c4 0%, #ffd1ff 100%);
-      animation: pulse 1.5s infinite;
-      color: #ff6b6b;
-      font-weight: bold;
-      border: 3px solid #ff6b6b;
-    }
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.1); }
-    }
-    @keyframes flashIn {
-      0% { transform: scale(0.5); opacity: 0; }
-      50% { transform: scale(1.2); }
-      100% { transform: scale(1); opacity: 1; }
-    }
-    .flash-in {
-      animation: flashIn 0.8s ease-out;
-    }
-    .prize-open {
-      background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);
-      color: #2d5016;
-    }
-    .prize-won {
-      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-      color: white;
-      text-decoration: line-through;
-      font-weight: bold;
-    }
-    .host-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(5px);
-      z-index: 1000;
-    }
+    @keyframes slideIn { from { transform: translateY(-12px) scale(.98); opacity:0 } to { transform: translateY(0) scale(1); opacity:1 } }
+
+    /* host / player screens */
+    .screen { display:none; padding:18px; min-height:100vh; }
+    .screen.active { display:block; }
+
+    /* small tweaks */
+    .badge { display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; font-weight:600; }
+    .small { font-size:.85rem; }
   </style>
 </head>
 <body>
 
-  <!-- Player View (Main Screen) -->
-  <div id="playerView" class="min-h-screen p-4 sm:p-8">
-    
-    <!-- Settings Icon -->
-    <button id="openHostBtn" class="fixed top-4 right-4 z-50 glass p-3 rounded-full hover:scale-110 transition-transform shadow-lg">
-      <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-      </svg>
-    </button>
+  <!-- Toast container -->
+  <div id="toastContainer" class="pointer-events-none"></div>
 
-    <!-- Header -->
-    <div class="text-center mb-8">
-      <div class="inline-block bg-gradient-to-r from-pink-500 to-purple-500 text-white px-6 py-2 rounded-full text-sm font-semibold mb-3">
-        Ladies Meet 2025
-      </div>
-      <h1 class="text-5xl sm:text-6xl font-bold text-purple-800 mb-2">🎲 Tambola Time!</h1>
-      <p class="text-lg text-purple-600">Made with ❤️ by Ordnance Fraternity</p>
+  <!-- NAV -->
+  <header class="w-full py-4 px-4 sm:px-8 flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <div class="badge bg-gradient-to-r from-pink-500 to-purple-500 text-white">Ladies Meet 2025</div>
+      <h1 class="text-lg sm:text-2xl font-extrabold text-purple-800">Tambola 🎲</h1>
     </div>
+    <nav class="flex items-center gap-3">
+      <a href="#player" id="navPlayer" class="px-3 py-2 rounded-md glass small">Player</a>
+      <a href="#host" id="navHost" class="px-3 py-2 rounded-md glass small">Host</a>
+    </nav>
+  </header>
 
-    <!-- Current Number Display -->
-    <div class="glass rounded-3xl p-8 mb-8 text-center shadow-2xl">
-      <p class="text-2xl text-purple-700 mb-4 font-semibold">Current Number</p>
-      <div id="currentNumberDisplay" class="text-[10rem] font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-orange-500 flash-in">
-        --
-      </div>
-    </div>
+  <!-- PLAYER SCREEN -->
+  <main id="playerScreen" class="screen active">
+    <div class="max-w-7xl mx-auto">
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      
-      <!-- Main Board -->
-      <div class="lg:col-span-2 glass rounded-3xl p-6 shadow-xl">
-        <h2 class="text-2xl font-bold text-purple-800 mb-4 text-center">Number Board</h2>
-        <div id="mainBoard" class="grid grid-cols-9 sm:grid-cols-10 gap-2">
-          <!-- Numbers 1-90 will be generated here -->
-        </div>
-      </div>
-
-      <!-- Side Panel -->
-      <div class="space-y-6">
-        
-        <!-- Last 10 Numbers -->
-        <div class="glass rounded-3xl p-6 shadow-xl">
-          <h3 class="text-xl font-bold text-purple-800 mb-4">Last 10 Called</h3>
-          <div id="lastNumbers" class="flex flex-wrap gap-2">
-            <!-- Last numbers will appear here -->
-          </div>
-        </div>
-
-        <!-- Prize Status -->
-        <div class="glass rounded-3xl p-6 shadow-xl">
-          <h3 class="text-xl font-bold text-purple-800 mb-4">Prize Status</h3>
-          <div id="prizeStatusPlayer" class="space-y-2">
-            <!-- Prize status will be shown here -->
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-  <!-- Host View (Overlay) -->
-  <div id="hostView" class="host-overlay hidden">
-    <div class="container mx-auto p-4 sm:p-8 h-full overflow-y-auto">
-      
-      <!-- Close Button -->
-      <button id="closeHostBtn" class="fixed top-4 right-4 z-50 bg-red-500 text-white p-3 rounded-full hover:bg-red-600 transition shadow-lg">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-        </svg>
-      </button>
-
-      <div class="glass rounded-3xl p-6 sm:p-8 max-w-6xl mx-auto">
-        
-        <h2 class="text-4xl font-bold text-purple-800 mb-8 text-center">🎮 Host Control Panel</h2>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          
-          <!-- Left Column: Controls -->
-          <div class="space-y-6">
-            
-            <!-- Draw Number -->
-            <div class="bg-white/50 rounded-2xl p-6 shadow-lg">
-              <h3 class="text-xl font-bold text-purple-800 mb-4">Draw Number</h3>
-              <button id="drawNumberBtn" class="w-full bg-gradient-to-r from-green-400 to-blue-500 text-white py-4 px-6 rounded-xl font-bold text-lg hover:from-green-500 hover:to-blue-600 transition shadow-lg">
-                🎲 Draw Next Number
-              </button>
-              
-              <!-- Private Number Display -->
-              <div class="mt-6 bg-yellow-100 rounded-xl p-6 text-center border-4 border-yellow-400">
-                <p class="text-sm text-yellow-800 font-semibold mb-2">Drawn Number (Private)</p>
-                <div id="drawnNumber" class="text-7xl font-bold text-yellow-700">--</div>
-              </div>
-
-              <!-- Flash to Board -->
-              <button id="flashNumberBtn" class="w-full mt-4 bg-gradient-to-r from-pink-500 to-orange-500 text-white py-4 px-6 rounded-xl font-bold text-lg hover:from-pink-600 hover:to-orange-600 transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                📢 Flash to Board
-              </button>
-            </div>
-
-            <!-- Prize Management -->
-            <div class="bg-white/50 rounded-2xl p-6 shadow-lg">
-              <h3 class="text-xl font-bold text-purple-800 mb-4">Prize Management</h3>
-              <div id="prizeManagement" class="space-y-2">
-                <!-- Prize toggles will be here -->
+      <!-- Top row: left current+last10, right prizes -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <!-- Left: Current + Last10 -->
+        <div class="md:col-span-2 glass rounded-3xl p-6 shadow-lg">
+          <div class="flex flex-col sm:flex-row items-stretch gap-6">
+            <!-- Current Number -->
+            <div class="flex-1 flex items-center justify-center bg-white/30 rounded-2xl p-4">
+              <div class="text-center">
+                <div class="text-sm text-purple-700 font-semibold mb-2">Current Number</div>
+                <div id="currentNumberDisplay" class="text-6xl sm:text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-orange-500">--</div>
               </div>
             </div>
 
-            <!-- Reset Game -->
-            <button id="resetGameBtn" class="w-full bg-gradient-to-r from-red-500 to-pink-500 text-white py-4 px-6 rounded-xl font-bold text-lg hover:from-red-600 hover:to-pink-600 transition shadow-lg">
-              🔄 Reset Game
-            </button>
-
+            <!-- Last 10 -->
+            <div class="w-full sm:w-72 glass rounded-2xl p-4">
+              <div class="text-sm text-purple-700 font-semibold mb-2">Last 10 Called</div>
+              <div id="lastNumbers" class="flex flex-wrap gap-2"></div>
+            </div>
           </div>
+        </div>
 
-          <!-- Right Column: Host Board -->
-          <div class="bg-white/50 rounded-2xl p-6 shadow-lg">
-            <h3 class="text-xl font-bold text-purple-800 mb-4">Host Board</h3>
-            <div id="hostBoard" class="grid grid-cols-9 sm:grid-cols-10 gap-1">
-              <!-- Numbers 1-90 will be generated here -->
+        <!-- Right: Prize Status -->
+        <div class="glass rounded-3xl p-6 shadow-lg">
+          <div class="text-sm text-purple-700 font-semibold mb-2">Prize Status</div>
+          <div id="prizeStatusPlayer" class="space-y-3"></div>
+        </div>
+      </div>
+
+      <!-- Full Board -->
+      <div class="glass rounded-3xl p-6 shadow-xl">
+        <h2 class="text-xl font-bold text-purple-800 mb-4">Number Board</h2>
+        <div id="mainBoard" class="pb-4"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- HOST SCREEN (separate route) -->
+  <main id="hostScreen" class="screen">
+    <div class="max-w-6xl mx-auto">
+      <div class="glass rounded-3xl p-6 shadow-xl mb-6">
+        <div class="flex items-center justify-between gap-4">
+          <h2 class="text-3xl font-bold text-purple-800">🎮 Host Control Panel</h2>
+          <div class="flex gap-2">
+            <button id="resetGameBtn" class="bg-red-500 text-white px-4 py-2 rounded-xl font-semibold hover:bg-red-600">🔄 Reset</button>
+            <button id="lockHostBtn" class="bg-gray-100 text-gray-800 px-4 py-2 rounded-xl font-semibold">Lock</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+          <!-- Controls -->
+          <div class="bg-white/40 p-4 rounded-2xl">
+            <div class="mb-4">
+              <div class="text-sm text-purple-700 font-semibold mb-2">Draw Number</div>
+              <div class="flex gap-3">
+                <button id="drawNumberBtn" class="flex-1 py-3 rounded-xl font-bold bg-gradient-to-r from-green-400 to-blue-500 text-white">🎲 Draw Next</button>
+                <button id="flashNumberBtn" class="py-3 px-4 rounded-xl font-bold bg-gradient-to-r from-pink-500 to-orange-500 text-white disabled:opacity-60" disabled>📢 Flash</button>
+              </div>
+            </div>
+
+            <div class="mt-4">
+              <div class="text-sm text-purple-700 font-semibold mb-2">Drawn (Private)</div>
+              <div id="drawnNumber" class="text-5xl font-extrabold text-yellow-700">--</div>
+            </div>
+
+            <div class="mt-6">
+              <div class="text-sm text-purple-700 font-semibold mb-2">Prize Management</div>
+              <div id="prizeManagement" class="space-y-2"></div>
             </div>
           </div>
 
+          <!-- Host board preview -->
+          <div class="bg-white/40 p-4 rounded-2xl">
+            <div class="text-sm text-purple-700 font-semibold mb-2">Host Board</div>
+            <div id="hostBoard" class="pb-4"></div>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- Reset Confirmation Modal -->
-  <div id="resetModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-[2000] flex items-center justify-center p-4">
-    <div class="glass rounded-3xl p-8 max-w-md w-full shadow-2xl">
-      <h3 class="text-2xl font-bold text-purple-800 mb-4">⚠️ Confirm Reset</h3>
-      <p class="text-gray-700 mb-6">Are you sure you want to reset the entire game? This will clear all called numbers and prize statuses.</p>
-      <div class="flex gap-4">
-        <button id="confirmResetBtn" class="flex-1 bg-red-500 text-white py-3 px-6 rounded-xl font-bold hover:bg-red-600 transition">
-          Yes, Reset
-        </button>
-        <button id="cancelResetBtn" class="flex-1 bg-gray-300 text-gray-700 py-3 px-6 rounded-xl font-bold hover:bg-gray-400 transition">
-          Cancel
-        </button>
+      <!-- Host: full-board below -->
+      <div class="glass rounded-3xl p-6 shadow-xl">
+        <h3 class="text-lg font-bold text-purple-800 mb-3">Full Board (Host View)</h3>
+        <div id="hostBoardLarge" class="grid gap-2"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Reset confirmation modal (simple) -->
+  <div id="resetModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div class="glass rounded-3xl p-6 max-w-sm w-full">
+      <h3 class="text-xl font-bold text-purple-800 mb-2">Confirm Reset</h3>
+      <p class="mb-4">Reset clears all called numbers and prize statuses.</p>
+      <div class="flex gap-3">
+        <button id="confirmResetBtn" class="flex-1 bg-red-500 text-white py-2 rounded-xl font-semibold">Yes, reset</button>
+        <button id="cancelResetBtn" class="flex-1 bg-gray-200 text-gray-800 py-2 rounded-xl font-semibold">Cancel</button>
       </div>
     </div>
   </div>
 
 <script>
-  // Supabase Configuration
+  // -------------------------
+  // Supabase (same config)
+  // -------------------------
   const SUPABASE_URL = "https://jlzqdefinnwoazsqlunf.supabase.co";
   const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsenFkZWZpbm53b2F6c3FsdW5mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI0NTgwOTksImV4cCI6MjA3ODAzNDA5OX0.ZPfFVDqJgZkuhPGO9WNlYHKDwKgQ9SZoGjSIypgaDIE";
-  
   const { createClient } = window.supabase;
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  // Game State
+  // -------------------------
+  // App state
+  // -------------------------
   let gameState = {
     calledNumbers: [],
     currentNumber: null,
@@ -236,143 +200,265 @@
     ]
   };
 
-  // Initialize boards
-  function initializeBoards() {
-    const mainBoard = document.getElementById('mainBoard');
-    const hostBoard = document.getElementById('hostBoard');
-    
-    for (let i = 1; i <= 90; i++) {
-      // Main board
-      const mainCell = document.createElement('div');
-      mainCell.className = 'number-cell uncalled text-center py-3 rounded-lg font-bold text-lg';
-      mainCell.textContent = i;
-      mainCell.dataset.number = i;
-      mainBoard.appendChild(mainCell);
+  // host password
+  const HOST_PASSWORD = "ladiesmeet2025";
+  let hostUnlocked = false;
 
-      // Host board
-      const hostCell = document.createElement('div');
-      hostCell.className = 'number-cell uncalled text-center py-2 rounded-lg font-bold text-sm';
-      hostCell.textContent = i;
-      hostCell.dataset.number = i;
-      hostBoard.appendChild(hostCell);
+  // -------------------------
+  // DOM refs
+  // -------------------------
+  const playerScreen = document.getElementById('playerScreen');
+  const hostScreen = document.getElementById('hostScreen');
+  const currentNumberDisplay = document.getElementById('currentNumberDisplay');
+  const mainBoard = document.getElementById('mainBoard');
+  const hostBoard = document.getElementById('hostBoard');
+  const hostBoardLarge = document.getElementById('hostBoardLarge');
+  const lastNumbersDiv = document.getElementById('lastNumbers');
+  const prizeStatusPlayer = document.getElementById('prizeStatusPlayer');
+  const prizeManagement = document.getElementById('prizeManagement');
+  const drawnNumberDiv = document.getElementById('drawnNumber');
+  const drawNumberBtn = document.getElementById('drawNumberBtn');
+  const flashNumberBtn = document.getElementById('flashNumberBtn');
+  const drawnNumberEl = document.getElementById('drawnNumber');
+  const toastContainer = document.getElementById('toastContainer');
+
+  // host controls
+  const resetGameBtn = document.getElementById('resetGameBtn');
+  const lockHostBtn = document.getElementById('lockHostBtn');
+
+  // reset modal
+  const resetModal = document.getElementById('resetModal');
+  const confirmResetBtn = document.getElementById('confirmResetBtn');
+  const cancelResetBtn = document.getElementById('cancelResetBtn');
+
+  // -------------------------
+  // Audio (WebAudio) - small effects
+  // -------------------------
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  function playBeep(frequency = 880, duration = 0.12, type = 'sine', gain = 0.08){
+    try{
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = type;
+      o.frequency.value = frequency;
+      g.gain.value = gain;
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start();
+      g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+      setTimeout(()=>{ o.stop(); o.disconnect(); g.disconnect(); }, duration*1000 + 50);
+    }catch(e){}
+  }
+  function playDrawSound(){ playBeep(720,0.12,'sawtooth',0.09); playBeep(1100,0.08,'sine',0.06); }
+  function playFlashSound(){ playBeep(1100,0.08,'square',0.08); playBeep(1550,0.06,'sine',0.06); }
+
+  // -------------------------
+  // Routing: #player / #host with password prompt
+  // -------------------------
+  function handleHash(){
+    const h = location.hash.replace('#','') || 'player';
+    if(h === 'host'){
+      // prompt for password if not unlocked
+      if(!hostUnlocked){
+        const pw = prompt('Enter host password:');
+        if(pw === HOST_PASSWORD){
+          hostUnlocked = true;
+          showScreen('host');
+        } else {
+          alert('Wrong password. Redirecting to Player view.');
+          location.hash = '#player';
+          showScreen('player');
+        }
+      } else {
+        showScreen('host');
+      }
+    } else {
+      showScreen('player');
+    }
+  }
+  function showScreen(name){
+    if(name === 'host'){
+      playerScreen.classList.remove('active');
+      hostScreen.classList.add('active');
+    } else {
+      hostScreen.classList.remove('active');
+      playerScreen.classList.add('active');
+    }
+  }
+  window.addEventListener('hashchange', handleHash);
+  handleHash(); // initial
+
+  // -------------------------
+  // Initialize Boards
+  // -------------------------
+  function makeCell(num, classes = '') {
+    const div = document.createElement('div');
+    div.className = 'number-cell px-2 py-3 text-center rounded-lg font-bold ' + classes;
+    div.textContent = num;
+    div.dataset.number = num;
+    return div;
+  }
+
+  function initializeBoards(){
+    // clear
+    mainBoard.innerHTML = '';
+    hostBoard.innerHTML = '';
+    hostBoardLarge.innerHTML = '';
+
+    for(let i=1;i<=90;i++){
+      // main
+      const m = makeCell(i,'uncalled');
+      mainBoard.appendChild(m);
+
+      // host small
+      const hs = makeCell(i,'uncalled text-sm py-2');
+      hostBoard.appendChild(hs);
+
+      // host large (preview)
+      const hl = makeCell(i,'uncalled');
+      hostBoardLarge.appendChild(hl);
     }
   }
 
-  // Update UI from game state
-  function updateUI() {
-    // Update current number display
-    const currentDisplay = document.getElementById('currentNumberDisplay');
-    currentDisplay.textContent = gameState.currentNumber || '--';
-    if (gameState.currentNumber) {
-      currentDisplay.classList.add('flash-in');
-      setTimeout(() => currentDisplay.classList.remove('flash-in'), 800);
+  // -------------------------
+  // UI Update
+  // -------------------------
+  function updateUI(){
+    // current number
+    currentNumberDisplay.textContent = gameState.currentNumber || '--';
+    if(gameState.currentNumber){
+      currentNumberDisplay.classList.add('flash-in');
+      setTimeout(()=> currentNumberDisplay.classList.remove('flash-in'),700);
     }
 
-    // Update boards
+    // boards - update every .number-cell
     document.querySelectorAll('.number-cell').forEach(cell => {
-      const num = parseInt(cell.dataset.number);
-      cell.className = 'number-cell text-center rounded-lg font-bold';
-      
-      if (cell.parentElement.id === 'mainBoard') {
-        cell.classList.add('py-3', 'text-lg');
-      } else {
-        cell.classList.add('py-2', 'text-sm');
-      }
-
-      if (num === gameState.currentNumber) {
+      const num = parseInt(cell.dataset.number,10);
+      cell.classList.remove('uncalled','called','current');
+      if(num === gameState.currentNumber){
         cell.classList.add('current');
-      } else if (gameState.calledNumbers.includes(num)) {
+      } else if(gameState.calledNumbers.includes(num)){
         cell.classList.add('called');
       } else {
         cell.classList.add('uncalled');
       }
     });
 
-    // Update last 10 numbers
-    const lastNumbersDiv = document.getElementById('lastNumbers');
-    lastNumbersDiv.innerHTML = gameState.lastNumbers.slice(0, 10).map(num => 
-      `<div class="px-4 py-2 rounded-lg font-bold text-white" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">${num}</div>`
-    ).join('');
+    // last 10
+    lastNumbersDiv.innerHTML = '';
+    gameState.lastNumbers.slice(0,10).forEach(n => {
+      const d = document.createElement('div');
+      d.className = 'px-3 py-2 rounded-md font-bold text-white';
+      d.style.background = 'linear-gradient(135deg,#f093fb 0%,#f5576c 100%)';
+      d.textContent = n;
+      lastNumbersDiv.appendChild(d);
+    });
 
-    // Update prize displays
-    updatePrizeDisplays();
+    // prizes - player
+    prizeStatusPlayer.innerHTML = '';
+    gameState.prizes.forEach(prize => {
+      const el = document.createElement('div');
+      el.className = 'px-3 py-3 rounded-xl font-semibold';
+      if(prize.status === 'OPEN'){
+        el.classList.add('prize-open');
+        el.style.background = 'linear-gradient(135deg,#d4fc79 0%,#96e6a1 100%)';
+        el.style.color = '#274016';
+      } else {
+        el.classList.add('prize-won');
+        el.style.background = 'linear-gradient(135deg,#f093fb 0%,#f5576c 100%)';
+        el.style.color = '#fff';
+        el.style.textDecoration = 'line-through';
+      }
+      el.textContent = `${prize.name}: ${prize.status}`;
+      prizeStatusPlayer.appendChild(el);
+    });
+
+    // prize management (host)
+    prizeManagement.innerHTML = '';
+    gameState.prizes.forEach(prize => {
+      const btn = document.createElement('button');
+      btn.className = 'w-full px-4 py-2 rounded-xl font-semibold hover:opacity-90';
+      btn.textContent = `${prize.name}: ${prize.status}`;
+      if(prize.status === 'OPEN'){
+        btn.style.background = 'linear-gradient(135deg,#d4fc79 0%,#96e6a1 100%)';
+        btn.style.color = '#274016';
+      } else {
+        btn.style.background = 'linear-gradient(135deg,#f093fb 0%,#f5576c 100%)';
+        btn.style.color = '#fff';
+      }
+      btn.onclick = () => togglePrize(prize.id);
+      prizeManagement.appendChild(btn);
+    });
+
+    // drawn number (private display)
+    drawnNumberDiv.textContent = gameState.drawnNumber || '--';
   }
 
-  // Update prize displays
-  function updatePrizeDisplays() {
-    // Player view
-    const prizeStatusPlayer = document.getElementById('prizeStatusPlayer');
-    prizeStatusPlayer.innerHTML = gameState.prizes.map(prize => 
-      `<div class="px-4 py-3 rounded-xl font-semibold ${prize.status === 'OPEN' ? 'prize-open' : 'prize-won'}">
-        ${prize.name}: ${prize.status}
-      </div>`
-    ).join('');
-
-    // Host view
-    const prizeManagement = document.getElementById('prizeManagement');
-    prizeManagement.innerHTML = gameState.prizes.map(prize => 
-      `<button class="w-full px-4 py-3 rounded-xl font-semibold ${prize.status === 'OPEN' ? 'prize-open' : 'prize-won'} hover:opacity-80 transition" onclick="togglePrize('${prize.id}')">
-        ${prize.name}: ${prize.status}
-      </button>`
-    ).join('');
+  // -------------------------
+  // Toggle prize (host)
+  // -------------------------
+  async function togglePrize(prizeId){
+    const prize = gameState.prizes.find(p=>p.id===prizeId);
+    if(!prize) return;
+    prize.status = prize.status === 'OPEN' ? 'WON' : 'OPEN';
+    showToast(`${prize.name} ${prize.status === 'WON' ? 'claimed 🎉' : 'reopened'}`);
+    await syncToDatabase();
+    updateUI();
   }
+  window.togglePrize = togglePrize; // expose for in-console if needed
 
-  // Toggle prize status
-  window.togglePrize = async function(prizeId) {
-    const prize = gameState.prizes.find(p => p.id === prizeId);
-    if (prize) {
-      prize.status = prize.status === 'OPEN' ? 'WON' : 'OPEN';
-      await syncToDatabase();
-      updateUI();
-    }
-  };
-
-  // Draw number
-  document.getElementById('drawNumberBtn').addEventListener('click', async () => {
-    const availableNumbers = [];
-    for (let i = 1; i <= 90; i++) {
-      if (!gameState.calledNumbers.includes(i) && i !== gameState.currentNumber) {
-        availableNumbers.push(i);
+  // -------------------------
+  // Draw / Flash logic
+  // -------------------------
+  drawNumberBtn.addEventListener('click', async () => {
+    // build available numbers
+    const available = [];
+    for(let i=1;i<=90;i++){
+      if(!gameState.calledNumbers.includes(i) && i !== gameState.currentNumber && i !== gameState.drawnNumber){
+        available.push(i);
       }
     }
-
-    if (availableNumbers.length === 0) {
-      alert('All numbers have been called!');
-      return;
-    }
-
-    const randomIndex = Math.floor(Math.random() * availableNumbers.length);
-    gameState.drawnNumber = availableNumbers[randomIndex];
-    
-    document.getElementById('drawnNumber').textContent = gameState.drawnNumber;
-    document.getElementById('flashNumberBtn').disabled = false;
+    if(available.length === 0){ alert('All numbers called'); return; }
+    const idx = Math.floor(Math.random()*available.length);
+    gameState.drawnNumber = available[idx];
+    drawnNumberDiv.textContent = gameState.drawnNumber;
+    flashNumberBtn.disabled = false;
+    playDrawSound();
+    // do not commit yet - host must hit flash
   });
 
-  // Flash to board
-  document.getElementById('flashNumberBtn').addEventListener('click', async () => {
-    if (!gameState.drawnNumber) return;
-
-    if (gameState.currentNumber) {
+  flashNumberBtn.addEventListener('click', async () => {
+    if(!gameState.drawnNumber) return;
+    // move previous current -> called & lastNumbers
+    if(gameState.currentNumber){
       gameState.calledNumbers.push(gameState.currentNumber);
       gameState.lastNumbers.unshift(gameState.currentNumber);
+      // keep lastNumbers trimmed
+      if(gameState.lastNumbers.length>50) gameState.lastNumbers = gameState.lastNumbers.slice(0,50);
     }
-
+    // set current
     gameState.currentNumber = gameState.drawnNumber;
     gameState.drawnNumber = null;
+    drawnNumberDiv.textContent = '--';
+    flashNumberBtn.disabled = true;
 
-    document.getElementById('drawnNumber').textContent = '--';
-    document.getElementById('flashNumberBtn').disabled = true;
+    // announce
+    showToast(`Number ${gameState.currentNumber} flashed!`);
+    playFlashSound();
 
+    // sync & update UI
     await syncToDatabase();
     updateUI();
   });
 
-  // Reset game
-  document.getElementById('resetGameBtn').addEventListener('click', () => {
-    document.getElementById('resetModal').classList.remove('hidden');
+  // -------------------------
+  // Reset
+  // -------------------------
+  resetGameBtn.addEventListener('click', () => {
+    resetModal.classList.remove('hidden');
   });
-
-  document.getElementById('confirmResetBtn').addEventListener('click', async () => {
+  cancelResetBtn.addEventListener('click', () => resetModal.classList.add('hidden'));
+  confirmResetBtn.addEventListener('click', async () => {
+    resetModal.classList.add('hidden');
     gameState = {
       calledNumbers: [],
       currentNumber: null,
@@ -386,77 +472,104 @@
         { id: 'full_house', name: 'Full House', status: 'OPEN' }
       ]
     };
-
     await syncToDatabase();
     updateUI();
-    document.getElementById('resetModal').classList.add('hidden');
+    showToast('Game reset');
   });
 
-  document.getElementById('cancelResetBtn').addEventListener('click', () => {
-    document.getElementById('resetModal').classList.add('hidden');
+  // Lock host (simple toggle)
+  lockHostBtn.addEventListener('click', () => {
+    hostUnlocked = !hostUnlocked;
+    lockHostBtn.textContent = hostUnlocked ? 'Lock' : 'Unlock';
+    lockHostBtn.classList.toggle('bg-gray-100');
+    showToast(hostUnlocked ? 'Host unlocked' : 'Host locked');
   });
 
-  // View toggle
-  document.getElementById('openHostBtn').addEventListener('click', () => {
-    document.getElementById('hostView').classList.remove('hidden');
-  });
+  // -------------------------
+  // Toasts
+  // -------------------------
+  function showToast(text, timeout=3000){
+    const t = document.createElement('div');
+    t.className = 'toast glass rounded-lg p-3 shadow-md';
+    t.innerHTML = `<div class="font-semibold text-sm">${text}</div>`;
+    toastContainer.appendChild(t);
+    setTimeout(()=> {
+      t.style.transition = 'all .25s ease';
+      t.style.opacity = '0';
+      t.style.transform = 'translateY(-8px) scale(.98)';
+      setTimeout(()=> t.remove(), 250);
+    }, timeout);
+  }
 
-  document.getElementById('closeHostBtn').addEventListener('click', () => {
-    document.getElementById('hostView').classList.add('hidden');
-  });
-
-  // Database sync
-  async function syncToDatabase() {
+  // -------------------------
+  // Database sync (same logic: upsert + realtime)
+  // -------------------------
+  async function syncToDatabase(){
     try {
-      const { error } = await supabase
+      await supabase
         .from('tambola_game')
         .upsert({
           id: 1,
           game_state: gameState,
           updated_at: new Date().toISOString()
         });
-
-      if (error) console.error('Sync error:', error);
-    } catch (err) {
-      console.error('Sync failed:', err);
+    } catch(err){
+      console.error('sync error', err);
     }
   }
 
-  async function loadFromDatabase() {
+  async function loadFromDatabase(){
     try {
       const { data, error } = await supabase
         .from('tambola_game')
         .select('*')
-        .eq('id', 1)
+        .eq('id',1)
         .single();
 
-      if (data && data.game_state) {
+      if(data && data.game_state){
         gameState = data.game_state;
         updateUI();
+      } else {
+        // if empty, push initial
+        await syncToDatabase();
       }
-    } catch (err) {
-      console.log('No existing game state');
+    } catch(err){
+      console.log('No existing state or load failed', err);
+      await syncToDatabase();
     }
   }
 
-  // Real-time sync
+  // Realtime subscription (preserve exactly same behavior)
   supabase
     .channel('tambola_updates')
-    .on('postgres_changes', 
-      { event: '*', schema: 'public', table: 'tambola_game' },
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'tambola_game' },
       (payload) => {
-        if (payload.new && payload.new.game_state) {
+        if(payload.new && payload.new.game_state){
           gameState = payload.new.game_state;
           updateUI();
         }
-      }
-    )
+      })
     .subscribe();
 
-  // Initialize
+  // -------------------------
+  // Init
+  // -------------------------
   initializeBoards();
   loadFromDatabase();
-</script>
 
+  // ensure UI updates on load
+  updateUI();
+
+  // small accessibility: navigate buttons set hash
+  document.getElementById('navPlayer').addEventListener('click', (e)=>{ e.preventDefault(); location.hash='#player'; });
+  document.getElementById('navHost').addEventListener('click', (e)=>{ e.preventDefault(); location.hash='#host'; });
+
+  // keyboard shortcuts (optional)
+  window.addEventListener('keydown', (e)=>{
+    if(e.key === 'd' && hostUnlocked && document.querySelector('#drawNumberBtn')) drawNumberBtn.click();
+    if(e.key === 'f' && hostUnlocked && !flashNumberBtn.disabled) flashNumberBtn.click();
+  });
+
+</script>
 </body>
 </html>
