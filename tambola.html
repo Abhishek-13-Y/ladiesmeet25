@@ -127,13 +127,13 @@
   <main id="hostScreen" class="screen">
     <div class="max-w-6xl mx-auto">
       <div class="glass rounded-3xl p-6 shadow-xl mb-6">
-        <div class="flex items-center justify-between gap-4">
-          <h2 class="text-3xl font-bold text-purple-800">🎮 Host Control Panel</h2>
-          <div class="flex gap-2">
-            <button id="resetGameBtn" class="bg-red-500 text-white px-4 py-2 rounded-xl font-semibold hover:bg-red-600">🔄 Reset</button>
-            <button id="lockHostBtn" class="bg-gray-100 text-gray-800 px-4 py-2 rounded-xl font-semibold">Lock</button>
-          </div>
-        </div>
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <h2 class="text-2xl sm:text-3xl font-bold text-purple-800">🎮 Host Control Panel</h2>
+      <div class="flex gap-2">
+        <button id="resetGameBtn" class="bg-red-500 text-white px-4 py-2 rounded-xl font-semibold hover:bg-red-600">🔄 Reset</button>
+        <button id="lockHostBtn" class="bg-gray-100 text-gray-800 px-4 py-2 rounded-xl font-semibold">Lock</button>
+    </div>
+    </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
           <!-- Controls -->
@@ -452,7 +452,7 @@
       wrap.appendChild(label);
 
       const row = document.createElement('div');
-      row.className = 'flex gap-2';
+      row.className = 'flex flex-col sm:flex gap-2';
 
       // claimant input
       const inp = document.createElement('input');
