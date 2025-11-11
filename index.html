@@ -126,9 +126,11 @@
             </div>
           </div>
         </div>
-        
+
+
+         
         <!-- Reel Upload (Always Editable) 
-        <div class="bg-gradient-to-br from-blue-50 to-cyan-50 p-4 sm:p-5 rounded-xl border-2 border-blue-200">
+         <div class="bg-gradient-to-br from-blue-50 to-cyan-50 p-4 sm:p-5 rounded-xl border-2 border-blue-200"></div>
           <label class="block text-sm font-semibold text-blue-700 mb-2 flex items-center gap-2">
             <span>🎥</span> Upload Reel (Optional)
           </label> -->
@@ -153,7 +155,7 @@
               </div>
               <video id="newReelVideo" src="" controls class="w-full sm:w-48 h-32 object-cover rounded-lg bg-black"></video>
             </div>
-          </div> -->
+          </div> 
 
           <div class="relative">
             <input id="reel" type="file" accept="video/mp4,video/quicktime" 
@@ -169,7 +171,7 @@
               <div>• Can be updated anytime</div>
             </div>
           </div>
-        </div>
+        </div>-->
 
         <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-rose-600 to-pink-600 text-white py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg hover:from-rose-700 hover:to-pink-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
           Submit Registration ✓
@@ -190,17 +192,17 @@
   let existingRecord = null;
   
   const selfieInput = document.getElementById("selfie");
-  const reelInput = document.getElementById("reel");
+  // const reelInput = document.getElementById("reel");
   const newSelfiePreview = document.getElementById("newSelfiePreview");
   const newSelfieImg = document.getElementById("newSelfieImg");
   const existingSelfiePreview = document.getElementById("existingSelfiePreview");
   const existingSelfieImg = document.getElementById("existingSelfieImg");
   const clearSelfieBtn = document.getElementById("clearSelfieBtn");
-  const newReelPreview = document.getElementById("newReelPreview");
-  const newReelVideo = document.getElementById("newReelVideo");
-  const existingReelPreview = document.getElementById("existingReelPreview");
-  const existingReelVideo = document.getElementById("existingReelVideo");
-  const clearReelBtn = document.getElementById("clearReelBtn");
+  // const newReelPreview = document.getElementById("newReelPreview");
+  // const newReelVideo = document.getElementById("newReelVideo");
+  // const existingReelPreview = document.getElementById("existingReelPreview");
+  // const existingReelVideo = document.getElementById("existingReelVideo");
+  // const clearReelBtn = document.getElementById("clearReelBtn");
 
   function validateMobile(mobile) {
     const mobileError = document.getElementById("mobileError");
@@ -281,10 +283,12 @@
           existingSelfieImg.src = data.selfie_url;
           existingSelfiePreview.classList.remove("hidden");
         }
-        if (data.reel_url) {
-          existingReelVideo.src = data.reel_url;
-          existingReelPreview.classList.remove("hidden");
-        }
+
+        // if (data.reel_url) {
+        //   existingReelVideo.src = data.reel_url;
+        //   existingReelPreview.classList.remove("hidden");
+        // }
+
         statusDiv.textContent = "";
       } else {
         existingRecord = null;
@@ -318,7 +322,7 @@
     const unit = document.getElementById("unit").value.trim();
     const futureReady = document.getElementById("futureReady").value.trim();
     const selfieFile = selfieInput.files[0];
-    const reelFile = reelInput.files[0];
+    // const reelFile = reelInput ? reelInput.files[0] : null;
 
     const selfieValidation = validateFile(selfieFile, 'image');
     if (!selfieValidation.valid) {
@@ -329,27 +333,27 @@
       return;
     }
 
-    const reelValidation = validateFile(reelFile, 'video');
-    if (!reelValidation.valid) {
-      document.getElementById("reelError").textContent = reelValidation.error;
-      document.getElementById("reelError").classList.remove("hidden");
-      submitBtn.disabled = false;
-      submitBtn.textContent = "Submit Registration ✓";
-      return;
-    }
+    // const reelValidation = validateFile(reelFile, 'video');
+    // if (!reelValidation.valid) {
+    //   document.getElementById("reelError").textContent = reelValidation.error;
+    //   document.getElementById("reelError").classList.remove("hidden");
+    //   submitBtn.disabled = false;
+    //   submitBtn.textContent = "Submit Registration ✓";
+    //   return;
+    // }
 
     try {
       let selfieUrl = existingRecord?.selfie_url || null;
-      let reelUrl = existingRecord?.reel_url || null;
+      // let reelUrl = existingRecord?.reel_url || null;
 
       if (selfieFile) {
         statusDiv.textContent = "📤 Uploading selfie...";
         selfieUrl = await uploadFile(selfieFile, 'selfies', mobile);
       }
-      if (reelFile) {
-        statusDiv.textContent = "📤 Uploading reel...";
-        reelUrl = await uploadFile(reelFile, 'reels', mobile);
-      }
+      // if (reelFile) {
+      //   statusDiv.textContent = "📤 Uploading reel...";
+      //   reelUrl = await uploadFile(reelFile, 'reels', mobile);
+      // }
 
       statusDiv.textContent = "💾 Saving your registration...";
 
@@ -359,7 +363,7 @@
         unit: unit,
         future_ready: futureReady,
         selfie_url: selfieUrl,
-        reel_url: reelUrl,
+        // reel_url: reelUrl,
         created_at: existingRecord ? existingRecord.created_at : new Date().toISOString()
       };
 
@@ -396,15 +400,15 @@
     newSelfieImg.src = "";
   }
 
-  function clearReelPreview() {
-    reelInput.value = null;
-    newReelPreview.classList.add("hidden");
-    URL.revokeObjectURL(newReelVideo.src);
-    newReelVideo.src = "";
-  }
+  // function clearReelPreview() {
+  //   reelInput.value = null;
+  //   newReelPreview.classList.add("hidden");
+  //   URL.revokeObjectURL(newReelVideo.src);
+  //   newReelVideo.src = "";
+  // }
 
   clearSelfieBtn.addEventListener("click", clearSelfiePreview);
-  clearReelBtn.addEventListener("click", clearReelPreview);
+  // if (clearReelBtn) clearReelBtn.addEventListener("click", clearReelPreview);
 
   selfieInput.addEventListener("change", (e) => {
     document.getElementById("selfieError").classList.add("hidden");
@@ -422,21 +426,22 @@
     }
   });
 
-  reelInput.addEventListener("change", (e) => {
-    document.getElementById("reelError").classList.add("hidden");
-    const file = e.target.files[0];
-    if (file) {
-      const validation = validateFile(file, 'video');
-      if (validation.valid) {
-        newReelVideo.src = URL.createObjectURL(file);
-        newReelPreview.classList.remove("hidden");
-      } else {
-        document.getElementById("reelError").textContent = validation.error;
-        document.getElementById("reelError").classList.remove("hidden");
-        clearReelPreview();
-      }
-    }
-  });
+  // reelInput?.addEventListener("change", (e) => {
+  //   document.getElementById("reelError").classList.add("hidden");
+  //   const file = e.target.files[0];
+  //   if (file) {
+  //     const validation = validateFile(file, 'video');
+  //     if (validation.valid) {
+  //       newReelVideo.src = URL.createObjectURL(file);
+  //       newReelPreview.classList.remove("hidden");
+  //     } else {
+  //       document.getElementById("reelError").textContent = validation.error;
+  //       document.getElementById("reelError").classList.remove("hidden");
+  //       clearReelPreview();
+  //     }
+  //   }
+  // });
 </script>
+
 </body>
 </html>
