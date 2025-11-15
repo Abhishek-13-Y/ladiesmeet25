@@ -3,720 +3,534 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Tambola - Ladies Meet 2025</title>
+  <title>Tambola - Monthly Interaction 2025</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
   <style>
     :root{
-      --glass-bg: rgba(255,255,255,0.22);
-      --glass-border: rgba(255,255,255,0.35);
+      --glass-bg: rgba(255,255,255,0.12);
+      --glass-border: rgba(255,255,255,0.18);
+      --teal-1: #06b6d4;
+      --teal-2: #14b8a6;
+      --gold: #fbbf24;
     }
+
     body {
-      background: linear-gradient(135deg,#e0c3fc 0%,#8ec5fc 100%);
+      background: linear-gradient(135deg, #dffaf6 0%, #c8f7f1 40%, #bfeeee 100%);
       min-height:100vh;
       margin:0;
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      font-family: Inter, ui-sans-serif, system-ui;
+      color: #044e54;
     }
+
     .glass {
       background: var(--glass-bg);
       backdrop-filter: blur(8px) saturate(120%);
       border: 1px solid var(--glass-border);
     }
+
     .number-cell { transition: all .28s ease; user-select:none; }
-    .uncalled { background: rgba(200,200,200,0.25); color:#6b7280; }
-    .called { background: linear-gradient(135deg,#f093fb 0%,#f5576c 100%); color:#fff; font-weight:700; }
-    .current { background: linear-gradient(135deg,#fad0c4 0%,#ffd1ff 100%); color:#ff3b6b; font-weight:800; border:3px solid rgba(255,107,107,0.15); transform:scale(1.03); box-shadow:0 6px 18px rgba(0,0,0,0.08); }
-    .flash-in { animation: flashIn .7s ease-out; }
-    @keyframes flashIn { 0%{transform:scale(.6);opacity:0} 60%{transform:scale(1.08)} 100%{transform:scale(1);opacity:1} }
+    .uncalled { background: rgba(200,200,200,0.12); color:#0f172a; }
+    .called { background: linear-gradient(135deg, #a7f3d0, #6ee7b7); color:#044e54; font-weight:700; }
+    .current { background: linear-gradient(135deg,#c8f7f1,#a7f3d0); color:var(--teal-2); font-weight:800; border:3px solid rgba(6,182,212,0.12); transform:scale(1.03); }
 
-    /* responsive board: auto-fit */
-    #mainBoard, #hostBoard { display:grid; gap:8px; grid-template-columns: repeat(auto-fit, minmax(46px, 1fr)); align-items:center; }
+    #mainBoard, #hostBoard {
+      display:grid; gap:8px;
+      grid-template-columns: repeat(auto-fit, minmax(46px, 1fr));
+    }
 
-    /* toasts */
     .toast {
-      position:fixed;
-      right:16px;
-      top:16px;
-      z-index:9999;
-      pointer-events:auto;
-      transform-origin:top right;
+      position:fixed; right:16px; top:16px; z-index:9999;
       animation: slideIn .28s ease-out;
     }
-    @keyframes slideIn { from { transform: translateY(-12px) scale(.98); opacity:0 } to { transform: translateY(0) scale(1); opacity:1 } }
+    @keyframes slideIn {
+      from { opacity:0; transform: translateY(-6px) scale(.97); }
+      to { opacity:1; transform: translateY(0) scale(1); }
+    }
 
-    /* host / player screens */
-    .screen { display:none; padding:18px; min-height:100vh; }
+    .screen { display:none; }
     .screen.active { display:block; }
 
-    /* small tweaks */
-    .badge { display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; font-weight:600; }
-    .small { font-size:.85rem; }
+    /* PREMIUM PRIZES UI */
+    .special-prize {
+      background: linear-gradient(135deg, #06b6d4, #14b8a6, #0d9488);
+      color:white;
+      padding: 12px 18px;
+      border-radius: 14px;
+      font-weight: 800;
+      box-shadow: 0 6px 18px rgba(6,182,212,0.25);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      transition:.2s ease;
+    }
 
-    /* confetti canvas */
-    #confettiCanvas { position:fixed; inset:0; pointer-events:none; z-index:2000; display:none; }
+    .special-button {
+      background:white;
+      color:#0d6e6c;
+      padding:8px 14px;
+      border-radius:10px;
+      font-weight:700;
+      box-shadow:0 3px 8px rgba(0,0,0,0.10);
+    }
 
-    /* prize row on player - single horizontal row */
-    #prizeRow { display:flex; gap:8px; align-items:center; flex-wrap:nowrap; overflow-x:auto; padding-bottom:4px; }
+    .special-button:disabled {
+      opacity:0.6;
+      color:#555;
+    }
 
-    /* last 10 area larger */
-    .last10Wrap { min-width:260px; max-width:60%; }
+    .pulse {
+      animation: pulseGold 1.2s ease-in-out;
+    }
+
+    @keyframes pulseGold {
+      0% { transform:scale(1); box-shadow:0 0 0 rgba(6,182,212,0.15); }
+      50% { transform:scale(1.05); box-shadow:0 0 22px rgba(6,182,212,0.35); }
+      100% { transform:scale(1); box-shadow:0 0 0 rgba(6,182,212,0.15); }
+    }
   </style>
 </head>
+
 <body>
 
-  <!-- Confetti Canvas -->
-  <canvas id="confettiCanvas"></canvas>
-
-  <!-- Toast container -->
-  <div id="toastContainer" class="pointer-events-none"></div>
-
-  <!-- NAV -->
-  <header class="w-full py-4 px-4 sm:px-8 flex items-center justify-between">
-    <div class="flex items-center gap-4">
-      <div class="badge bg-gradient-to-r from-pink-500 to-purple-500 text-white">Ladies Meet 2025</div>
-      <h1 class="text-lg sm:text-2xl font-extrabold text-purple-800">Tambola 🎲</h1>
+<header class="p-4 flex justify-between items-center">
+  <div class="flex items-center gap-3">
+    <div class="px-3 py-2 rounded-full bg-gradient-to-r from-teal-400 to-cyan-500 text-white font-semibold">
+      Monthly Interaction 2025
     </div>
-    <nav class="flex items-center gap-3">
-      <a href="#player" id="navPlayer" class="px-3 py-2 rounded-md glass small">Player</a>
-      <a href="#host" id="navHost" class="px-3 py-2 rounded-md glass small">Host</a>
-    </nav>
-  </header>
+    <h1 class="text-2xl font-extrabold text-teal-600">Tambola 🎲</h1>
+  </div>
 
-  <!-- PLAYER SCREEN -->
-  <main id="playerScreen" class="screen active">
-    <div class="max-w-7xl mx-auto">
+  <nav class="flex gap-3">
+    <a id="navPlayer" href="#player" class="glass px-3 py-2 rounded-md">Player</a>
+    <a id="navHost" href="#host" class="glass px-3 py-2 rounded-md">Host</a>
+  </nav>
+</header>
 
-     <!-- Top row: Full width current number, last 10, and prize row -->
-<div class="glass rounded-3xl p-6 shadow-lg mb-6">
-  <div class="flex flex-col gap-6">
-    <!-- Current + Last 10 -->
-    <div class="flex flex-col lg:flex-row items-stretch gap-6">
-      
-      <!-- Current Number (now wider and centered) -->
-      <div class="flex-1 flex items-center justify-center bg-white/30 rounded-2xl p-6">
-        <div class="text-center w-full">
-          <div class="text-sm text-purple-700 font-semibold mb-2">Current Number</div>
-          <div id="currentNumberDisplay" class="text-7xl sm:text-8xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-orange-500">--</div>
+<!-- PLAYER SCREEN -->
+<main id="playerScreen" class="screen active px-4">
+  <div class="max-w-6xl mx-auto">
+
+    <!-- CURRENT + LAST 10 + PRIZES -->
+    <div class="glass rounded-3xl p-6 mb-6 shadow">
+      <div class="flex flex-col gap-6">
+
+        <div class="flex flex-col lg:flex-row gap-6">
+
+          <!-- CURRENT NUMBER -->
+          <div class="flex-1 flex items-center justify-center bg-white/30 rounded-2xl p-6">
+            <div class="text-center w-full">
+              <div class="text-sm font-semibold text-teal-700 mb-1">Current Number</div>
+              <div id="currentNumberDisplay" class="text-7xl font-extrabold text-teal-500">--</div>
+            </div>
+          </div>
+
+          <!-- LAST 10 -->
+          <div class="flex-1 glass rounded-2xl p-6">
+            <div class="text-sm font-semibold text-teal-700 mb-2">Last 10</div>
+            <div id="lastNumbers" class="flex gap-2 flex-wrap"></div>
+          </div>
+        </div>
+
+        <!-- PRIZE ROW -->
+        <div id="prizeRow" class="glass rounded-xl p-4 flex gap-3 overflow-x-auto"></div>
+
+      </div>
+    </div>
+
+    <!-- MAIN BOARD -->
+    <div class="glass rounded-3xl p-6 shadow">
+      <h2 class="text-xl font-bold text-teal-700 mb-4">Number Board</h2>
+      <div id="mainBoard"></div>
+    </div>
+
+  </div>
+</main>
+
+<!-- HOST SCREEN -->
+<main id="hostScreen" class="screen px-4">
+  <div class="max-w-5xl mx-auto">
+
+    <div class="glass rounded-3xl p-6 shadow mb-6">
+
+      <div class="flex justify-between items-center">
+        <h2 class="text-3xl font-bold text-teal-700">Host Panel</h2>
+
+        <div class="flex gap-2">
+          <button id="resetGameBtn" class="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold">Reset</button>
+          <button id="lockHostBtn" class="bg-gray-200 px-4 py-2 rounded-lg font-semibold">Lock</button>
         </div>
       </div>
 
-      <!-- Last 10 (larger area) -->
-      <div class="flex-1 glass rounded-2xl p-6">
-        <div class="text-sm text-purple-700 font-semibold mb-3">Last 10 Called</div>
-        <div id="lastNumbers" class="flex flex-wrap gap-2 justify-center"></div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+
+        <!-- Number Controls -->
+        <div class="bg-white/40 p-4 rounded-2xl">
+          <div class="text-sm text-teal-700 font-semibold mb-2">Draw Number</div>
+          <div class="flex gap-3">
+            <button id="drawNumberBtn" class="flex-1 bg-gradient-to-r from-teal-400 to-cyan-500 text-white py-3 rounded-xl font-bold">🎲 Draw</button>
+            <button id="flashNumberBtn" disabled class="flex-1 bg-gradient-to-r from-teal-300 to-teal-500 text-white py-3 rounded-xl font-bold">📢 Flash</button>
+          </div>
+
+          <div class="mt-6">
+            <div class="text-sm text-teal-700 font-semibold">Drawn</div>
+            <div id="drawnNumber" class="text-5xl font-extrabold text-teal-600">--</div>
+          </div>
+
+          <div class="mt-6">
+            <div class="text-sm text-teal-700 font-semibold mb-2">Prize Management</div>
+            <div id="prizeManagement" class="space-y-3"></div>
+          </div>
+        </div>
+
+        <!-- HOST PREVIEW BOARD -->
+        <div class="bg-white/40 p-4 rounded-2xl">
+          <div class="text-sm text-teal-700 font-semibold mb-2">Host Board</div>
+          <div id="hostBoard"></div>
+        </div>
+
       </div>
     </div>
+  </div>
+</main>
 
-    <!-- Prize status single horizontal row -->
-    <div id="prizeRow" class="glass rounded-xl p-4"></div>
+<!-- RESET MODAL -->
+<div id="resetModal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+  <div class="glass p-6 rounded-3xl max-w-sm w-full">
+    <h3 class="text-xl font-bold text-teal-700 mb-2">Reset Game?</h3>
+    <p class="mb-4">This will clear all called numbers and reset all prizes.</p>
+    <div class="flex gap-3">
+      <button id="confirmResetBtn" class="flex-1 bg-red-500 text-white py-2 rounded-lg font-semibold">Reset</button>
+      <button id="cancelResetBtn" class="flex-1 bg-gray-200 py-2 rounded-lg font-semibold">Cancel</button>
+    </div>
   </div>
 </div>
 
-
-      <!-- Full Board -->
-      <div class="glass rounded-3xl p-6 shadow-xl">
-        <h2 class="text-xl font-bold text-purple-800 mb-4">Number Board</h2>
-        <div id="mainBoard" class="pb-4"></div>
-      </div>
-    </div>
-  </main>
-
-  <!-- HOST SCREEN (separate route) -->
-  <main id="hostScreen" class="screen">
-    <div class="max-w-6xl mx-auto">
-      <div class="glass rounded-3xl p-6 shadow-xl mb-6">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-    <h2 class="text-2xl sm:text-3xl font-bold text-purple-800">🎮 Host Control Panel</h2>
-      <div class="flex gap-2">
-        <button id="resetGameBtn" class="bg-red-500 text-white px-4 py-2 rounded-xl font-semibold hover:bg-red-600">🔄 Reset</button>
-        <button id="lockHostBtn" class="bg-gray-100 text-gray-800 px-4 py-2 rounded-xl font-semibold">Lock</button>
-    </div>
-    </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-          <!-- Controls -->
-          <div class="bg-white/40 p-4 rounded-2xl">
-            <div class="mb-4">
-              <div class="text-sm text-purple-700 font-semibold mb-2">Draw Number</div>
-              <div class="flex gap-3">
-                <button id="drawNumberBtn" class="flex-1 py-3 rounded-xl font-bold bg-gradient-to-r from-green-400 to-blue-500 text-white">🎲 Draw Next</button>
-                <button id="flashNumberBtn" class="py-3 px-4 rounded-xl font-bold bg-gradient-to-r from-pink-500 to-orange-500 text-white disabled:opacity-60" disabled>📢 Flash</button>
-              </div>
-            </div>
-
-            <div class="mt-4">
-              <div class="text-sm text-purple-700 font-semibold mb-2">Drawn (Private)</div>
-              <div id="drawnNumber" class="text-5xl font-extrabold text-yellow-700">--</div>
-            </div>
-
-            <div class="mt-6">
-              <div class="text-sm text-purple-700 font-semibold mb-2">Prize Management</div>
-              <div id="prizeManagement" class="space-y-3"></div>
-            </div>
-          </div>
-
-          <!-- Host board small preview -->
-          <div class="bg-white/40 p-4 rounded-2xl">
-            <div class="text-sm text-purple-700 font-semibold mb-2">Host Board (small)</div>
-            <div id="hostBoard" class="pb-4"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Removed: host full-board large (as requested) -->
-
-    </div>
-  </main>
-
-  <!-- Reset confirmation modal (simple) -->
-  <div id="resetModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-    <div class="glass rounded-3xl p-6 max-w-sm w-full">
-      <h3 class="text-xl font-bold text-purple-800 mb-2">Confirm Reset</h3>
-      <p class="mb-4">Reset clears all called numbers and prize statuses (and claimant names).</p>
-      <div class="flex gap-3">
-        <button id="confirmResetBtn" class="flex-1 bg-red-500 text-white py-2 rounded-xl font-semibold">Yes, reset</button>
-        <button id="cancelResetBtn" class="flex-1 bg-gray-200 text-gray-800 py-2 rounded-xl font-semibold">Cancel</button>
-      </div>
-    </div>
-  </div>
+<!-- TOASTS -->
+<div id="toastContainer"></div>
 
 <script>
-  // -------------------------
-  // Supabase (same config)
-  // -------------------------
-  const SUPABASE_URL = "https://jlzqdefinnwoazsqlunf.supabase.co";
-  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsenFkZWZpbm53b2F6c3FsdW5mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI0NTgwOTksImV4cCI6MjA3ODAzNDA5OX0.ZPfFVDqJgZkuhPGO9WNlYHKDwKgQ9SZoGjSIypgaDIE";
-  const { createClient } = window.supabase;
-  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+/* ============================================================
+   INITIAL STATE
+   ============================================================ */
+let gameState = {
+  calledNumbers: [],
+  currentNumber: null,
+  drawnNumber: null,
+  lastNumbers: [],
+  prizes: [
+    { id:"fullhouse", name:"Full House", status:"OPEN" },
+    { id:"outhouse", name:"Outhouse", status:"OPEN" },
+    { id:"top_line", name:"Top Line", status:"OPEN" },
+    { id:"middle_line", name:"Middle Line", status:"OPEN" },
+    { id:"bottom_line", name:"Bottom Line", status:"OPEN" },
+    { id:"star", name:"Star", status:"OPEN" }
+  ]
+};
 
-  // -------------------------
-  // App state
-  // -------------------------
-  let gameState = {
+let hostUnlocked = true;
+
+/* ============================================================
+   SUPABASE
+   ============================================================ */
+const SUPABASE_URL = "https://jlzqdefinnwoazsqlunf.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/* ============================================================
+   DOM ELEMENTS
+   ============================================================ */
+const playerScreen = document.getElementById('playerScreen');
+const hostScreen = document.getElementById('hostScreen');
+const currentNumberDisplay = document.getElementById('currentNumberDisplay');
+const mainBoard = document.getElementById('mainBoard');
+const hostBoard = document.getElementById('hostBoard');
+const lastNumbersDiv = document.getElementById('lastNumbers');
+const prizeRow = document.getElementById('prizeRow');
+const prizeManagement = document.getElementById('prizeManagement');
+const drawnNumberDiv = document.getElementById('drawnNumber');
+const drawNumberBtn = document.getElementById('drawNumberBtn');
+const flashNumberBtn = document.getElementById('flashNumberBtn');
+const toastContainer = document.getElementById('toastContainer');
+
+/* ============================================================
+   SCREEN ROUTER
+   ============================================================ */
+function handleHash(){
+  if(location.hash === "#host") showScreen("host");
+  else showScreen("player");
+}
+function showScreen(name){
+  if(name === "host"){
+    playerScreen.classList.remove("active");
+    hostScreen.classList.add("active");
+  } else {
+    hostScreen.classList.remove("active");
+    playerScreen.classList.add("active");
+  }
+}
+window.addEventListener("hashchange", handleHash);
+handleHash();
+
+/* ============================================================
+   BUILD NUMBER BOARDS
+   ============================================================ */
+function buildBoards(){
+  mainBoard.innerHTML = '';
+  hostBoard.innerHTML = '';
+  for(let i=1; i<=90; i++){
+    const cell1 = document.createElement('div');
+    cell1.textContent = i;
+    cell1.dataset.number = i;
+    cell1.className = 'number-cell uncalled text-center px-2 py-3 rounded-lg font-bold';
+    mainBoard.appendChild(cell1);
+
+    const cell2 = document.createElement('div');
+    cell2.textContent = i;
+    cell2.dataset.number = i;
+    cell2.className = 'number-cell uncalled text-center px-2 py-2 rounded-lg text-sm';
+    hostBoard.appendChild(cell2);
+  }
+}
+
+/* ============================================================
+   UPDATE UI
+   ============================================================ */
+function updateUI(){
+  currentNumberDisplay.textContent = gameState.currentNumber || "--";
+
+  document.querySelectorAll('.number-cell').forEach(c=>{
+    const n = Number(c.dataset.number);
+    c.classList.remove("uncalled","called","current");
+
+    if(n === gameState.currentNumber) c.classList.add("current");
+    else if(gameState.calledNumbers.includes(n)) c.classList.add("called");
+    else c.classList.add("uncalled");
+  });
+
+  lastNumbersDiv.innerHTML = "";
+  gameState.lastNumbers.slice(0,10).forEach(n=>{
+    const d = document.createElement('div');
+    d.className = "px-3 py-2 rounded-md font-bold text-white";
+    d.style.background = "linear-gradient(135deg,#06b6d4,#14b8a6)";
+    d.textContent = n;
+    lastNumbersDiv.appendChild(d);
+  });
+
+  prizeRow.innerHTML = "";
+  gameState.prizes.forEach(p=>{
+    const row = document.createElement('div');
+
+    if(p.id==="fullhouse" || p.id==="outhouse"){
+      row.className = "special-prize";
+      if(p.status==="CLAIMED") row.classList.add("pulse");
+    } else {
+      row.className = "px-3 py-2 rounded-xl font-semibold bg-gradient-to-r from-teal-100 to-teal-200 text-teal-700";
+      if(p.status==="CLAIMED"){
+        row.style.background="linear-gradient(135deg,#a7f3d0,#6ee7b7)";
+      }
+    }
+
+    row.textContent = `${p.name} — ${p.status}`;
+
+    prizeRow.appendChild(row);
+  });
+
+  drawnNumberDiv.textContent = gameState.drawnNumber || "--";
+
+  prizeManagement.innerHTML = "";
+  gameState.prizes.forEach(p=>{
+    const box = document.createElement('div');
+    box.className = "p-3 bg-white/60 rounded-lg";
+
+    const title = document.createElement('div');
+    title.className = "font-semibold text-teal-700 mb-1";
+    title.textContent = `${p.name} · ${p.status}`;
+    box.appendChild(title);
+
+    const row = document.createElement('div');
+    row.className = "flex gap-3";
+
+    const btn = document.createElement('button');
+    btn.className = "px-3 py-2 rounded-lg font-bold text-white";
+    btn.style.background = "linear-gradient(135deg,#06b6d4,#14b8a6)";
+    btn.textContent = p.status === "OPEN" ? "Mark CLAIMED" : "Reopen";
+
+    btn.onclick = async ()=>{
+      p.status = p.status === "OPEN" ? "CLAIMED" : "OPEN";
+
+      if(p.id==="fullhouse" || p.id==="outhouse"){
+        triggerPulse(p.id);
+      }
+
+      await syncDB();
+      updateUI();
+      toast(`${p.name} ${p.status}`);
+    };
+
+    const saveBtn = document.createElement('button');
+    saveBtn.className = "px-3 py-2 rounded-lg font-bold bg-blue-500 text-white";
+    saveBtn.textContent = "Save";
+    saveBtn.onclick = async()=>{
+      await syncDB();
+      toast(`Saved ${p.name}`);
+    }
+
+    row.appendChild(btn);
+    row.appendChild(saveBtn);
+    box.appendChild(row);
+
+    prizeManagement.appendChild(box);
+  });
+}
+
+function triggerPulse(){
+  const cards = document.querySelectorAll('.special-prize');
+  cards.forEach(c=>{
+    c.classList.add('pulse');
+    setTimeout(()=>c.classList.remove('pulse'),1500);
+  });
+}
+
+/* ============================================================
+   DRAW + FLASH NUMBER
+   ============================================================ */
+drawNumberBtn.onclick = ()=>{
+  const available = [];
+  for(let i=1;i<=90;i++){
+    if(!gameState.calledNumbers.includes(i) &&
+       i!==gameState.currentNumber &&
+       i!==gameState.drawnNumber){
+      available.push(i);
+    }
+  }
+  if(!available.length) return toast("All numbers drawn");
+
+  const next = available[Math.floor(Math.random()*available.length)];
+  gameState.drawnNumber = next;
+  updateUI();
+
+  flashNumberBtn.disabled = false;
+};
+
+flashNumberBtn.onclick = async()=>{
+  if(!gameState.drawnNumber) return;
+
+  if(gameState.currentNumber){
+    gameState.calledNumbers.unshift(gameState.currentNumber);
+    gameState.lastNumbers.unshift(gameState.currentNumber);
+  }
+
+  gameState.currentNumber = gameState.drawnNumber;
+  gameState.drawnNumber = null;
+
+  flashNumberBtn.disabled = true;
+
+  await syncDB();
+  updateUI();
+  toast(`Number ${gameState.currentNumber} flashed`);
+};
+
+/* ============================================================
+   RESET GAME
+   ============================================================ */
+resetGameBtn.onclick = ()=>{
+  resetModal.classList.remove('hidden');
+};
+cancelResetBtn.onclick = ()=>{
+  resetModal.classList.add('hidden');
+};
+confirmResetBtn.onclick = async()=>{
+  resetModal.classList.add('hidden');
+
+  gameState = {
     calledNumbers: [],
     currentNumber: null,
     drawnNumber: null,
     lastNumbers: [],
     prizes: [
-      { id: 'top_line', name: 'Top Line', status: 'OPEN', claimant: '' },
-      { id: 'middle_line', name: 'Middle Line', status: 'OPEN', claimant: '' },
-      { id: 'bottom_line', name: 'Bottom Line', status: 'OPEN', claimant: '' },
-      { id: 'early_five', name: 'Early Five', status: 'OPEN', claimant: '' },
-      { id: 'full_house', name: 'Full House', status: 'OPEN', claimant: '' }
+      { id:"fullhouse", name:"Full House", status:"OPEN" },
+      { id:"outhouse", name:"Outhouse", status:"OPEN" },
+      { id:"top_line", name:"Top Line", status:"OPEN" },
+      { id:"middle_line", name:"Middle Line", status:"OPEN" },
+      { id:"bottom_line", name:"Bottom Line", status:"OPEN" },
+      { id:"star", name:"Star", status:"OPEN" }
     ]
   };
 
-  // host password
-  const HOST_PASSWORD = "ladiesmeet2025";
-  let hostUnlocked = false;
-
-  // -------------------------
-  // DOM refs
-  // -------------------------
-  const playerScreen = document.getElementById('playerScreen');
-  const hostScreen = document.getElementById('hostScreen');
-  const currentNumberDisplay = document.getElementById('currentNumberDisplay');
-  const mainBoard = document.getElementById('mainBoard');
-  const hostBoard = document.getElementById('hostBoard');
-  const lastNumbersDiv = document.getElementById('lastNumbers');
-  const prizeRow = document.getElementById('prizeRow');
-  const prizeStatusPlayer = document.getElementById('prizeStatusPlayer');
-  const prizeManagement = document.getElementById('prizeManagement');
-  const drawnNumberDiv = document.getElementById('drawnNumber');
-  const drawNumberBtn = document.getElementById('drawNumberBtn');
-  const flashNumberBtn = document.getElementById('flashNumberBtn');
-  const drawnNumberEl = document.getElementById('drawnNumber');
-  const toastContainer = document.getElementById('toastContainer');
-
-  // host controls
-  const resetGameBtn = document.getElementById('resetGameBtn');
-  const lockHostBtn = document.getElementById('lockHostBtn');
-
-  // reset modal
-  const resetModal = document.getElementById('resetModal');
-  const confirmResetBtn = document.getElementById('confirmResetBtn');
-  const cancelResetBtn = document.getElementById('cancelResetBtn');
-
-  // confetti
-  const confettiCanvas = document.getElementById('confettiCanvas');
-  const confettiCtx = confettiCanvas.getContext('2d');
-
-  // -------------------------
-  // Audio (WebAudio)
-  // -------------------------
-  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  function playBeep(frequency = 880, duration = 0.12, type = 'sine', gain = 0.08){
-    try{
-      const o = audioCtx.createOscillator();
-      const g = audioCtx.createGain();
-      o.type = type;
-      o.frequency.value = frequency;
-      g.gain.value = gain;
-      o.connect(g); g.connect(audioCtx.destination);
-      o.start();
-      g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
-      setTimeout(()=>{ o.stop(); o.disconnect(); g.disconnect(); }, duration*1000 + 50);
-    }catch(e){}
-  }
-  function playDrawSound(){ playBeep(720,0.12,'sawtooth',0.09); playBeep(1100,0.08,'sine',0.06); }
-  function playFlashSound(){ playBeep(1100,0.08,'square',0.08); playBeep(1550,0.06,'sine',0.06); }
-
-  // -------------------------
-  // Confetti implementation
-  // -------------------------
-  let confettiParticles = [];
-  let confettiRunning = false;
-  function resizeConfetti(){
-    confettiCanvas.width = window.innerWidth;
-    confettiCanvas.height = window.innerHeight;
-  }
-  window.addEventListener('resize', resizeConfetti);
-  resizeConfetti();
-
-  function spawnConfettiBurst(duration = 2500){
-    // show canvas
-    confettiCanvas.style.display = 'block';
-    confettiParticles = [];
-    const count = 120;
-    for(let i=0;i<count;i++){
-      confettiParticles.push({
-        x: Math.random()*confettiCanvas.width,
-        y: Math.random()*confettiCanvas.height - confettiCanvas.height*0.2,
-        vx: (Math.random()-0.5)*8,
-        vy: Math.random()*6 + 2,
-        size: Math.random()*6 + 4,
-        rot: Math.random()*360,
-        color: ['#FF6B6B','#F093FB','#F6D365','#96E6A1','#FFD166'][Math.floor(Math.random()*5)],
-        spin: (Math.random()-0.5)*0.2
-      });
-    }
-    confettiRunning = true;
-    const start = performance.now();
-    function step(ts){
-      const t = ts - start;
-      confettiCtx.clearRect(0,0,confettiCanvas.width, confettiCanvas.height);
-      confettiParticles.forEach(p=>{
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.08; // gravity
-        p.rot += p.spin;
-        confettiCtx.save();
-        confettiCtx.translate(p.x,p.y);
-        confettiCtx.rotate(p.rot);
-        confettiCtx.fillStyle = p.color;
-        confettiCtx.fillRect(-p.size/2, -p.size/2, p.size, p.size*0.6);
-        confettiCtx.restore();
-      });
-      if(t < duration){
-        requestAnimationFrame(step);
-      } else {
-        // fade out for 400ms
-        setTimeout(()=> {
-          confettiCtx.clearRect(0,0,confettiCanvas.width, confettiCanvas.height);
-          confettiCanvas.style.display = 'none';
-          confettiRunning = false;
-        }, 400);
-      }
-    }
-    requestAnimationFrame(step);
-  }
-
-  // -------------------------
-  // Routing: #player / #host with password prompt
-  // -------------------------
-  function handleHash(){
-    const h = location.hash.replace('#','') || 'player';
-    if(h === 'host'){
-      // prompt for password if not unlocked
-      if(!hostUnlocked){
-        const pw = prompt('Enter host password:');
-        if(pw === HOST_PASSWORD){
-          hostUnlocked = true;
-          showScreen('host');
-        } else {
-          alert('Wrong password. Redirecting to Player view.');
-          location.hash = '#player';
-          showScreen('player');
-        }
-      } else {
-        showScreen('host');
-      }
-    } else {
-      showScreen('player');
-    }
-  }
-  function showScreen(name){
-    if(name === 'host'){
-      playerScreen.classList.remove('active');
-      hostScreen.classList.add('active');
-    } else {
-      hostScreen.classList.remove('active');
-      playerScreen.classList.add('active');
-    }
-  }
-  window.addEventListener('hashchange', handleHash);
-  handleHash(); // initial
-
-  // -------------------------
-  // Initialize Boards
-  // -------------------------
-  function makeCell(num, classes = '') {
-    const div = document.createElement('div');
-    div.className = 'number-cell px-2 py-3 text-center rounded-lg font-bold ' + classes;
-    div.textContent = num;
-    div.dataset.number = num;
-    return div;
-  }
-
-  function initializeBoards(){
-    // clear
-    mainBoard.innerHTML = '';
-    hostBoard.innerHTML = '';
-
-    for(let i=1;i<=90;i++){
-      // main
-      const m = makeCell(i,'uncalled');
-      mainBoard.appendChild(m);
-
-      // host small
-      const hs = makeCell(i,'uncalled text-sm py-2');
-      hostBoard.appendChild(hs);
-    }
-  }
-
-  // -------------------------
-  // UI Update
-  // -------------------------
-  function updateUI(){
-    // current number
-    currentNumberDisplay.textContent = gameState.currentNumber || '--';
-    if(gameState.currentNumber){
-      currentNumberDisplay.classList.add('flash-in');
-      setTimeout(()=> currentNumberDisplay.classList.remove('flash-in'),700);
-    }
-
-    // boards - update every .number-cell
-    document.querySelectorAll('.number-cell').forEach(cell => {
-      const num = parseInt(cell.dataset.number,10);
-      cell.classList.remove('uncalled','called','current');
-      if(num === gameState.currentNumber){
-        cell.classList.add('current');
-      } else if(gameState.calledNumbers.includes(num)){
-        cell.classList.add('called');
-      } else {
-        cell.classList.add('uncalled');
-      }
-    });
-
-    // last 10
-    lastNumbersDiv.innerHTML = '';
-    gameState.lastNumbers.slice(0,10).forEach(n => {
-      const d = document.createElement('div');
-      d.className = 'px-3 py-2 rounded-md font-bold text-white';
-      d.style.background = 'linear-gradient(135deg,#f093fb 0%,#f5576c 100%)';
-      d.textContent = n;
-      lastNumbersDiv.appendChild(d);
-    });
-
-    // prize row on player (single row)
-    prizeRow.innerHTML = '';
-    gameState.prizes.forEach(prize => {
-      const card = document.createElement('div');
-      card.className = 'px-3 py-2 rounded-xl font-semibold flex items-center gap-3 whitespace-nowrap';
-      if(prize.status === 'OPEN'){
-        card.style.background = 'linear-gradient(135deg,#d4fc79 0%,#96e6a1 100%)';
-        card.style.color = '#274016';
-      } else {
-        card.style.background = 'linear-gradient(135deg,#f093fb 0%,#f5576c 100%)';
-        card.style.color = '#fff';
-      }
-      // display claimant if present
-      const label = document.createElement('div');
-      label.textContent = prize.claimant ? `${prize.name} — ${prize.status} by ${prize.claimant}` : `${prize.name} — ${prize.status}`;
-      if(prize.status === 'OPEN') label.textContent = `${prize.name} — OPEN`;
-      card.appendChild(label);
-      prizeRow.appendChild(card);
-    });
-
-    // prize management (host): re-render inputs
-    prizeManagement.innerHTML = '';
-    gameState.prizes.forEach(prize => {
-      const wrap = document.createElement('div');
-      wrap.className = 'p-2 rounded-lg bg-white/60';
-
-      const label = document.createElement('div');
-      label.className = 'text-sm font-semibold text-purple-800 mb-2';
-      label.textContent = `${prize.name} · ${prize.status}`;
-      wrap.appendChild(label);
-
-      const row = document.createElement('div');
-      row.className = 'flex flex-col sm:flex gap-2';
-
-      // claimant input
-      const inp = document.createElement('input');
-      inp.type = 'text';
-      inp.placeholder = 'Claimant name';
-      inp.value = prize.claimant || '';
-      inp.className = 'flex-1 px-3 py-2 rounded-lg border';
-      inp.oninput = (e) => { prize.claimant = e.target.value; };
-
-      // toggle button (open/won)
-      const toggleBtn = document.createElement('button');
-      toggleBtn.className = 'px-3 py-2 rounded-lg font-semibold';
-      toggleBtn.textContent = prize.status === 'OPEN' ? 'Mark WON' : 'Reopen';
-      toggleBtn.style.background = prize.status === 'OPEN' ? 'linear-gradient(135deg,#f093fb 0%,#f5576c 100%)' : 'linear-gradient(135deg,#d4fc79 0%,#96e6a1 100%)';
-      toggleBtn.style.color = '#fff';
-      toggleBtn.onclick = async () => {
-        // If marking WON and no claimant entered, ask (small validation)
-        if(prize.status === 'OPEN'){
-          if(!prize.claimant || prize.claimant.trim().length === 0){
-            const name = prompt(`Enter claimant name for ${prize.name}: (recommended)`, '');
-            if(name !== null) prize.claimant = name.trim();
-          }
-        } else {
-          // reopening -> clear claimant? we'll keep claimant but status reopens
-        }
-
-        prize.status = prize.status === 'OPEN' ? 'WON' : 'OPEN';
-        // if full_house won -> confetti
-        if(prize.id === 'full_house' && prize.status === 'WON'){
-          spawnConfettiBurst(2800);
-          showToast(`🎉 Full House WON by ${prize.claimant || 'Unknown'}`);
-        } else {
-          showToast(`${prize.name} is now ${prize.status}`);
-        }
-
-        // play sound for big prize
-        if(prize.id === 'full_house' && prize.status === 'WON'){
-          playBeep(520,0.14,'sine',0.12);
-          playBeep(840,0.09,'sine',0.09);
-        }
-
-        await syncToDatabase();
-        updateUI();
-      };
-
-      // save claimant button
-      const saveBtn = document.createElement('button');
-      saveBtn.className = 'px-3 py-2 rounded-lg bg-blue-500 text-white font-semibold';
-      saveBtn.textContent = 'Save';
-      saveBtn.onclick = async () => {
-        await syncToDatabase();
-        showToast(`${prize.name} claimant saved`);
-      };
-
-      row.appendChild(inp);
-      row.appendChild(toggleBtn);
-      row.appendChild(saveBtn);
-
-      wrap.appendChild(row);
-      prizeManagement.appendChild(wrap);
-    });
-
-    // drawn number (private display)
-    drawnNumberDiv.textContent = gameState.drawnNumber || '--';
-  }
-
-  // -------------------------
-  // Toggle prize wrapper (for direct toggle if needed)
-  // -------------------------
-  async function togglePrize(prizeId){
-    const prize = gameState.prizes.find(p=>p.id===prizeId);
-    if(!prize) return;
-    prize.status = prize.status === 'OPEN' ? 'WON' : 'OPEN';
-    await syncToDatabase();
-    updateUI();
-  }
-  window.togglePrize = togglePrize;
-
-  // -------------------------
-  // Draw / Flash logic
-  // -------------------------
-  drawNumberBtn.addEventListener('click', async () => {
-    // build available numbers
-    const available = [];
-    for(let i=1;i<=90;i++){
-      if(!gameState.calledNumbers.includes(i) && i !== gameState.currentNumber && i !== gameState.drawnNumber){
-        available.push(i);
-      }
-    }
-    if(available.length === 0){ alert('All numbers called'); return; }
-    const idx = Math.floor(Math.random()*available.length);
-    gameState.drawnNumber = available[idx];
-    drawnNumberDiv.textContent = gameState.drawnNumber;
-    flashNumberBtn.disabled = false;
-    playDrawSound();
-    // do not commit yet - host must hit flash
-  });
-
-  flashNumberBtn.addEventListener('click', async () => {
-    if(!gameState.drawnNumber) return;
-    // move previous current -> called & lastNumbers
-    if(gameState.currentNumber){
-      gameState.calledNumbers.push(gameState.currentNumber);
-      gameState.lastNumbers.unshift(gameState.currentNumber);
-      if(gameState.lastNumbers.length>200) gameState.lastNumbers = gameState.lastNumbers.slice(0,200);
-    }
-    // set current
-    gameState.currentNumber = gameState.drawnNumber;
-    gameState.drawnNumber = null;
-    drawnNumberDiv.textContent = '--';
-    flashNumberBtn.disabled = true;
-
-    // announce
-    showToast(`Number ${gameState.currentNumber} flashed!`);
-    playFlashSound();
-
-    // sync & update UI
-    await syncToDatabase();
-    updateUI();
-  });
-
-  // -------------------------
-  // Reset
-  // -------------------------
-  resetGameBtn.addEventListener('click', () => {
-    resetModal.classList.remove('hidden');
-  });
-  cancelResetBtn.addEventListener('click', () => resetModal.classList.add('hidden'));
-  confirmResetBtn.addEventListener('click', async () => {
-    resetModal.classList.add('hidden');
-    gameState = {
-      calledNumbers: [],
-      currentNumber: null,
-      drawnNumber: null,
-      lastNumbers: [],
-      prizes: [
-        { id: 'top_line', name: 'Top Line', status: 'OPEN', claimant: '' },
-        { id: 'middle_line', name: 'Middle Line', status: 'OPEN', claimant: '' },
-        { id: 'bottom_line', name: 'Bottom Line', status: 'OPEN', claimant: '' },
-        { id: 'early_five', name: 'Early Five', status: 'OPEN', claimant: '' },
-        { id: 'full_house', name: 'Full House', status: 'OPEN', claimant: '' }
-      ]
-    };
-    await syncToDatabase();
-    updateUI();
-    showToast('Game reset');
-  });
-
-  // Lock host (simple toggle)
-  lockHostBtn.addEventListener('click', () => {
-    hostUnlocked = !hostUnlocked;
-    lockHostBtn.textContent = hostUnlocked ? 'Lock' : 'Unlock';
-    lockHostBtn.classList.toggle('bg-gray-100');
-    showToast(hostUnlocked ? 'Host unlocked' : 'Host locked');
-  });
-
-  // -------------------------
-  // Toasts
-  // -------------------------
-  function showToast(text, timeout=3200){
-    const t = document.createElement('div');
-    t.className = 'toast glass rounded-lg p-3 shadow-md';
-    t.innerHTML = `<div class="font-semibold text-sm">${text}</div>`;
-    toastContainer.appendChild(t);
-    setTimeout(()=> {
-      t.style.transition = 'all .25s ease';
-      t.style.opacity = '0';
-      t.style.transform = 'translateY(-8px) scale(.98)';
-      setTimeout(()=> t.remove(), 250);
-    }, timeout);
-  }
-
-  // -------------------------
-  // Database sync (upsert + realtime)
-  // -------------------------
-  async function syncToDatabase(){
-    try {
-      await supabase
-        .from('tambola_game')
-        .upsert({
-          id: 1,
-          game_state: gameState,
-          updated_at: new Date().toISOString()
-        });
-    } catch(err){
-      console.error('sync error', err);
-    }
-  }
-
-  async function loadFromDatabase(){
-    try {
-      const { data, error } = await supabase
-        .from('tambola_game')
-        .select('*')
-        .eq('id',1)
-        .single();
-
-      if(data && data.game_state){
-        // ensure prizes have claimant field (backwards compat)
-        if(data.game_state.prizes && Array.isArray(data.game_state.prizes)){
-          data.game_state.prizes = data.game_state.prizes.map(p => ({ claimant:'', ...p }));
-        }
-        gameState = data.game_state;
-        updateUI();
-      } else {
-        // if empty, push initial
-        await syncToDatabase();
-      }
-    } catch(err){
-      console.log('No existing state or load failed', err);
-      await syncToDatabase();
-    }
-  }
-
-  // Realtime subscription (preserve behavior)
-  supabase
-    .channel('tambola_updates')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'tambola_game' },
-      (payload) => {
-        if(payload.new && payload.new.game_state){
-          // ensure claimant field exists for prizes
-          if(payload.new.game_state.prizes && Array.isArray(payload.new.game_state.prizes)){
-            payload.new.game_state.prizes = payload.new.game_state.prizes.map(p => ({ claimant:'', ...p }));
-          }
-          gameState = payload.new.game_state;
-          updateUI();
-        }
-      })
-    .subscribe();
-
-  // -------------------------
-  // Init
-  // -------------------------
-  initializeBoards();
-  loadFromDatabase();
+  await syncDB();
   updateUI();
+  toast("Game Reset");
+};
 
-  // ensure UI updates on load
-  document.getElementById('navPlayer').addEventListener('click', (e)=>{ e.preventDefault(); location.hash='#player'; });
-  document.getElementById('navHost').addEventListener('click', (e)=>{ e.preventDefault(); location.hash='#host'; });
+/* ============================================================
+   LOCK HOST PANEL
+   ============================================================ */
+lockHostBtn.onclick = ()=>{
+  hostUnlocked = !hostUnlocked;
+  lockHostBtn.textContent = hostUnlocked ? "Lock" : "Unlock";
+};
 
-  // keyboard shortcuts
-  window.addEventListener('keydown', (e)=>{
-    if(e.key === 'd' && hostUnlocked) drawNumberBtn.click();
-    if(e.key === 'f' && hostUnlocked && !flashNumberBtn.disabled) flashNumberBtn.click();
-  });
+/* ============================================================
+   TOAST
+   ============================================================ */
+function toast(text){
+  const t = document.createElement("div");
+  t.className = "toast glass p-3 rounded-lg shadow";
+  t.textContent = text;
+  toastContainer.appendChild(t);
 
-  // -------------------------
-  // Confetti spawn helper wrapper (for external calls)
-  // -------------------------
-  function spawnConfettiBurst(duration = 2500) {
-    try {
-      spawnConfettiBurstInner(duration);
-    } catch(e) {
-      // fallback: simple visual toast
-      showToast('🎉 Confetti!');
+  setTimeout(()=>{
+    t.style.opacity="0"; 
+    t.style.transform="translateY(-6px)";
+    setTimeout(()=>t.remove(),250);
+  },3000);
+}
+
+/* ============================================================
+   DATABASE SYNC
+   ============================================================ */
+async function syncDB(){
+  try {
+    await supabase.from("tambola_game").upsert({
+      id:1,
+      game_state:gameState,
+      updated_at:new Date().toISOString()
+    });
+  } catch(e){ console.log(e); }
+}
+
+async function loadDB(){
+  try{
+    const {data} = await supabase
+      .from("tambola_game")
+      .select("*")
+      .eq("id",1)
+      .single();
+
+    if(data && data.game_state){
+      gameState = data.game_state;
+    } else {
+      await syncDB();
     }
+  } catch(e){
+    console.log("DB Load error", e);
   }
+}
 
-  // define inner function with different name to avoid hoisting conflict
-  function spawnConfettiBurstInner(duration = 2500){
-    // small wrapper to call existing function defined earlier
-    spawnConfettiBurst(duration);
-  }
+/* ============================================================
+   INIT
+   ============================================================ */
+async function init(){
+  buildBoards();
+  await loadDB();
+  updateUI();
+}
+init();
+
+document.getElementById('navPlayer').onclick = ()=> location.hash="#player";
+document.getElementById('navHost').onclick = ()=> location.hash="#host";
 
 </script>
 </body>

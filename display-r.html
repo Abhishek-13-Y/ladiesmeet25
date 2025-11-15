@@ -1,235 +1,152 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Resolution Dashboard - Ladies Meet 2025</title>
+  <title>Vision Display - Monthly Interaction 2025</title>
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
   <style>
-    /* --- Animations --- */
-    @keyframes scroll {
-      0% { transform: translateX(0); }
-      100% { transform: translateX(-50%); }
-    }
-    .scroll-container {
-      animation: scroll 90s linear infinite;
-      display: flex;
-      gap: 1.5rem;
-    }
-    .scroll-container:hover { animation-play-state: paused; }
-
     @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.95); }
-      to { opacity: 1; transform: scale(1); }
-    }
-    .resolution-card {
-      animation: fadeIn 0.5s ease-out;
-      flex-shrink: 0;
-      width: 480px !important;
-      min-width: 480px !important;
+      from {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
     }
 
-    /* --- Frosted Glass + Highlight --- */
+    @keyframes flipIn {
+      0% {
+        transform: rotateY(90deg);
+        opacity: 0;
+      }
+
+      100% {
+        transform: rotateY(0deg);
+        opacity: 1;
+      }
+    }
+
+    .card-flip {
+      animation: flipIn 0.6s ease-out;
+    }
+
     .glass-card {
       background: rgba(255, 255, 255, 0.25);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      border-radius: 24px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 20px;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-      transition: all 0.3s ease;
-    }
-    .glass-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
-    }
-    .highlight {
-      box-shadow: 0 0 25px rgba(255, 128, 171, 0.5);
-      border: 1px solid rgba(255, 128, 171, 0.5);
-      transform: scale(1.02);
+      transition: all 0.4s ease;
     }
 
-    /* --- Page Background --- */
+    .glass-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 32px rgba(20, 184, 166, 0.2);
+    }
+
     body {
-      background: linear-gradient(135deg, rgba(255,183,197,0.45), rgba(193,224,255,0.45), rgba(200,255,214,0.45));
-      backdrop-filter: blur(25px);
-      -webkit-backdrop-filter: blur(25px);
+      background: linear-gradient(135deg,
+          rgba(204, 251, 241, 0.5),
+          rgba(165, 243, 252, 0.5),
+          rgba(167, 243, 208, 0.5));
+      background-size: cover;
+      background-position: center;
       background-attachment: fixed;
     }
 
-    /* --- Quote Text --- */
     .quote-box {
-  position: relative;
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-radius: 20px;
-  padding: 1.75rem 2rem;
-  margin: 0.75rem 0;
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.5),
-    0 2px 8px rgba(0, 0, 0, 0.08);
-  font-style: italic;
-  color: #333;
-  transition: all 0.3s ease;
-}
-.quote-box:hover {
-  transform: scale(1.01);
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.6),
-    0 4px 14px rgba(0, 0, 0, 0.15);
-}
-.quote-box p {
-  margin: 0;
-  line-height: 1.6;
-  font-size: 1.125rem;
-  font-weight: 400;
-}
-
+      background: rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 16px;
+      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8),
+        0 2px 8px rgba(0, 0, 0, 0.08);
+    }
   </style>
 </head>
 
-<body class="min-h-screen overflow-hidden text-gray-800">
+<body class="min-h-screen text-gray-800 overflow-hidden">
 
-  <!-- Header -->
-  <header class="bg-white/70 backdrop-blur-xl shadow-xl py-8 px-12 sticky top-0 z-50">
+  <!-- HEADER -->
+  <header class="bg-white/70 backdrop-blur-xl shadow-xl py-6 px-8 sticky top-0 z-50">
     <div class="max-w-[1920px] mx-auto flex justify-between items-center">
       <div>
-        <div class="inline-block bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-2 rounded-full text-base font-semibold mb-3">
-          Ladies Meet 2025
+        <div
+          class="inline-block bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-6 py-2 rounded-full text-sm font-semibold mb-2">
+          Monthly Interaction 2025
         </div>
-        <h1 class="text-6xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-          Resolution Dashboard 2026
-        </h1>
+        <h2 class="text-5xl font-bold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
+          Community Visions 2026
+        </h2>
       </div>
       <div class="text-right">
-        <div class="text-5xl font-bold text-purple-600" id="totalCount">0</div>
-        <div class="text-lg text-gray-600">Total Resolutions</div>
+        <div class="text-5xl font-bold text-teal-600" id="totalCount">0</div>
+        <div class="text-lg text-gray-600">Total Visions</div>
       </div>
     </div>
   </header>
 
-  <!-- Main Dashboard -->
-  <main class="py-8">
-
-    <!-- Top Liked -->
-    <section class="mb-8 px-12">
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-4xl font-bold text-purple-800 flex items-center gap-3">
-          <span class="text-5xl">❤️</span> Most Loved
-        </h2>
-        <div class="text-2xl font-semibold text-purple-600" id="topCount">0</div>
+  <!-- MAIN GRID -->
+  <main class="p-8">
+    <div class="max-w-[1800px] mx-auto">
+      <div id="grid"
+        class="grid gap-4 auto-rows-fr grid-cols-[repeat(auto-fit,minmax(260px,1fr))]">
       </div>
-      <div class="overflow-hidden">
-        <div id="topRow" class="scroll-container"></div>
-      </div>
-    </section>
-
-    <!-- Recently Updated -->
-    <section class="mb-8 px-12">
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-4xl font-bold text-blue-800 flex items-center gap-3">
-          <span class="text-5xl">🆕</span> Recently Updated
-        </h2>
-        <div class="text-2xl font-semibold text-blue-600" id="recentCount">0</div>
-      </div>
-      <div class="overflow-hidden">
-        <div id="recentRow" class="scroll-container" style="animation-direction: reverse;"></div>
-      </div>
-    </section>
-
-    <!-- Random Resolutions -->
-    <section class="mb-8 px-12">
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-4xl font-bold text-green-800 flex items-center gap-3">
-          <span class="text-5xl">🎲</span> More Resolutions
-        </h2>
-        <div class="text-2xl font-semibold text-green-600" id="randomCount">0</div>
-      </div>
-      <div class="overflow-hidden">
-        <div id="randomRow" class="scroll-container"></div>
-      </div>
-    </section>
-
+    </div>
   </main>
 
-  <!-- Footer -->
-  <footer class="fixed bottom-0 left-0 right-0 bg-white/70 backdrop-blur-lg py-4 text-center text-base text-gray-700 shadow-lg">
-    Made with ❤️ by Ordnance Fraternity • Auto-refreshing every 45 seconds
+  <!-- FOOTER -->
+  <footer class="fixed bottom-0 left-0 right-0 bg-white/70 backdrop-blur-lg py-3 text-center text-base text-gray-700 shadow-lg">
+    Made with ❤️ by Ordnance Fraternity • Rotating every 5 seconds
   </footer>
 
-  <!-- Loading Overlay -->
+  <!-- LOADING -->
   <div id="loading" class="fixed inset-0 bg-white/80 flex items-center justify-center z-50">
     <div class="text-center">
-      <div class="inline-block animate-spin rounded-full h-20 w-20 border-4 border-purple-200 border-t-purple-600 mb-4"></div>
-      <p class="text-gray-800 text-2xl">Loading Resolutions...</p>
+      <div class="inline-block animate-spin rounded-full h-20 w-20 border-4 border-teal-200 border-t-teal-600 mb-4"></div>
+      <p class="text-gray-800 text-2xl">Loading Visions...</p>
     </div>
   </div>
 
   <script>
     const SUPABASE_URL = "https://jlzqdefinnwoazsqlunf.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsenFkZWZpbm53b2F6c3FsdW5mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI0NTgwOTksImV4cCI6MjA3ODAzNDA5OX0.ZPfFVDqJgZkuhPGO9WNlYHKDwKgQ9SZoGjSIypgaDIE";
+
     const { createClient } = window.supabase;
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const topRow = document.getElementById('topRow');
-    const recentRow = document.getElementById('recentRow');
-    const randomRow = document.getElementById('randomRow');
+    const grid = document.getElementById('grid');
     const totalCount = document.getElementById('totalCount');
-    const topCount = document.getElementById('topCount');
-    const recentCount = document.getElementById('recentCount');
-    const randomCount = document.getElementById('randomCount');
     const loading = document.getElementById('loading');
 
-    let currentDataHash = '';
+    let allVisions = [];
 
     function escapeHtml(s) {
-      if (s == null) return '';
-      return String(s).replaceAll('&', '&amp;').replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+      if (!s) return '';
+      return String(s)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
     }
 
     function shortName(name) {
       if (!name) return 'Anonymous';
-      const parts = name.split(' ');
-      return parts[0];
+      return name.split(' ')[0];
     }
 
-    function createCard(resolution) {
-      return `
-        <div class="resolution-card glass-card">
-          <div class="p-8">
-            <div class="flex items-start justify-between mb-4">
-              <div>
-                <div class="text-sm text-gray-600 mb-1 font-medium">${escapeHtml(resolution.unit || 'Unit')}</div>
-                <h3 class="text-3xl font-bold text-gray-800">${escapeHtml(shortName(resolution.name))}</h3>
-              </div>
-              <div class="flex items-center gap-2 bg-white/40 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm">
-                <span class="text-2xl text-pink-500">❤️</span>
-                <span class="font-bold text-2xl text-pink-600">${resolution.likes || 0}</span>
-              </div>
-            </div>
-
-            <div class="quote-box">
-                <p>${escapeHtml(resolution.resolution)}</p>
-            </div>
-
-
-            <div class="flex justify-between items-center text-sm text-gray-600">
-              <div class="flex items-center gap-2">
-                <span>✏️ ${resolution.edits || 0}/3 edits</span>
-              </div>
-              <span class="text-xs">${new Date(resolution.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    function shuffleArray(array) {
-      const shuffled = [...array];
+    function shuffleArray(arr) {
+      const shuffled = [...arr];
       for (let i = shuffled.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
@@ -237,63 +154,90 @@
       return shuffled;
     }
 
-    async function loadResolutions() {
+    function createCard(vision) {
+      return `
+        <div class="glass-card card-flip h-full flex flex-col overflow-hidden min-h-0">
+          <div class="p-4 flex-1 flex flex-col min-h-0">
+            
+            <div class="flex items-start justify-between mb-3">
+              <div class="flex-1 min-w-0">
+                <div class="text-xs text-gray-600 mb-1 font-medium">
+                  ${escapeHtml(vision.unit || 'Unit')}
+                </div>
+                <h3 class="text-xl font-bold text-teal-800 truncate">
+                  ${escapeHtml(shortName(vision.name))}
+                </h3>
+              </div>
+
+              <div class="flex items-center gap-1 bg-white/50 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm shrink-0">
+                <span class="text-lg">❤️</span>
+                <span class="font-bold text-lg text-teal-600">${vision.likes || 0}</span>
+              </div>
+            </div>
+
+            <div class="quote-box p-4 flex-1 flex items-center justify-center min-h-0 overflow-hidden">
+              <p class="text-sm leading-relaxed text-gray-800 line-clamp-6">
+                ${escapeHtml(vision.future_ready)}
+              </p>
+            </div>
+
+            <div class="flex justify-between items-center text-xs text-gray-600 mt-3">
+              <span>✏️ ${vision.edits || 0}/3</span>
+              <span>${new Date(vision.created_at).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric'
+              })}</span>
+            </div>
+
+          </div>
+        </div>
+      `;
+    }
+
+    function renderGrid(visions) {
+      const batch = shuffleArray(visions);
+      grid.innerHTML = batch.map(v => createCard(v)).join('');
+    }
+
+    async function loadVisions() {
       try {
         const { data, error } = await supabase
-          .from('resolutions')
-          .select('*')
+          .from('participants')
+          .select('id, name, unit, future_ready, likes, edits, created_at')
+          .not('future_ready', 'is', null)
           .order('created_at', { ascending: false })
-          .limit(100);
+          .limit(200);
 
         if (error) throw error;
-        const resolutions = data || [];
-        const newHash = JSON.stringify(resolutions);
-        if (newHash === currentDataHash) return;
-        currentDataHash = newHash;
 
-        totalCount.textContent = resolutions.length;
-        if (!resolutions.length) {
+        allVisions = data || [];
+        totalCount.textContent = allVisions.length;
+
+        if (!allVisions.length) {
           loading.classList.add('hidden');
-          topRow.innerHTML = '<div class="text-center py-20 text-gray-500 text-2xl">No resolutions yet</div>';
+          grid.innerHTML = '<div class="text-center text-2xl text-gray-500 py-20">No visions yet</div>';
           return;
         }
 
-        const sortedByLikes = [...resolutions].sort((a, b) => (b.likes || 0) - (a.likes || 0));
-        const topLiked = sortedByLikes.slice(0, 10);
-        const recent = resolutions.slice(0, 10);
-        const usedIds = new Set([...topLiked.map(r => r.id), ...recent.map(r => r.id)]);
-        const remaining = resolutions.filter(r => !usedIds.has(r.id));
-        const random = shuffleArray(remaining).slice(0, 12);
-
-        topCount.textContent = topLiked.length;
-        recentCount.textContent = recent.length;
-        randomCount.textContent = random.length;
-
-        const topCards = topLiked.map(createCard).join('');
-        const recentCards = recent.map(createCard).join('');
-        const randomCards = random.map(createCard).join('');
-
-        topRow.innerHTML = topCards + topCards;
-        recentRow.innerHTML = recentCards + recentCards;
-        randomRow.innerHTML = randomCards + randomCards;
-
-        // Random highlight
-        const allCards = document.querySelectorAll('.resolution-card');
-        if (allCards.length > 0) {
-          const randomIndex = Math.floor(Math.random() * allCards.length);
-          allCards[randomIndex].classList.add('highlight');
-        }
-
+        renderGrid(allVisions);
         loading.classList.add('hidden');
+
       } catch (err) {
-        console.error(err);
+        console.error('Error:', err);
         loading.classList.add('hidden');
+        grid.innerHTML = '<div class="text-center text-2xl text-red-600 py-20">Failed to load</div>';
       }
     }
 
-    loadResolutions();
-    setInterval(loadResolutions, 45000);
-    document.addEventListener('visibilitychange', () => !document.hidden && loadResolutions());
+    loadVisions();
+    setInterval(() => renderGrid(allVisions), 5000);
+    setInterval(loadVisions, 60000);
+
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) loadVisions();
+    });
   </script>
+
 </body>
+
 </html>
