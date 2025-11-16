@@ -89,6 +89,27 @@
       50% { transform:scale(1.05); box-shadow:0 0 22px rgba(6,182,212,0.35); }
       100% { transform:scale(1); box-shadow:0 0 0 rgba(6,182,212,0.15); }
     }
+
+    .sync-indicator {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      z-index: 1000;
+    }
+
+    .sync-connected {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+    }
+
+    .sync-disconnected {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+    }
   </style>
 </head>
 
@@ -107,6 +128,9 @@
     <a id="navHost" href="#host" class="glass px-3 py-2 rounded-md">Host</a>
   </nav>
 </header>
+
+<!-- Sync Indicator -->
+<div id="syncIndicator" class="sync-indicator sync-disconnected">⚡ Connecting...</div>
 
 <!-- PLAYER SCREEN -->
 <main id="playerScreen" class="screen active px-4">
@@ -230,6 +254,7 @@ let gameState = {
 };
 
 let hostUnlocked = true;
+let isUpdatingFromRemote = false; // Flag to prevent sync loops
 
 /* ============================================================
    SUPABASE
@@ -237,7 +262,7 @@ let hostUnlocked = true;
 const SUPABASE_URL = "https://jlzqdefinnwoazsqlunf.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsenFkZWZpbm53b2F6c3FsdW5mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI0NTgwOTksImV4cCI6MjA3ODAzNDA5OX0.ZPfFVDqJgZkuhPGO9WNlYHKDwKgQ9SZoGjSIypgaDIE";
 const { createClient } = window.supabase;
-  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 /* ============================================================
    DOM ELEMENTS
@@ -254,6 +279,7 @@ const drawnNumberDiv = document.getElementById('drawnNumber');
 const drawNumberBtn = document.getElementById('drawNumberBtn');
 const flashNumberBtn = document.getElementById('flashNumberBtn');
 const toastContainer = document.getElementById('toastContainer');
+const syncIndicator = document.getElementById('syncIndicator');
 
 /* ============================================================
    SCREEN ROUTER
@@ -333,7 +359,7 @@ function updateUI(){
       }
     }
 
-    row.textContent = `${p.name} — ${p.status}`;
+    row.textContent = `${p.name} – ${p.status}`;
 
     prizeRow.appendChild(row);
   });
@@ -490,16 +516,35 @@ function toast(text){
 }
 
 /* ============================================================
+   SYNC INDICATOR
+   ============================================================ */
+function updateSyncIndicator(connected) {
+  if (connected) {
+    syncIndicator.textContent = '⚡ Live';
+    syncIndicator.className = 'sync-indicator sync-connected';
+  } else {
+    syncIndicator.textContent = '⚠️ Offline';
+    syncIndicator.className = 'sync-indicator sync-disconnected';
+  }
+}
+
+/* ============================================================
    DATABASE SYNC
    ============================================================ */
 async function syncDB(){
+  if (isUpdatingFromRemote) return; // Don't sync if we're updating from remote
+  
   try {
     await supabase.from("tambola_game").upsert({
       id:1,
       game_state:gameState,
       updated_at:new Date().toISOString()
     });
-  } catch(e){ console.log(e); }
+    console.log('✅ Synced to database');
+  } catch(e){ 
+    console.error('❌ Sync error:', e); 
+    toast('Sync failed');
+  }
 }
 
 async function loadDB(){
@@ -512,12 +557,57 @@ async function loadDB(){
 
     if(data && data.game_state){
       gameState = data.game_state;
+      console.log('✅ Loaded from database');
     } else {
       await syncDB();
     }
   } catch(e){
-    console.log("DB Load error", e);
+    console.log("⚠️ DB Load error, using defaults", e);
   }
+}
+
+/* ============================================================
+   REALTIME SUBSCRIPTION
+   ============================================================ */
+function setupRealtime() {
+  const channel = supabase
+    .channel('tambola-realtime')
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'tambola_game',
+        filter: 'id=eq.1'
+      },
+      (payload) => {
+        console.log('🔔 Realtime update received:', payload);
+        
+        if (payload.new && payload.new.game_state) {
+          isUpdatingFromRemote = true;
+          gameState = payload.new.game_state;
+          updateUI();
+          
+          // Reset flag after a short delay
+          setTimeout(() => {
+            isUpdatingFromRemote = false;
+          }, 100);
+        }
+      }
+    )
+    .subscribe((status) => {
+      console.log('📡 Subscription status:', status);
+      
+      if (status === 'SUBSCRIBED') {
+        updateSyncIndicator(true);
+        toast('🎉 Connected to live updates!');
+      } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+        updateSyncIndicator(false);
+        toast('⚠️ Lost connection');
+      }
+    });
+
+  return channel;
 }
 
 /* ============================================================
@@ -527,11 +617,27 @@ async function init(){
   buildBoards();
   await loadDB();
   updateUI();
+  
+  // Setup realtime after initial load
+  setupRealtime();
+  
+  console.log('🎲 Tambola initialized with realtime sync');
 }
 init();
 
 document.getElementById('navPlayer').onclick = ()=> location.hash="#player";
 document.getElementById('navHost').onclick = ()=> location.hash="#host";
+
+// Handle connection loss
+window.addEventListener('online', () => {
+  toast('🌐 Back online');
+  setupRealtime();
+});
+
+window.addEventListener('offline', () => {
+  toast('📴 Connection lost');
+  updateSyncIndicator(false);
+});
 
 </script>
 </body>
