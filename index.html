@@ -176,6 +176,31 @@
        -------------------- */
     let existingRecord = null;
     let allVisions = [];
+    let currentUserMobile = null; // Track logged-in user
+    let likedResolutions = new Set(); // Track which resolutions user has liked
+    /* --------------------
+       LocalStorage for liked resolutions
+       -------------------- */
+    function saveLikedResolutions() {
+      if (currentUserMobile) {
+        const key = `liked_resolutions_${currentUserMobile}`;
+        localStorage.setItem(key, JSON.stringify([...likedResolutions]));
+      }
+    }
+
+    function loadLikedResolutions() {
+      if (currentUserMobile) {
+        const key = `liked_resolutions_${currentUserMobile}`;
+        const stored = localStorage.getItem(key);
+        if (stored) {
+          try {
+            likedResolutions = new Set(JSON.parse(stored));
+          } catch (e) {
+            likedResolutions = new Set();
+          }
+        }
+      }
+    }
 
     /* --------------------
        Helpers
@@ -246,6 +271,7 @@
       if (hash === '#resolutions') {
         document.getElementById('resolutionsPage').classList.remove('hidden');
         document.getElementById('navResolutions').classList.add('bg-teal-500', 'text-white');
+        loadLikedResolutions(); // Load user's like history
         loadResolutions();
       } else {
         document.getElementById('registerPage').classList.remove('hidden');
@@ -423,6 +449,9 @@
       container.innerHTML = '';
 
       list.forEach(v => {
+        const isOwnResolution = currentUserMobile && v.mobile === currentUserMobile;
+        const hasLiked = likedResolutions.has(v.id);
+        
         const card = document.createElement('div');
         card.className = 'bg-white rounded-2xl p-5 shadow-sm border-2 border-teal-100 hover:border-teal-300 transition card-shadow';
         card.innerHTML = `
@@ -435,47 +464,69 @@
           </div>
           <div class="text-gray-700 mb-4 text-sm leading-relaxed" style="white-space:pre-wrap;">${esc(v.future_ready)}</div>
           <div class="flex items-center justify-between pt-3 border-t border-teal-100">
-            <button data-id="${v.id}" class="like-btn inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-teal-100 to-cyan-100 hover:from-teal-200 hover:to-cyan-200 font-semibold transition">
-              ❤️ <span class="likes-count text-teal-700">${v.likes || 0}</span>
+            <button data-id="${v.id}" class="like-btn inline-flex items-center gap-2 px-4 py-2 rounded-full ${
+              isOwnResolution 
+                ? 'bg-gray-200 cursor-not-allowed' 
+                : hasLiked 
+                  ? 'bg-gradient-to-r from-pink-200 to-red-200' 
+                  : 'bg-gradient-to-r from-teal-100 to-cyan-100 hover:from-teal-200 hover:to-cyan-200'
+            } font-semibold transition" ${isOwnResolution || hasLiked ? 'disabled' : ''}>
+              ${hasLiked ? '✓' : '❤️'} <span class="likes-count text-teal-700">${v.likes || 0}</span>
             </button>
-            <div class="text-xs text-gray-500">Edits: ${v.edits || 0}/3</div>
+            <div class="text-xs text-gray-500">
+              ${isOwnResolution ? '<span class="text-blue-600 font-semibold">Your vision</span>' : `Edits: ${v.edits || 0}/3`}
+            </div>
           </div>
         `;
         container.appendChild(card);
 
-        card.querySelector('.like-btn').addEventListener('click', async (ev) => {
-          const btn = ev.currentTarget;
-          const id = btn.dataset.id;
-          const span = btn.querySelector('.likes-count');
-          const old = parseInt(span.textContent || '0');
+        // Only add click handler if not own resolution and not already liked
+        if (!isOwnResolution && !hasLiked) {
+          card.querySelector('.like-btn').addEventListener('click', async (ev) => {
+            const btn = ev.currentTarget;
+            const id = btn.dataset.id;
+            const span = btn.querySelector('.likes-count');
+            const old = parseInt(span.textContent || '0');
 
-          btn.disabled = true;
-          span.textContent = old + 1;
+            btn.disabled = true;
+            span.textContent = old + 1;
 
-          try {
-            const { data: participant } = await supabase
-              .from('participants')
-              .select('likes')
-              .eq('id', id)
-              .single();
+            try {
+              const { data: participant } = await supabase
+                .from('participants')
+                .select('likes')
+                .eq('id', id)
+                .single();
 
-            const newLikes = (participant?.likes || 0) + 1;
+              const newLikes = (participant?.likes || 0) + 1;
 
-            const { error } = await supabase
-              .from('participants')
-              .update({ likes: newLikes })
-              .eq('id', id);
+              const { error } = await supabase
+                .from('participants')
+                .update({ likes: newLikes })
+                .eq('id', id);
 
-            if (error) throw error;
-            span.textContent = newLikes;
-          } catch (err) {
-            console.error(err);
-            span.textContent = old;
-            alert('Failed to like');
-          } finally {
-            btn.disabled = false;
-          }
-        });
+              if (error) throw error;
+              
+              span.textContent = newLikes;
+              likedResolutions.add(id); // Mark as liked
+              
+              // Update button appearance
+              btn.classList.remove('bg-gradient-to-r', 'from-teal-100', 'to-cyan-100', 'hover:from-teal-200', 'hover:to-cyan-200');
+              btn.classList.add('bg-gradient-to-r', 'from-pink-200', 'to-red-200', 'cursor-not-allowed');
+              btn.innerHTML = `✓ <span class="likes-count text-teal-700">${newLikes}</span>`;
+              
+              // Save to localStorage
+              saveLikedResolutions();
+              
+            } catch (err) {
+              console.error(err);
+              span.textContent = old;
+              alert('Failed to like');
+            } finally {
+              btn.disabled = true; // Keep disabled after like
+            }
+          });
+        }
       });
     }
 
@@ -541,6 +592,8 @@
 
         if (data) {
           existingRecord = data;
+          currentUserMobile = mobile; // Store user's mobile
+          
           const visionEdits = data.edits || 0;
           const selfieEdits = data.selfie_edits || 0;
 
