@@ -41,8 +41,7 @@
       </div>
 
       <div id="topControls" class="flex items-center gap-3 ml-4">
-        <!-- logout/switch user will appear here when logged in -->
-      </div>
+        </div>
     </header>
 
     <nav class="glass rounded-2xl p-4 mb-6 card-shadow">
@@ -53,7 +52,6 @@
     </nav>
 
     <main class="glass rounded-3xl p-6 card-shadow min-h-[520px]">
-      <!-- Registration -->
       <section id="registerPage" class="">
         <h2 class="text-2xl font-bold text-teal-700 mb-4 text-center">Registration Portal</h2>
 
@@ -121,7 +119,6 @@
         <div id="status" class="mt-4 text-center text-sm"></div>
       </section>
 
-      <!-- Resolutions -->
       <section id="resolutionsPage" class="hidden">
         <h2 class="text-2xl font-bold text-teal-700 mb-4 text-center">Community Visions 2026</h2>
 
@@ -305,8 +302,7 @@
       }
     }
     window.addEventListener('hashchange', handleRoute);
-    showTopControls();
-    handleRoute();
+    handleRoute(); // Run on initial load
 
     /* -------------
        LOAD RESOLUTIONS
@@ -440,7 +436,6 @@
 
               // success - reflect state
               likedResolutions.add(id);
-              saveLikedResolutionsForUser();
               indicatorArea.innerHTML = `<div class="liked-badge">✓ Liked</div>`;
               likeBtn.classList.add('disabled');
 
@@ -456,28 +451,6 @@
           });
         }
       });
-    }
-
-    /* -------------
-       LocalStorage helpers for liked set per user
-       ------------- */
-    function saveLikedResolutionsForUser() {
-      if (!currentUserMobile) return;
-      const key = `liked_resolutions_${currentUserMobile}`;
-      try { localStorage.setItem(key, JSON.stringify([...likedResolutions])); } catch (e) {}
-    }
-    function loadLikedResolutionsForUser() {
-      likedResolutions = new Set();
-      if (!currentUserMobile) return;
-      const key = `liked_resolutions_${currentUserMobile}`;
-      const raw = localStorage.getItem(key);
-      if (raw) {
-        try {
-          JSON.parse(raw).forEach(id => likedResolutions.add(String(id)));
-        } catch (e) {
-          likedResolutions = new Set();
-        }
-      }
     }
 
     /* -------------
@@ -540,7 +513,7 @@
           document.getElementById("unit").value = data.unit || '';
           document.getElementById("futureReady").value = data.future_ready || '';
           document.getElementById("visionRemaining").textContent = Math.max(0, MAX_EDITS - (data.edits || 0));
-          document.getElementById("welcomeName").textContent = data.name || '';
+          document.getElementById("welcomeName").textContent = data.name || 'participant';
           document.getElementById("welcomeMobile").textContent = mobile;
           document.getElementById("welcomeMessage").classList.remove("hidden");
 
@@ -552,6 +525,11 @@
           }
         } else {
           existingRecord = null;
+          // Clear form for new user
+          document.getElementById("name").value = '';
+          document.getElementById("unit").value = '';
+          document.getElementById("futureReady").value = '';
+          document.getElementById("existingSelfiePreview").classList.add("hidden");
           document.getElementById("welcomeMessage").classList.add("hidden");
           document.getElementById("visionRemaining").textContent = MAX_EDITS;
         }
@@ -559,18 +537,16 @@
         // set logged-in user
         currentUserMobile = mobile;
         localStorage.setItem('loggedInMobile', mobile);
-        loadLikedResolutionsForUser(); // load stored likes (will later be replaced by DB fetch on loadResolutions)
         showTopControls();
 
         // show fields
         document.getElementById("formFields").classList.remove("hidden");
-        document.getElementById("mobile").readOnly = true;
-        checkBtn.classList.add("hidden");
-        statusDiv.textContent = "";
+        document.getElementById("mobile").readOnly = true; // Lock mobile field
+        checkBtn.classList.add("hidden"); // Hide continue button
+        statusDiv.textContent = data ? "Record found. You can update your details." : "New participant. Please fill the form.";
       } catch (err) {
         console.error(err);
         statusDiv.textContent = "❌ Error checking mobile";
-      } finally {
         checkBtn.disabled = false;
         checkBtn.textContent = "Continue →";
       }
@@ -689,61 +665,43 @@
        LOGOUT / SWITCH USER
        ------------- */
     function doLogout() {
-      // clear session and liked storage keys for this user
-      try {
-        if (currentUserMobile) {
-          localStorage.removeItem(`liked_resolutions_${currentUserMobile}`);
-        }
-      } catch (e) {}
+      // clear session
       localStorage.removeItem('loggedInMobile');
       currentUserMobile = null;
       likedResolutions = new Set();
       existingRecord = null;
-      // reset UI
+      
+      // reset UI to initial state
       document.getElementById("mobile").value = '';
       document.getElementById("formFields").classList.add("hidden");
       document.getElementById("welcomeMessage").classList.add("hidden");
+      document.getElementById("existingSelfiePreview").classList.add("hidden");
+      document.getElementById("newSelfiePreview").classList.add("hidden");
+      document.getElementById("selfie").value = '';
+      document.getElementById("status").textContent = '';
+      
       document.getElementById("checkBtn").classList.remove("hidden");
+      document.getElementById("checkBtn").disabled = false;
+      document.getElementById("checkBtn").textContent = "Continue →";
+      
       document.getElementById("mobile").readOnly = false;
-      showTopControls();
-      window.location.hash = '#register';
+      
+      showTopControls(); // Update top controls to "Not logged in"
+      window.location.hash = '#register'; // Go back to register page
+      
       // clear cards
       document.getElementById('cardsContainer').innerHTML = '';
+      document.getElementById('emptyState').classList.add('hidden');
     }
 
     /* -------------
-       On-load: if logged in, prefill and show welcome
+       On-load: Just show top controls
        ------------- */
-    (async function initOnLoad() {
+    (function initOnLoad() {
+      // This function now ONLY shows the top controls.
+      // It no longer auto-logs in the user, forcing them
+      // to enter their mobile number every time, as requested.
       showTopControls();
-      if (!currentUserMobile) return;
-      try {
-        const { data } = await supabase.from('participants').select('*').eq('mobile', currentUserMobile).maybeSingle();
-        if (data) {
-          existingRecord = data;
-          document.getElementById("welcomeName").textContent = data.name || '';
-          document.getElementById("welcomeMobile").textContent = currentUserMobile;
-          document.getElementById("welcomeMessage").classList.remove("hidden");
-          document.getElementById("formFields").classList.remove("hidden");
-          document.getElementById("mobile").value = currentUserMobile;
-          document.getElementById("mobile").readOnly = true;
-          document.getElementById("checkBtn").classList.add("hidden");
-          document.getElementById("name").value = data.name || '';
-          document.getElementById("unit").value = data.unit || '';
-          document.getElementById("futureReady").value = data.future_ready || '';
-          document.getElementById("visionRemaining").textContent = Math.max(0, MAX_EDITS - (data.edits || 0));
-          if (data.selfie_url) {
-            document.getElementById("existingSelfieImg").src = data.selfie_url;
-            document.getElementById("existingSelfiePreview").classList.remove("hidden");
-          }
-        } else {
-          // if mobile stored but not in DB, simply clear stored session to avoid stuck state
-          // (this can happen if DB was reset)
-          // doLogout();
-        }
-      } catch (err) {
-        console.warn('prefill error', err);
-      }
     })();
   </script>
 </body>
