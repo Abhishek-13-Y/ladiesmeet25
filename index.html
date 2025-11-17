@@ -12,7 +12,6 @@
       background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(250,255,254,0.75));
       backdrop-filter: blur(8px);
     }
-    .like-btn.liked { pointer-events: none; opacity: 0.85; }
     .liked-badge {
       background-color: #16a34a; /* green-600 */
       color: white;
@@ -24,17 +23,26 @@
       align-items:center;
       gap:6px;
     }
+    .like-btn { transition: all .18s ease; }
+    .like-btn.disabled { pointer-events: none; opacity: .8; }
   </style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-emerald-50 text-gray-800">
 
+ 
   <div class="max-w-5xl mx-auto p-4">
-    <header class="text-center mb-6 pt-6">
-      <div class="inline-block px-5 py-2 rounded-full bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-semibold mb-2">
-        Monthly Interaction 2025
+    <header class="flex items-center justify-between mb-6 pt-6">
+      <div class="text-center w-full">
+        <div class="inline-block px-5 py-2 rounded-full bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-semibold mb-2">
+          Monthly Interaction 2025
+        </div>
+        <h1 class="text-3xl md:text-4xl font-extrabold text-teal-700 mb-1">Participant Portal</h1>
+        <p class="text-sm text-gray-600">Made with ❤️ by Ordnance Fraternity</p>
       </div>
-      <h1 class="text-4xl font-extrabold text-teal-700 mb-1">Participant Portal</h1>
-      <p class="text-sm text-gray-600">Made with ❤️ by Ordnance Fraternity</p>
+
+      <div id="topControls" class="flex items-center gap-3 ml-4">
+        <!-- logout/switch user will appear here when logged in -->
+      </div>
     </header>
 
     <nav class="glass rounded-2xl p-4 mb-6 card-shadow">
@@ -44,9 +52,8 @@
       </div>
     </nav>
 
-    <main class="glass rounded-3xl p-6 card-shadow min-h-[500px]">
-
-      <!-- REGISTER -->
+    <main class="glass rounded-3xl p-6 card-shadow min-h-[520px]">
+      <!-- Registration -->
       <section id="registerPage" class="">
         <h2 class="text-2xl font-bold text-teal-700 mb-4 text-center">Registration Portal</h2>
 
@@ -81,13 +88,30 @@
             <div>
               <label class="block text-sm font-semibold text-teal-700 mb-2">✨ Your Vision for 2026</label>
               <textarea id="futureReady" rows="4" maxlength="500" class="w-full p-3 rounded-xl border-2 border-teal-200" placeholder="Share your goals and vision..."></textarea>
-              <div class="text-xs text-gray-500 mt-1"><span id="charCount">0</span> / 500</div>
+              <div class="text-xs text-gray-500 mt-1">Remaining edits: <span id="visionRemaining">3</span> / 3</div>
             </div>
 
             <div>
               <label class="block text-sm font-semibold mb-2">📸 Upload Selfie (Optional)</label>
               <input id="selfie" type="file" accept="image/jpeg,image/png,image/jpg" class="w-full p-2 bg-white rounded-xl border-2 border-purple-200" />
               <p id="selfieError" class="text-red-600 text-sm mt-1 hidden"></p>
+
+              <div id="existingSelfiePreview" class="hidden mt-3">
+                <div class="bg-white rounded-xl p-3 border-2 border-green-300 inline-block">
+                  <div class="flex items-center gap-3 mb-2"><span class="text-green-600">✅</span><span class="text-sm font-semibold text-green-700">Selfie Already Uploaded</span></div>
+                  <img id="existingSelfieImg" src="" alt="Current" class="w-28 h-28 object-cover rounded-lg" />
+                </div>
+              </div>
+
+              <div id="newSelfiePreview" class="hidden mt-3">
+                <div class="bg-white rounded-xl p-3 border-2 border-blue-300 inline-block">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-semibold text-blue-700">Preview (Not saved)</span>
+                    <button type="button" id="clearSelfieBtn" class="text-red-600 hover:text-red-800 text-sm font-semibold">✕ Remove</button>
+                  </div>
+                  <img id="newSelfieImg" src="" alt="Preview" class="w-28 h-28 object-cover rounded-lg" />
+                </div>
+              </div>
             </div>
 
             <button id="submitBtn" class="w-full bg-gradient-to-r from-teal-600 to-cyan-600 text-white py-3 rounded-xl font-bold">Submit ✓</button>
@@ -97,7 +121,7 @@
         <div id="status" class="mt-4 text-center text-sm"></div>
       </section>
 
-      <!-- RESOLUTIONS -->
+      <!-- Resolutions -->
       <section id="resolutionsPage" class="hidden">
         <h2 class="text-2xl font-bold text-teal-700 mb-4 text-center">Community Visions 2026</h2>
 
@@ -119,7 +143,7 @@
 
   <script>
     /* -------------
-       Config
+       CONFIG
        ------------- */
     const SUPABASE_URL = "https://jlzqdefinnwoazsqlunf.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsenFkZWZpbm53b2F6c3FsdW5mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI0NTgwOTksImV4cCI6MjA3ODAzNDA5OX0.ZPfFVDqJgZkuhPGO9WNlYHKDwKgQ9SZoGjSIypgaDIE";
@@ -129,19 +153,44 @@
     const MAX_EDITS = 3;
 
     /* -------------
-       State
+       STATE
        ------------- */
     let existingRecord = null;
     let allVisions = [];
-    let likedSet = new Set();
-    let loggedInMobile = localStorage.getItem("loggedInMobile") || null;
+    let currentUserMobile = localStorage.getItem('loggedInMobile') || null;
+    let likedResolutions = new Set(); // holds target_id (uuid strings)
 
     /* -------------
-       Helpers
+       HELPERS
        ------------- */
     function esc(s) { if (!s) return ''; return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;'); }
     function shortName(n) { if (!n) return 'Anonymous'; return n.split(' ')[0]; }
     function navigateTo(hash) { window.location.hash = hash; }
+
+    function showTopControls() {
+      const area = document.getElementById('topControls');
+      area.innerHTML = '';
+      if (currentUserMobile) {
+        const span = document.createElement('div');
+        span.className = 'text-sm text-gray-600 pr-4';
+        span.innerHTML = `Logged in: <strong>${currentUserMobile}</strong>`;
+        area.appendChild(span);
+
+        const logoutBtn = document.createElement('button');
+        logoutBtn.className = 'px-3 py-2 rounded-xl bg-white border border-gray-300 text-sm';
+        logoutBtn.textContent = 'Logout / Switch User';
+        logoutBtn.addEventListener('click', () => {
+          if (!confirm('Logout and switch user?')) return;
+          doLogout();
+        });
+        area.appendChild(logoutBtn);
+      } else {
+        const info = document.createElement('div');
+        info.className = 'text-sm text-gray-600';
+        info.textContent = 'Not logged in';
+        area.appendChild(info);
+      }
+    }
 
     function validateMobile(mobile) {
       const err = document.getElementById("mobileError");
@@ -164,12 +213,13 @@
     }
 
     /* -------------
-       Image compression & upload (kept from original)
+       IMAGE HELPERS
        ------------- */
     function compressImageIfNeeded(file, maxWidth = 1440, quality = 0.92) {
       return new Promise((resolve, reject) => {
         if (!file) return resolve(null);
         if (file.size < 200 * 1024) return resolve(file);
+
         const reader = new FileReader();
         reader.onload = () => {
           const img = new Image();
@@ -195,18 +245,6 @@
       });
     }
 
-    async function getStoragePathFromUrl(publicUrl) {
-      if (!publicUrl) return null;
-      try {
-        const { data: files } = await supabase.storage.from(STORAGE_BUCKET).list('selfies', { limit: 1000, sortBy: { column: 'created_at', order: 'desc' }});
-        if (!files) return null;
-        const urlParts = publicUrl.split('/');
-        const fileName = urlParts[urlParts.length - 1].split('?')[0];
-        const match = files.find(f => f.name === fileName);
-        return match ? `selfies/${match.name}` : null;
-      } catch (err) { return null; }
-    }
-
     async function uploadFileSafe(file, mobile, previousUrl = null) {
       if (!file) return previousUrl || null;
       const fileToUpload = await compressImageIfNeeded(file, 1440, 0.92);
@@ -228,15 +266,21 @@
       }
       if (previousUrl) {
         try {
-          const oldPath = await getStoragePathFromUrl(previousUrl);
-          if (oldPath) await supabase.storage.from(STORAGE_BUCKET).remove([oldPath]);
+          // try best-effort deletion of previous
+          const { data: files } = await supabase.storage.from(STORAGE_BUCKET).list('selfies', { limit: 1000 });
+          if (files) {
+            const parts = previousUrl.split('/');
+            const filename = parts[parts.length - 1].split('?')[0];
+            const match = files.find(f => f.name === filename);
+            if (match) await supabase.storage.from(STORAGE_BUCKET).remove([`selfies/${match.name}`]).catch(()=>{});
+          }
         } catch (e) {}
       }
       return newPublicUrl;
     }
 
     /* -------------
-       Routing
+       ROUTING
        ------------- */
     function handleRoute() {
       const hash = window.location.hash || '#register';
@@ -246,6 +290,12 @@
       document.getElementById('navResolutions').classList.remove('bg-teal-500','text-white');
 
       if (hash === '#resolutions') {
+        // guard: require login
+        if (!currentUserMobile) {
+          alert('Please register / login first.');
+          window.location.hash = '#register';
+          return;
+        }
         document.getElementById('resolutionsPage').classList.remove('hidden');
         document.getElementById('navResolutions').classList.add('bg-teal-500','text-white');
         loadResolutions();
@@ -255,10 +305,11 @@
       }
     }
     window.addEventListener('hashchange', handleRoute);
+    showTopControls();
     handleRoute();
 
     /* -------------
-       Load Resolutions & likedSet
+       LOAD RESOLUTIONS
        ------------- */
     async function loadResolutions() {
       try {
@@ -266,12 +317,11 @@
         if (error) throw error;
         allVisions = data || [];
 
-        // refresh likedSet for logged-in user
-        likedSet.clear();
-        loggedInMobile = localStorage.getItem("loggedInMobile") || null;
-        if (loggedInMobile) {
-          const { data: likedRows, error: lerr } = await supabase.from('likes').select('target_id').eq('user_mobile', loggedInMobile);
-          if (!lerr && Array.isArray(likedRows)) likedRows.forEach(r => likedSet.add(r.target_id));
+        // load liked resolutions for current user from DB
+        likedResolutions = new Set();
+        if (currentUserMobile) {
+          const { data: likedRows, error: lErr } = await supabase.from('likes').select('target_id').eq('user_mobile', currentUserMobile);
+          if (!lErr && Array.isArray(likedRows)) likedRows.forEach(r => likedResolutions.add(String(r.target_id)));
         }
 
         renderVisions(allVisions);
@@ -281,6 +331,9 @@
       }
     }
 
+    /* -------------
+       RENDER VISIONS
+       ------------- */
     function renderVisions(list) {
       const container = document.getElementById("cardsContainer");
       const empty = document.getElementById("emptyState");
@@ -288,19 +341,22 @@
 
       if (!list || !list.length) {
         container.innerHTML = '';
-        empty.classList.remove("hidden");
+        empty.classList.remove('hidden');
         badge.textContent = '0';
         return;
       }
-
-      empty.classList.add("hidden");
+      empty.classList.add('hidden');
       badge.textContent = list.length;
       container.innerHTML = '';
 
       list.forEach(v => {
+        const id = String(v.id);
+        const isOwn = currentUserMobile && (v.mobile === currentUserMobile);
+        const hasLiked = likedResolutions.has(id);
+
         const card = document.createElement('div');
         card.className = 'bg-white rounded-2xl p-5 shadow-sm border-2 border-teal-100 transition card-shadow';
-        const createdDate = v.created_at ? new Date(v.created_at).toLocaleDateString() : '';
+        const created = v.created_at ? new Date(v.created_at).toLocaleDateString() : '';
         const likesCount = v.likes || 0;
 
         card.innerHTML = `
@@ -309,17 +365,18 @@
               <div class="text-xs text-gray-500 mb-1">${esc(v.unit || 'Unit not specified')}</div>
               <div class="font-bold text-xl text-teal-700">${esc(shortName(v.name))}</div>
             </div>
-            <div class="text-xs text-gray-400">${createdDate}</div>
+            <div class="text-xs text-gray-400">${created}</div>
           </div>
 
           <div class="text-gray-700 mb-4 text-sm leading-relaxed" style="white-space:pre-wrap;">${esc(v.future_ready)}</div>
 
           <div class="flex items-center justify-between pt-3 border-t border-teal-100">
             <div class="flex items-center gap-3">
-              <button data-id="${v.id}" class="like-btn inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-teal-100 to-cyan-100 font-semibold transition">
-                ❤️ <span class="likes-count text-teal-700">${likesCount}</span>
+              <button data-id="${id}" class="like-btn inline-flex items-center gap-2 px-4 py-2 rounded-full ${isOwn ? 'bg-gray-200' : hasLiked ? 'bg-gradient-to-r from-pink-200 to-red-200 disabled' : 'bg-gradient-to-r from-teal-100 to-cyan-100 hover:from-teal-200 hover:to-cyan-200'} font-semibold">
+                <span class="like-icon">${hasLiked ? '❤️' : '🤍'}</span>
+                <span class="likes-count text-teal-700">${likesCount}</span>
               </button>
-              <div class="text-xs text-gray-500">Edits: ${v.edits || 0}/3</div>
+              <div class="text-xs text-gray-500">${isOwn ? '<span class="text-blue-600 font-semibold">Your vision</span>' : `Edits left: ${Math.max(0, MAX_EDITS - (v.edits || 0))}/3`}</div>
             </div>
             <div class="liked-indicator-area"></div>
           </div>
@@ -327,98 +384,100 @@
         container.appendChild(card);
 
         const likeBtn = card.querySelector('.like-btn');
+        const likeIcon = likeBtn.querySelector('.like-icon');
         const likeSpan = likeBtn.querySelector('.likes-count');
         const indicatorArea = card.querySelector('.liked-indicator-area');
 
-        // If this is the user's own resolution -> disable like
-        if (loggedInMobile && loggedInMobile === v.mobile) {
-          likeBtn.classList.add('liked');
-          likeBtn.title = "You cannot like your own resolution";
+        // set indicator / disabled state
+        if (isOwn) {
+          likeBtn.classList.add('disabled');
           likeBtn.disabled = true;
-
-          // place an indicator that it's your own resolution
-          indicatorArea.innerHTML = `<div class="text-xs text-gray-500">Your resolution</div>`;
-        } else if (likedSet.has(v.id)) {
-          // already liked -> show green badge
-          likeBtn.classList.add('liked');
-          likeBtn.title = "You already liked this";
+          indicatorArea.innerHTML = '';
+        } else if (hasLiked) {
+          likeBtn.classList.add('disabled');
           likeBtn.disabled = true;
+          likeIcon.textContent = '❤️';
           indicatorArea.innerHTML = `<div class="liked-badge">✓ Liked</div>`;
         } else {
           likeBtn.disabled = false;
-          likeBtn.title = "Like this vision";
-          indicatorArea.innerHTML = ''; // no badge
+          indicatorArea.innerHTML = '';
         }
 
-        // click handler
-        likeBtn.addEventListener('click', async (ev) => {
-          ev.preventDefault();
-          if (!loggedInMobile) {
-            alert("Please go to Registration and verify your mobile before liking.");
-            return;
-          }
-          if (loggedInMobile === v.mobile) {
-            alert("❌ You cannot like your own resolution.");
-            return;
-          }
+        // click handler for like (only when allowed)
+        if (!isOwn && !hasLiked) {
+          likeBtn.addEventListener('click', async (ev) => {
+            ev.preventDefault();
+            if (!currentUserMobile) { alert('Please register/login first.'); return; }
 
-          // optimistic UI
-          likeBtn.disabled = true;
-          const old = parseInt(likeSpan.textContent || '0');
-          likeSpan.textContent = old + 1;
+            // optimistic UI
+            likeBtn.disabled = true;
+            const old = parseInt(likeSpan.textContent || '0');
+            likeSpan.textContent = old + 1;
+            likeIcon.textContent = '❤️';
 
-          try {
-            // insert like
-            const { data: insertData, error: insertErr } = await supabase.from('likes').insert({ user_mobile: loggedInMobile, target_id: v.id });
+            try {
+              // Insert into likes table. DB trigger must increment participants.likes.
+              const { data: insertData, error: insertErr } = await supabase
+                .from('likes')
+                .insert({ user_mobile: currentUserMobile, target_id: id });
 
-            if (insertErr) {
-              // log detailed error to console for debugging
-              console.error('like insert error', insertErr);
-              // rollback UI
-              likeSpan.textContent = old;
-
-              // helpful alert
-              let info = insertErr.message || 'Unknown error';
-              if (insertErr.details) info += '\nDetails: ' + insertErr.details;
-              if (insertErr.hint) info += '\nHint: ' + insertErr.hint;
-              if (insertErr.status) info += '\nStatus: ' + insertErr.status;
-
-              // If status is 400, likely RLS / permission issue — show tailored help
-              if (insertErr.status === 400 || insertErr.status === 403) {
-                info += '\n\nPossible cause: DB policy (RLS) disallows anonymous inserts. Check Supabase RLS / Policies for the "likes" table.';
+              if (insertErr) {
+                console.error('like insert error', insertErr);
+                // rollback UI
+                likeSpan.textContent = old;
+                likeIcon.textContent = '🤍';
+                // Provide actionable message
+                let info = insertErr.message || 'Unknown error';
+                if (insertErr.details) info += '\n' + insertErr.details;
+                if (insertErr.hint) info += '\n' + insertErr.hint;
+                if (insertErr.status === 400 || insertErr.status === 403) {
+                  info += '\n\nPossible cause: RLS / Policy blocking anonymous inserts. Check Supabase policies for "likes" table.';
+                }
+                alert('Could not like:\n' + info);
+                likeBtn.disabled = false;
+                return;
               }
 
-              alert('Could not like:\n' + info);
-              return;
+              // success - reflect state
+              likedResolutions.add(id);
+              saveLikedResolutionsForUser();
+              indicatorArea.innerHTML = `<div class="liked-badge">✓ Liked</div>`;
+              likeBtn.classList.add('disabled');
+
+              // Note: participants.likes will be changed by DB trigger; we display optimistic +1
+              // Optionally: refresh row later to get canonical count
+            } catch (err) {
+              console.error('unexpected like error', err);
+              likeSpan.textContent = old;
+              likeIcon.textContent = '🤍';
+              likeBtn.disabled = false;
+              alert('Unexpected error. See console.');
             }
-
-            // update participant likes counter in DB (this is redundant if you apply server trigger — but safe to do)
-            // We'll try to update; if triggers exist they will also keep count in sync.
-            const { data: partData, error: pErr } = await supabase.from('participants').select('likes').eq('id', v.id).single();
-            let newLikes = (partData?.likes || 0) + 1;
-            if (pErr) { console.warn('participant fetch error', pErr); newLikes = old + 1; }
-            // attempt update
-            const { error: updErr } = await supabase.from('participants').update({ likes: newLikes }).eq('id', v.id);
-            if (updErr) {
-              console.warn('participant update error', updErr);
-              // not fatal — rely on trigger if configured
-            }
-
-            // success: reflect UI state
-            likeSpan.textContent = newLikes;
-            likedSet.add(v.id);
-            likeBtn.classList.add('liked');
-            likeBtn.title = "You already liked this";
-            likeBtn.disabled = true;
-            indicatorArea.innerHTML = `<div class="liked-badge">✓ Liked</div>`;
-
-          } catch (err) {
-            console.error('unexpected like error', err);
-            likeSpan.textContent = old; // rollback
-            alert('❌ Could not complete like action. See console for details.');
-          }
-        });
+          });
+        }
       });
+    }
+
+    /* -------------
+       LocalStorage helpers for liked set per user
+       ------------- */
+    function saveLikedResolutionsForUser() {
+      if (!currentUserMobile) return;
+      const key = `liked_resolutions_${currentUserMobile}`;
+      try { localStorage.setItem(key, JSON.stringify([...likedResolutions])); } catch (e) {}
+    }
+    function loadLikedResolutionsForUser() {
+      likedResolutions = new Set();
+      if (!currentUserMobile) return;
+      const key = `liked_resolutions_${currentUserMobile}`;
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        try {
+          JSON.parse(raw).forEach(id => likedResolutions.add(String(id)));
+        } catch (e) {
+          likedResolutions = new Set();
+        }
+      }
     }
 
     /* -------------
@@ -428,22 +487,33 @@
       e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 10);
     });
 
-    document.getElementById("futureReady")?.addEventListener("input", (e) => {
-      document.getElementById("charCount").textContent = e.target.value.length;
+    document.getElementById("futureReady").addEventListener("input", (e) => {
+      const len = e.target.value.length;
+      document.getElementById("visionRemaining").textContent = Math.max(0, MAX_EDITS - (existingRecord?.edits || 0));
     });
 
-    document.getElementById("selfie")?.addEventListener("change", (e) => {
+    document.getElementById("clearSelfieBtn").addEventListener("click", () => {
+      document.getElementById("selfie").value = '';
+      document.getElementById("newSelfiePreview").classList.add("hidden");
+      document.getElementById("newSelfieImg").src = '';
+    });
+
+    // Selfie preview handling
+    document.getElementById("selfie").addEventListener("change", (e) => {
       const file = e.target.files[0];
       const selfieError = document.getElementById("selfieError");
-      selfieError.classList.add('hidden');
-      selfieError.textContent = '';
+      selfieError.classList.add('hidden'); selfieError.textContent = '';
       if (file) {
-        const validation = validateFile(file);
-        if (!validation.valid) {
-          selfieError.textContent = validation.error;
-          selfieError.classList.remove("hidden");
-          e.target.value = '';
+        const v = validateFile(file);
+        if (!v.valid) {
+          selfieError.textContent = v.error; selfieError.classList.remove('hidden'); e.target.value = ''; return;
         }
+        const url = URL.createObjectURL(file);
+        document.getElementById("newSelfieImg").src = url;
+        document.getElementById("newSelfiePreview").classList.remove("hidden");
+        setTimeout(() => URL.revokeObjectURL(url), 6000);
+      } else {
+        document.getElementById("newSelfiePreview").classList.add("hidden");
       }
     });
 
@@ -465,24 +535,34 @@
 
         if (data) {
           existingRecord = data;
+          // fill fields
           document.getElementById("name").value = data.name || '';
           document.getElementById("unit").value = data.unit || '';
           document.getElementById("futureReady").value = data.future_ready || '';
-          document.getElementById("charCount").textContent = (data.future_ready || '').length;
+          document.getElementById("visionRemaining").textContent = Math.max(0, MAX_EDITS - (data.edits || 0));
           document.getElementById("welcomeName").textContent = data.name || '';
           document.getElementById("welcomeMobile").textContent = mobile;
           document.getElementById("welcomeMessage").classList.remove("hidden");
+
+          if (data.selfie_url) {
+            document.getElementById("existingSelfieImg").src = data.selfie_url;
+            document.getElementById("existingSelfiePreview").classList.remove("hidden");
+          } else {
+            document.getElementById("existingSelfiePreview").classList.add("hidden");
+          }
         } else {
           existingRecord = null;
-          document.getElementById("name").value = '';
-          document.getElementById("unit").value = '';
-          document.getElementById("futureReady").value = '';
           document.getElementById("welcomeMessage").classList.add("hidden");
+          document.getElementById("visionRemaining").textContent = MAX_EDITS;
         }
 
-        loggedInMobile = mobile;
-        localStorage.setItem("loggedInMobile", mobile);
+        // set logged-in user
+        currentUserMobile = mobile;
+        localStorage.setItem('loggedInMobile', mobile);
+        loadLikedResolutionsForUser(); // load stored likes (will later be replaced by DB fetch on loadResolutions)
+        showTopControls();
 
+        // show fields
         document.getElementById("formFields").classList.remove("hidden");
         document.getElementById("mobile").readOnly = true;
         checkBtn.classList.add("hidden");
@@ -524,43 +604,64 @@
       }
 
       try {
+        const prevVision = existingRecord?.future_ready || '';
+        const prevSelfieUrl = existingRecord?.selfie_url || null;
         let newEditsCount = existingRecord ? (existingRecord.edits || 0) : 0;
         let newSelfieEdits = existingRecord ? (existingRecord.selfie_edits || 0) : 0;
+
         const visionChanged = futureReady !== (existingRecord?.future_ready || '');
+        const selfieChanged = !!selfieFile;
+
         if (visionChanged) {
-          if (newEditsCount >= MAX_EDITS) { statusDiv.textContent = "⚠️ Vision update limit reached."; submitBtn.disabled=false; submitBtn.textContent='Submit ✓'; return; }
+          if (newEditsCount >= MAX_EDITS) {
+            statusDiv.textContent = "⚠️ Vision update limit reached.";
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Submit ✓";
+            return;
+          }
           newEditsCount++;
         }
 
-        let finalSelfieUrl = existingRecord?.selfie_url || null;
-        if (selfieFile) {
-          if (newSelfieEdits >= MAX_EDITS) { document.getElementById("selfieError").textContent = "⚠️ You have reached the 3-time limit for selfie updates."; document.getElementById("selfieError").classList.remove("hidden"); submitBtn.disabled=false; submitBtn.textContent='Submit ✓'; return; }
+        let finalSelfieUrl = prevSelfieUrl;
+        if (selfieChanged) {
+          if (newSelfieEdits >= MAX_EDITS) {
+            document.getElementById("selfieError").textContent = "⚠️ You have reached the 3-time limit for selfie updates.";
+            document.getElementById("selfieError").classList.remove("hidden");
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Submit ✓";
+            return;
+          }
           statusDiv.textContent = "📤 Uploading selfie...";
-          finalSelfieUrl = await uploadFileSafe(selfieFile, mobile, existingRecord?.selfie_url || null);
+          finalSelfieUrl = await uploadFileSafe(selfieFile, mobile, prevSelfieUrl);
           newSelfieEdits++;
         }
 
         statusDiv.textContent = "💾 Saving participant...";
+
         const participantData = {
           mobile,
           name,
           unit,
           future_ready: futureReady || null,
           selfie_url: finalSelfieUrl,
-          likes: existingRecord?.likes || 0,
           edits: newEditsCount,
           selfie_edits: newSelfieEdits,
           created_at: existingRecord?.created_at || new Date().toISOString()
         };
 
+        // Use upsert on mobile to create/update participant and preserve likes column (don't set likes here)
         const { error } = await supabase.from('participants').upsert(participantData, { onConflict: 'mobile' });
         if (error) throw error;
 
-        existingRecord = participantData;
-        document.getElementById("participantForm").classList.add("hidden");
-        statusDiv.textContent = "✅ Saved successfully.";
-        setTimeout(() => location.reload(), 1200);
+        // Update local existingRecord with latest counts so UI shows correctly
+        existingRecord = { ...existingRecord, ...participantData };
 
+        // show success and redirect to resolutions
+        statusDiv.textContent = "✅ Saved successfully.";
+        setTimeout(() => {
+          // navigate to resolutions after save
+          window.location.hash = '#resolutions';
+        }, 900);
       } catch (err) {
         console.error(err);
         statusDiv.textContent = "❌ " + (err.message || err);
@@ -570,7 +671,7 @@
     });
 
     /* -------------
-       Search & Refresh
+       Search & refresh
        ------------- */
     document.getElementById("searchInput").addEventListener("input", (e) => {
       const term = e.target.value.toLowerCase().trim();
@@ -585,29 +686,65 @@
     document.getElementById("refreshBtn").addEventListener("click", loadResolutions);
 
     /* -------------
-       Preload welcome if already logged in
+       LOGOUT / SWITCH USER
        ------------- */
-    if (loggedInMobile) {
-      (async () => {
-        try {
-          const { data } = await supabase.from('participants').select('*').eq('mobile', loggedInMobile).maybeSingle();
-          if (data) {
-            existingRecord = data;
-            document.getElementById("welcomeName").textContent = data.name || '';
-            document.getElementById("welcomeMobile").textContent = loggedInMobile;
-            document.getElementById("welcomeMessage").classList.remove("hidden");
-            document.getElementById("formFields").classList.remove("hidden");
-            document.getElementById("mobile").value = loggedInMobile;
-            document.getElementById("mobile").readOnly = true;
-            document.getElementById("checkBtn").classList.add("hidden");
-            document.getElementById("name").value = data.name || '';
-            document.getElementById("unit").value = data.unit || '';
-            document.getElementById("futureReady").value = data.future_ready || '';
-            document.getElementById("charCount").textContent = (data.future_ready || '').length;
-          }
-        } catch (e) { console.warn(e); }
-      })();
+    function doLogout() {
+      // clear session and liked storage keys for this user
+      try {
+        if (currentUserMobile) {
+          localStorage.removeItem(`liked_resolutions_${currentUserMobile}`);
+        }
+      } catch (e) {}
+      localStorage.removeItem('loggedInMobile');
+      currentUserMobile = null;
+      likedResolutions = new Set();
+      existingRecord = null;
+      // reset UI
+      document.getElementById("mobile").value = '';
+      document.getElementById("formFields").classList.add("hidden");
+      document.getElementById("welcomeMessage").classList.add("hidden");
+      document.getElementById("checkBtn").classList.remove("hidden");
+      document.getElementById("mobile").readOnly = false;
+      showTopControls();
+      window.location.hash = '#register';
+      // clear cards
+      document.getElementById('cardsContainer').innerHTML = '';
     }
+
+    /* -------------
+       On-load: if logged in, prefill and show welcome
+       ------------- */
+    (async function initOnLoad() {
+      showTopControls();
+      if (!currentUserMobile) return;
+      try {
+        const { data } = await supabase.from('participants').select('*').eq('mobile', currentUserMobile).maybeSingle();
+        if (data) {
+          existingRecord = data;
+          document.getElementById("welcomeName").textContent = data.name || '';
+          document.getElementById("welcomeMobile").textContent = currentUserMobile;
+          document.getElementById("welcomeMessage").classList.remove("hidden");
+          document.getElementById("formFields").classList.remove("hidden");
+          document.getElementById("mobile").value = currentUserMobile;
+          document.getElementById("mobile").readOnly = true;
+          document.getElementById("checkBtn").classList.add("hidden");
+          document.getElementById("name").value = data.name || '';
+          document.getElementById("unit").value = data.unit || '';
+          document.getElementById("futureReady").value = data.future_ready || '';
+          document.getElementById("visionRemaining").textContent = Math.max(0, MAX_EDITS - (data.edits || 0));
+          if (data.selfie_url) {
+            document.getElementById("existingSelfieImg").src = data.selfie_url;
+            document.getElementById("existingSelfiePreview").classList.remove("hidden");
+          }
+        } else {
+          // if mobile stored but not in DB, simply clear stored session to avoid stuck state
+          // (this can happen if DB was reset)
+          // doLogout();
+        }
+      } catch (err) {
+        console.warn('prefill error', err);
+      }
+    })();
   </script>
 </body>
 </html>
