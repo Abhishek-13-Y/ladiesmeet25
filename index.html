@@ -3,718 +3,799 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Monthly Interaction 2025 - Portal</title>
+  <title>Monthly Interaction 2025 - Resolutions Portal</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
   <style>
-    .card-shadow { box-shadow: 0 8px 20px rgba(20, 184, 166, 0.08); }
-    .glass {
-      background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(250,255,254,0.75));
-      backdrop-filter: blur(8px);
+    body { font-family: 'Inter', sans-serif; }
+    
+    /* Modern Glassmorphism & Gradients */
+    .bg-main {
+      background: radial-gradient(circle at top left, #ccfbf1, #ecfeff, #f0f9ff);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
     }
-    .liked-badge {
-      background-color: #16a34a; /* green-600 */
-      color: white;
-      font-weight: 700;
-      font-size: 11px;
-      padding: 6px 8px;
-      border-radius: 999px;
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
     }
-    .like-btn { transition: all .18s ease; }
-    .like-btn.disabled { pointer-events: none; opacity: .8; }
+    
+    .glass-panel {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 10px 40px -10px rgba(0, 128, 128, 0.1);
+    }
+
+    .glass-input {
+      background: rgba(255, 255, 255, 0.6);
+      border: 1px solid rgba(209, 213, 219, 0.8);
+      transition: all 0.2s ease;
+    }
+    .glass-input:focus {
+      background: #fff;
+      border-color: #14b8a6; /* teal-500 */
+      box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.15);
+      outline: none;
+    }
+    .glass-input:disabled {
+      background: #f3f4f6;
+      color: #9ca3af;
+      cursor: not-allowed;
+      border-color: #e5e7eb;
+    }
+    .glass-input.error {
+      border-color: #f43f5e;
+      background: #fff1f2;
+    }
+
+    /* Card Hover Effects */
+    .resolution-card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      will-change: transform;
+    }
+    .resolution-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    .like-btn { transition: all .2s cubic-bezier(0.4, 0, 0.2, 1); }
+    .like-btn:active { transform: scale(0.95); }
+    .like-btn.disabled { pointer-events: none; opacity: 0.9; }
+
+    /* Utility Animations */
+    .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-emerald-50 text-gray-800">
+<body class="min-h-screen bg-main text-slate-800">
 
-  <div class="max-w-5xl mx-auto p-4">
-    <header class="flex items-center justify-between mb-6 pt-6">
-      <div class="text-center w-full">
-        <div class="inline-block px-5 py-2 rounded-full bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-semibold mb-2">
-          Monthly Interaction 2025
+  <div class="max-w-6xl mx-auto p-4 md:p-6">
+    
+    <header class="flex flex-col md:flex-row items-center justify-between mb-8 pt-4 fade-in">
+      <div class="text-center md:text-left">
+        <div class="inline-flex items-center px-3 py-1 rounded-full bg-teal-100 text-teal-700 text-xs font-bold tracking-wide uppercase mb-3 border border-teal-200">
+          Registration Portal
         </div>
-        <h1 class="text-3xl md:text-4xl font-extrabold text-teal-700 mb-1">Participant Portal</h1>
-        <p class="text-sm text-gray-600">Made with ❤️ by Ordnance Fraternity</p>
+        <h1 class="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight mb-1">
+          Monthly Interaction <span class="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-cyan-600">2025</span>
+        </h1>
+        <p class="text-slate-500 font-medium">Connect, Share and Set Resolutions</p>
       </div>
-      <div id="topControls" class="flex items-center gap-3 ml-4 h-12"></div>
+
+      <div id="topControls" class="mt-4 md:mt-0 flex items-center gap-3">
+        </div>
     </header>
 
-    <nav class="glass rounded-2xl p-4 mb-6 card-shadow hidden">
-      <div class="flex justify-center gap-4 flex-wrap">
-        <button onclick="App.methods.navigateTo('#register')" id="navRegister" class="px-6 py-3 rounded-xl font-semibold bg-white border-2 border-teal-200">📝 Register / Update</button>
-        <button onclick="App.methods.navigateTo('#resolutions')" id="navResolutions" class="px-6 py-3 rounded-xl font-semibold bg-white border-2 border-teal-200">💭 View Resolutions</button>
-      </div>
+    <nav class="glass-panel rounded-2xl p-2 mb-8 flex justify-center md:justify-start gap-2 fade-in" style="animation-delay: 0.1s;">
+      <button onclick="navigateTo('#register')" id="navRegister" class="flex-1 md:flex-none px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+        My Profile
+      </button>
+      <button onclick="navigateTo('#resolutions')" id="navResolutions" class="flex-1 md:flex-none px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+        Community Resolutions
+      </button>
     </nav>
 
-    <main class="glass rounded-3xl p-6 card-shadow"> 
+    <main class="glass-panel rounded-3xl p-6 md:p-10 min-h-[600px] fade-in" style="animation-delay: 0.2s;">
       
-      <section id="registerPage" class="hidden min-h-[520px]">
-        <h2 class="text-2xl font-bold text-teal-700 mb-4 text-center">Registration Portal</h2>
-
-        <div id="welcomeMessage" class="hidden mb-6 bg-gradient-to-r from-teal-50 to-cyan-50 border-2 border-teal-200 rounded-2xl p-5 text-center">
-          <div class="text-3xl mb-2">👋 Welcome back, <span id="welcomeName"></span>!</div>
-          <div class="text-sm text-gray-600">Mobile: <span id="welcomeMobile" class="font-semibold"></span></div>
-        </div>
-
-        <form id="participantForm" class="space-y-5 max-w-2xl mx-auto">
-          <div>
-            <label class="block text-sm font-semibold mb-2">Mobile Number</label>
-            <div class="relative">
-              <input id="mobile" type="tel" maxlength="10" placeholder="Enter 10-digit mobile" required class="w-full p-4 rounded-xl border-2 border-teal-200" />
-            </div>
-            <p id="mobileError" class="text-red-600 text-sm mt-1 hidden"></p>
+      <section id="registerPage" class="">
+        <div class="max-w-2xl mx-auto">
+          
+          <div class="text-center mb-10">
+            <h2 class="text-2xl font-bold text-slate-800">Profile & Resolution</h2>
+            <p class="text-slate-500 text-sm mt-1">Complete your details to access the portal.</p>
+            <p class="text-slate-500 text-sm mt-1">Made with ❤️by Ordnance Fraternity</p>
           </div>
 
-          <button type="button" id="checkBtn" class="w-full bg-gradient-to-r from-teal-500 to-cyan-500 text-white py-3 rounded-xl font-semibold">Continue →</button>
+          <div id="welcomeMessage" class="hidden mb-8 bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-100 rounded-2xl p-6 text-center shadow-sm relative overflow-hidden">
+            <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-teal-100 rounded-full blur-xl opacity-50"></div>
+            <h3 class="text-xl font-bold text-teal-800 mb-0 relative z-10">Welcome back, <span id="welcomeName"></span>!</h3>
+          </div>
 
-          <div id="formFields" class="space-y-4 hidden">
-            <div>
-              <label class="block text-sm font-semibold mb-2">Full Name</label>
-              <input id="name" type="text" class="w-full p-3 rounded-xl border-2 border-teal-200" />
+          <form id="participantForm" class="space-y-6">
+            
+            <div id="mobileSection">
+              <label class="block text-sm font-bold text-slate-700 mb-2">Mobile Number</label>
+              <div class="flex gap-3">
+                <input id="mobile" type="tel" maxlength="10" placeholder="Enter 10-digit mobile" required
+                  class="glass-input w-full p-4 rounded-xl text-lg font-medium tracking-wide placeholder-slate-400" />
+                <button type="button" id="checkBtn" class="px-8 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors shadow-lg shadow-slate-200">
+                  Next
+                </button>
+              </div>
+              <p id="mobileError" class="text-rose-500 text-sm mt-2 hidden font-medium flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Invalid mobile number
+              </p>
             </div>
 
-            <div>
-              <label class="block text-sm font-semibold mb-2">Unit / Directorate</label>
-              <input id="unit" type="text" class="w-full p-3 rounded-xl border-2 border-teal-200" />
-            </div>
+            <div id="formFields" class="space-y-8 hidden fade-in">
+              <div class="h-px bg-slate-200 w-full"></div>
 
-            <div>
-              <label class="block text-sm font-semibold text-teal-700 mb-2">✨ Your Resolution for 2026</label>
-              <textarea id="resolutionText" rows="4" maxlength="500" class="w-full p-3 rounded-xl border-2 border-teal-200" placeholder="Share your goals and resolution..."></textarea>
-              <div class="text-xs text-gray-500 mt-1">Remaining edits: <span id="resolutionRemaining">3</span> / 3</div>
-            </div>
+              <div class="grid md:grid-cols-2 gap-6">
+                <div class="relative group">
+                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                    Full Name <span class="text-rose-500">*</span>
+                  </label>
+                  <input id="name" type="text" placeholder="e.g. Major Amit Kumar" required
+                    class="glass-input w-full p-3 rounded-xl font-medium" />
+                  <div id="nameLockedMsg" class="hidden absolute right-3 top-9 text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded">Locked</div>
+                </div>
 
-            <div>
-              <label class="block text-sm font-semibold mb-2">📸 Upload Selfie (Optional)</label>
-              <input id="selfie" type="file" accept="image/jpeg,image/png,image/jpg" class="w-full p-2 bg-white rounded-xl border-2 border-purple-200" />
-              <div class="text-xs text-gray-500 mt-1">Remaining edits: <span id="selfieRemaining">3</span> / 3</div>
-              <p id="selfieError" class="text-red-600 text-sm mt-1 hidden"></p>
-
-              <div id="existingSelfiePreview" class="hidden mt-3">
-                <div class="bg-white rounded-xl p-3 border-2 border-green-300 inline-block">
-                  <div class="flex items-center gap-3 mb-2"><span class="text-green-600">✅</span><span class="text-sm font-semibold text-green-700">Selfie Already Uploaded</span></div>
-                  <img id="existingSelfieImg" src="" alt="Current" class="w-28 h-28 object-cover rounded-lg" />
+                <div class="relative">
+                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                    Unit / Directorate <span class="text-rose-500">*</span>
+                  </label>
+                  <input id="unit" type="text" placeholder="e.g. COD Delhi" required
+                    class="glass-input w-full p-3 rounded-xl font-medium" />
                 </div>
               </div>
 
-              <div id="newSelfiePreview" class="hidden mt-3">
-                <div class="bg-white rounded-xl p-3 border-2 border-blue-300 inline-block">
-                  <div class="flex items-center justify-between mb-2">
-                    <span class="text-sm font-semibold text-blue-700">Preview (Not saved)</span>
-                    <button type="button" id="clearSelfieBtn" class="text-red-600 hover:text-red-800 text-sm font-semibold flex items-center gap-1"><span>🗑️</span> Remove</button>
+              <div class="bg-slate-50/50 p-5 rounded-2xl border border-slate-100">
+                <div class="flex justify-between items-center mb-3">
+                  <label class="flex items-center gap-2 text-sm font-bold text-teal-700">
+                    <span>✨ Your Resolution for 2026 <span class="text-rose-500">*</span></span>
+                  </label>
+                  <div id="visionCounterBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-teal-100 text-teal-700 border border-teal-200">
+                    3 Edits Left
                   </div>
-                  <img id="newSelfieImg" src="" alt="Preview" class="w-28 h-28 object-cover rounded-lg" />
+                </div>
+                <textarea id="futureReady" rows="4" maxlength="500" required
+                  class="glass-input w-full p-4 rounded-xl text-slate-700 leading-relaxed" 
+                  placeholder="Share your professional or personal resolution for the upcoming year..."></textarea>
+                <p id="visionLockedMsg" class="hidden text-xs text-rose-500 font-bold mt-2">⚠️ Editing limit reached for Resolutions.</p>
+              </div>
+
+              <div class="bg-slate-50/50 p-5 rounded-2xl border border-slate-100">
+                <div class="flex justify-between items-center mb-3">
+                  <label class="flex items-center gap-2 text-sm font-bold text-slate-700">
+                    <span>📸 Upload Selfie (Optional)</span>
+                    <span class="text-xs font-normal text-slate-400 ml-2">Max 5MB</span>
+                  </label>
+                  <div id="selfieCounterBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200">
+                    3 Uploads Left
+                  </div>
+                </div>
+
+                <input id="selfie" type="file" accept="image/jpeg,image/png,image/jpg" 
+                  class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100 transition cursor-pointer"/>
+                
+                <p id="selfieError" class="text-rose-600 text-sm mt-2 hidden font-medium"></p>
+                <p id="selfieLockedMsg" class="hidden text-xs text-rose-500 font-bold mt-2">⚠️ Upload limit reached.</p>
+
+                <div class="flex gap-4 mt-4 overflow-x-auto pb-2">
+                  <div id="existingSelfiePreview" class="hidden shrink-0 text-center">
+                     <div class="w-24 h-24 rounded-xl overflow-hidden border-2 border-green-500 shadow-sm relative group">
+                        <img id="existingSelfieImg" src="" class="w-full h-full object-cover" />
+                        <div class="absolute inset-0 bg-green-500/20 flex items-center justify-center text-white text-xs font-bold">Current</div>
+                     </div>
+                  </div>
+
+                  <div id="newSelfiePreview" class="hidden shrink-0 text-center">
+                    <div class="w-24 h-24 rounded-xl overflow-hidden border-2 border-dashed border-blue-400 bg-blue-50 relative">
+                      <img id="newSelfieImg" src="" class="w-full h-full object-cover opacity-90" />
+                      <button type="button" id="clearSelfieBtn" class="absolute top-1 right-1 bg-white text-rose-500 rounded-full p-1 shadow-sm hover:bg-rose-50">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
+
+              <div class="pt-4">
+                <button id="submitBtn" class="w-full bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-500 hover:to-cyan-500 text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-teal-200 transition-all transform active:scale-[0.99]">
+                  Save & Continue →
+                </button>
+                <div id="status" class="mt-4 text-center text-sm font-medium h-5"></div>
+              </div>
+
             </div>
-
-            <button id="submitBtn" class="w-full bg-gradient-to-r from-teal-600 to-cyan-600 text-white py-3 rounded-xl font-bold">Submit ✓</button>
-          </div>
-        </form>
-
-        <div id="status" class="mt-4 text-center text-sm"></div>
+          </form>
+        </div>
       </section>
 
-      <section id="resolutionsPage" class="hidden min-h-[520px]">
-        <h2 class="text-2xl font-bold text-teal-700 mb-4 text-center">Community Resolutions 2026</h2>
-
-        <div class="flex justify-between items-center gap-3 mb-4 flex-wrap">
-          <input id="searchInput" type="search" placeholder="Search by name, unit, or resolution..." class="flex-1 min-w-[200px] p-3 rounded-xl border-2 border-teal-200" />
-          <button id="refreshBtn" class="px-4 py-2 rounded-xl bg-white border-2 border-teal-200">🔄 Refresh</button>
-          <div class="text-sm text-gray-600">Showing: <span id="countBadge" class="font-bold text-teal-600">0</span></div>
+      <section id="resolutionsPage" class="hidden">
+        <div class="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
+          <div>
+            <h2 class="text-3xl font-bold text-slate-800">Community Resolutions</h2>
+            <p class="text-slate-500 mt-1">Inspiring goals from across the formation</p>
+          </div>
+          <div class="flex items-center gap-2 w-full md:w-auto">
+             <div class="relative flex-1 md:w-64">
+                <input id="searchInput" type="search" placeholder="Search people or resolutions..." class="glass-input w-full pl-10 pr-4 py-2 rounded-xl text-sm" />
+                <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+             </div>
+             <button id="refreshBtn" class="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-600 hover:text-teal-600 hover:border-teal-200 transition-colors">
+               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+             </button>
+          </div>
         </div>
 
-        <div id="cardsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        <div id="cardsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-8"></div>
 
-        <div id="emptyState" class="hidden text-center text-gray-500 py-12">
-          <div class="text-6xl mb-4">💭</div>
-          <p class="text-xl">No resolutions shared yet. Be the first!</p>
+        <div id="emptyState" class="hidden text-center py-20">
+          <div class="bg-slate-50 inline-flex p-6 rounded-full mb-4">
+            <span class="text-4xl">💭</span>
+          </div>
+          <h3 class="text-lg font-bold text-slate-700">No resolutions found</h3>
+          <p class="text-slate-500">Be the first to share your goals for 2026!</p>
         </div>
       </section>
     </main>
+
+    <footer class="text-center mt-12 text-slate-400 text-sm pb-6">
+      &copy; 2025 Ordnance Fraternity &bull; Secure Portal
+    </footer>
   </div>
 
   <script>
-    const App = {
-      // --- Configuration ---
-      config: {
-        SUPABASE_URL: "https://jlzqdefinnwoazsqlunf.supabase.co",
-        SUPABASE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsenFkZWZpbm53b2F6c3FsdW5mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI0NTgwOTksImV4cCI6MjA3ODAzNDA5OX0.ZPfFVDqJgZkuhPGO9WNlYHKDwKgQ9SZoGjSIypgaDIE",
-        STORAGE_BUCKET: "ladies-meet-2025",
-        MAX_EDITS: 3,
-        supabase: null
-      },
+    /* ------------- CONFIG ------------- */
+    const SUPABASE_URL = "https://jlzqdefinnwoazsqlunf.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsenFkZWZpbm53b2F6c3FsdW5mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI0NTgwOTksImV4cCI6MjA3ODAzNDA5OX0.ZPfFVDqJgZkuhPGO9WNlYHKDwKgQ9SZoGjSIypgaDIE";
+    const { createClient } = window.supabase;
+    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+    const STORAGE_BUCKET = "ladies-meet-2025";
+    
+    const MAX_VISION_EDITS = 3;
+    const MAX_SELFIE_EDITS = 3;
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
-      // --- Application State ---
-      state: {
-        existingRecord: null,
-        allResolutions: [],
-        currentUserMobile: localStorage.getItem('loggedInMobile') || null,
-        likedResolutions: new Set(),
-      },
+    /* ------------- STATE ------------- */
+    let existingRecord = null; 
+    let allResolutions = [];
+    let currentUserMobile = localStorage.getItem('loggedInMobile') || null;
+    let likedResolutions = new Set();
 
-      // --- Cached UI Elements ---
-      ui: {},
+    /* ------------- UTILS ------------- */
+    function esc(s) { if (!s) return ''; return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;'); }
+    function shortName(n) { if (!n) return 'Friend'; return n.split(' ')[0]; }
 
-      // --- Utility Functions ---
-      utils: {
-        esc(s) { if (!s) return ''; return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;'); },
-        shortName(n) { if (!n) return 'Anonymous'; return n.split(' ')[0]; },
+    function navigateTo(hash) {
+      window.location.hash = hash;
+    }
 
-        validateMobile(mobile) {
-          const err = App.ui.mobileError;
-          if (!/^[0-9]{10}$/.test(mobile)) {
-            err.textContent = "⚠️ Must be 10 digits";
-            err.classList.remove("hidden");
-            return false;
-          }
-          err.classList.add("hidden");
-          return true;
-        },
+    function updateAuthUI() {
+      const area = document.getElementById('topControls');
+      area.innerHTML = '';
+      if (currentUserMobile) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'flex items-center gap-3 bg-white/50 px-3 py-1.5 rounded-full border border-white/60';
+        wrapper.innerHTML = `
+          <div class="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></div>
+          <span class="text-xs font-semibold text-slate-600">${currentUserMobile}</span>
+        `;
+        const logoutBtn = document.createElement('button');
+        logoutBtn.className = 'text-xs font-bold text-slate-500 hover:text-rose-600 underline decoration-2 underline-offset-2 transition-colors';
+        logoutBtn.textContent = 'Exit';
+        logoutBtn.onclick = () => { if(confirm('Log out?')) doLogout(); };
+        
+        area.appendChild(wrapper);
+        area.appendChild(logoutBtn);
+      }
+    }
 
-        validateFile(file) {
-          if (!file) return { valid: true };
-          const maxSize = 5 * 1024 * 1024;
-          const allowed = ['image/jpeg', 'image/png', 'image/jpg'];
-          if (file.size > maxSize) return { valid: false, error: '❌ Max 5MB' };
-          if (!allowed.includes(file.type)) return { valid: false, error: '❌ JPG/PNG only' };
-          return { valid: true };
-        },
+    function setNavActive(tab) {
+      const regBtn = document.getElementById('navRegister');
+      const resBtn = document.getElementById('navResolutions');
+      
+      // Reset base styles
+      [regBtn, resBtn].forEach(btn => {
+        btn.classList.remove('bg-white', 'shadow-md', 'text-teal-700', 'ring-1', 'ring-black/5');
+        btn.classList.add('text-slate-500', 'hover:bg-white/40');
+      });
 
-        compressImageIfNeeded(file, maxWidth = 1440, quality = 0.92) {
-          return new Promise((resolve, reject) => {
-            if (!file) return resolve(null);
-            if (file.size < 200 * 1024) return resolve(file); // Don't compress small files
-            
-            const reader = new FileReader();
-            reader.onload = () => {
-              const img = new Image();
-              img.onload = () => {
-                const scale = (img.width > maxWidth) ? (maxWidth / img.width) : 1;
-                const tw = Math.round(img.width * scale);
-                const th = Math.round(img.height * scale);
-                const canvas = document.createElement('canvas');
-                canvas.width = tw; canvas.height = th;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, tw, th);
-                canvas.toBlob((blob) => {
-                  if (!blob) return reject(new Error('Compression failed'));
-                  const newFile = new File([blob], (file.name.replace(/\.[^/.]+$/, '') + ".jpg"), { type: 'image/jpeg' });
-                  resolve(newFile);
-                }, 'image/jpeg', quality);
-              };
-              img.onerror = reject;
-              img.src = reader.result;
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-          });
-        },
+      if (tab === 'register') {
+        regBtn.classList.add('bg-white', 'shadow-md', 'text-teal-700', 'ring-1', 'ring-black/5');
+        regBtn.classList.remove('text-slate-500', 'hover:bg-white/40');
+        document.getElementById('registerPage').classList.remove('hidden');
+        document.getElementById('resolutionsPage').classList.add('hidden');
+        
+        // --- RESET FORM STATE ON NAVIGATION BACK ---
+        document.getElementById("status").textContent = "";
+        document.getElementById("status").className = "mt-4 text-center text-sm font-medium h-5";
+        const btn = document.getElementById("submitBtn");
+        btn.disabled = false;
+        btn.textContent = "Save & Continue →";
+        // Re-populate to ensure limits are respected (disabled if limit reached, enabled if not)
+        if(existingRecord) populateForm(existingRecord);
+        
+      } else {
+        resBtn.classList.add('bg-white', 'shadow-md', 'text-teal-700', 'ring-1', 'ring-black/5');
+        resBtn.classList.remove('text-slate-500', 'hover:bg-white/40');
+        document.getElementById('registerPage').classList.add('hidden');
+        document.getElementById('resolutionsPage').classList.remove('hidden');
+        loadResolutions();
+      }
+    }
 
-        async uploadFileSafe(file, mobile, previousUrl = null) {
-          if (!file) return previousUrl || null;
-          
-          const fileToUpload = await App.utils.compressImageIfNeeded(file);
-          const fileName = `${mobile}_${Date.now()}.jpg`;
-          const filePath = `selfies/${fileName}`;
-          
-          const { error: uploadErr } = await App.config.supabase.storage
-            .from(App.config.STORAGE_BUCKET)
-            .upload(filePath, fileToUpload, { contentType: "image/jpeg", cacheControl: "3600", upsert: true });
-            
-          if (uploadErr) throw uploadErr;
-          
-          const { data: urlData } = App.config.supabase.storage
-            .from(App.config.STORAGE_BUCKET)
-            .getPublicUrl(filePath);
-            
-          const newPublicUrl = urlData.publicUrl;
-          
-          // Verify file is accessible
-          try {
-            const resp = await fetch(newPublicUrl, { method: 'HEAD' });
-            if (!resp.ok) throw new Error('Uploaded file not accessible');
-          } catch (err) {
-            await App.config.supabase.storage.from(App.config.STORAGE_BUCKET).remove([filePath]).catch(()=>{});
-            throw err;
-          }
-          
-          // Best-effort deletion of old file
-          if (previousUrl) {
-            try {
-              const parts = previousUrl.split('/');
-              const filename = parts[parts.length - 1].split('?')[0];
-              if (filename) {
-                 await App.config.supabase.storage.from(App.config.STORAGE_BUCKET).remove([`selfies/${filename}`]).catch(()=>{});
-              }
-            } catch (e) { /* ignore deletion error */ }
-          }
-          
-          return newPublicUrl;
+    /* ------------- ROUTING & GUARDS ------------- */
+    function handleRoute() {
+      const hash = window.location.hash || '#register';
+      
+      if (hash === '#resolutions') {
+        // GUARD: Must be logged in
+        if (!currentUserMobile) {
+          alert('Please enter your mobile number first.');
+          window.location.hash = '#register';
+          return;
         }
-      },
-
-      // --- Core Application Methods ---
-      methods: {
-        navigateTo(hash) {
-          window.location.hash = hash;
-        },
-
-        showTopControls() {
-          App.ui.topControls.innerHTML = ''; // Clear controls
-          if (App.state.currentUserMobile) {
-            // Logged in: Show only a small logout button
-            App.ui.topControls.innerHTML = `
-              <button id="logoutBtn" title="Logout / Switch User" class="px-3 py-2 rounded-xl bg-white border border-gray-300 text-xl">↩️</button>
-            `;
-            App.ui.topControls.querySelector('#logoutBtn').addEventListener('click', () => {
-              
-                App.methods.doLogout();
-              
-            });
+        // GUARD: Must have completed profile
+        if (!existingRecord || !existingRecord.name) {
+          alert('Please complete your profile details before viewing community resolutions.');
+          window.location.hash = '#register';
+          if(currentUserMobile) {
+             document.getElementById("formFields").classList.remove("hidden");
+             document.getElementById("checkBtn").classList.add("hidden");
           }
-          // Logged out: Show nothing
-        },
-
-        handleRoute() {
-          const hash = window.location.hash || '#register';
-          
-          App.ui.registerPage.classList.add('hidden');
-          App.ui.resolutionsPage.classList.add('hidden');
-          App.ui.navRegister.classList.remove('bg-teal-500', 'text-white');
-          App.ui.navResolutions.classList.remove('bg-teal-500', 'text-white');
-
-          if (hash === '#resolutions') {
-            if (!App.state.currentUserMobile) {
-              alert('Please register / login first.');
-              window.location.hash = '#register';
-              return;
-            }
-            App.ui.resolutionsPage.classList.remove('hidden');
-            App.ui.navResolutions.classList.add('bg-teal-500', 'text-white');
-            App.methods.loadResolutions();
-          } else {
-            App.ui.registerPage.classList.remove('hidden');
-            App.ui.navRegister.classList.add('bg-teal-500', 'text-white');
-          }
-        },
-
-        async loadResolutions() {
-          try {
-            const { data, error } = await App.config.supabase.from('participants')
-              .select('*')
-              .not('future_ready', 'is', null) // future_ready is the DB column
-              .order('likes', { ascending: false })
-              .order('created_at', { ascending: false })
-              .limit(200);
-              
-            if (error) throw error;
-            App.state.allResolutions = data || [];
-
-            // Reload likes from DB as single source of truth
-            App.state.likedResolutions = new Set();
-            if (App.state.currentUserMobile) {
-              const { data: likedRows, error: lErr } = await App.config.supabase
-                .from('likes')
-                .select('target_id')
-                .eq('user_mobile', App.state.currentUserMobile);
-                
-              if (!lErr && Array.isArray(likedRows)) {
-                likedRows.forEach(r => App.state.likedResolutions.add(String(r.target_id)));
-              }
-            }
-
-            App.methods.renderResolutions(App.state.allResolutions);
-          } catch (err) {
-            console.error('loadResolutions error', err);
-            App.ui.cardsContainer.innerHTML = '<div class="text-red-600 text-center p-4">Failed to load resolutions.</div>';
-          }
-        },
-
-        renderResolutions(list) {
-          if (!list || !list.length) {
-            App.ui.cardsContainer.innerHTML = '';
-            App.ui.emptyState.classList.remove('hidden');
-            App.ui.countBadge.textContent = '0';
-            return;
-          }
-
-          App.ui.emptyState.classList.add('hidden');
-          App.ui.countBadge.textContent = list.length;
-          App.ui.cardsContainer.innerHTML = '';
-          const { esc, shortName } = App.utils;
-
-          list.forEach(v => {
-            const id = String(v.id);
-            const isOwn = App.state.currentUserMobile && (v.mobile === App.state.currentUserMobile);
-            const hasLiked = App.state.likedResolutions.has(id);
-            const created = v.created_at ? new Date(v.created_at).toLocaleDateString() : '';
-            const likesCount = v.likes || 0;
-            const resolutionText = v.future_ready; // DB column name
-
-            const card = document.createElement('div');
-            card.className = 'bg-white rounded-2xl p-5 shadow-sm border-2 border-teal-100 transition card-shadow';
-            card.innerHTML = `
-              <div class="flex justify-between items-start mb-3">
-                <div class="flex-1">
-                  <div class="text-xs text-gray-500 mb-1">${esc(v.unit || 'Unit not specified')}</div>
-                  <div class="font-bold text-xl text-teal-700">${esc(shortName(v.name))}</div>
-                </div>
-                <div class="text-xs text-gray-400">${created}</div>
-              </div>
-              <div class="text-gray-700 mb-4 text-sm leading-relaxed" style="white-space:pre-wrap;">${esc(resolutionText)}</div>
-              <div class="flex items-center justify-between pt-3 border-t border-teal-100">
-                <div class="flex items-center gap-3">
-                  <button data-id="${id}" class="like-btn inline-flex items-center gap-2 px-4 py-2 rounded-full ${isOwn ? 'bg-gray-200' : hasLiked ? 'bg-gradient-to-r from-pink-200 to-red-200 disabled' : 'bg-gradient-to-r from-teal-100 to-cyan-100 hover:from-teal-200 hover:to-cyan-200'} font-semibold">
-                    <span class="like-icon">${hasLiked ? '❤️' : '🤍'}</span>
-                    <span class="likes-count text-teal-700">${likesCount}</span>
-                  </button>
-                  <div class="text-xs text-gray-500">${isOwn ? '<span class="text-blue-600 font-semibold">Your resolution</span>' : `Edits left: ${Math.max(0, App.config.MAX_EDITS - (v.edits || 0))}/3`}</div>
-                </div>
-                <div class="liked-indicator-area"></div>
-              </div>
-            `;
-            App.ui.cardsContainer.appendChild(card);
-
-            const likeBtn = card.querySelector('.like-btn');
-            const likeIcon = likeBtn.querySelector('.like-icon');
-            const likeSpan = likeBtn.querySelector('.likes-count');
-            const indicatorArea = card.querySelector('.liked-indicator-area');
-
-            if (isOwn) {
-              likeBtn.classList.add('disabled');
-              likeBtn.disabled = true;
-            } else if (hasLiked) {
-              likeBtn.classList.add('disabled');
-              likeBtn.disabled = true;
-              indicatorArea.innerHTML = `<div class="liked-badge">✓ Liked</div>`;
-            } else {
-              // Only add click listener if not owned and not liked
-              likeBtn.addEventListener('click', async (ev) => {
-                ev.preventDefault();
-                if (!App.state.currentUserMobile) { alert('Please register/login first.'); return; }
-                
-                likeBtn.disabled = true;
-                const old = parseInt(likeSpan.textContent || '0');
-                likeSpan.textContent = old + 1;
-                likeIcon.textContent = '❤️';
-
-                try {
-                  const { error: insertErr } = await App.config.supabase
-                    .from('likes')
-                    .insert({ user_mobile: App.state.currentUserMobile, target_id: id });
-
-                  if (insertErr) throw insertErr;
-
-                  App.state.likedResolutions.add(id);
-                  indicatorArea.innerHTML = `<div class="liked-badge">✓ Liked</div>`;
-                  likeBtn.classList.add('disabled');
-
-                } catch (err) {
-                  console.error('like error', err);
-                  likeSpan.textContent = old;
-                  likeIcon.textContent = '🤍';
-                  likeBtn.disabled = false;
-                  alert('Could not save like. You may have already liked this.');
-                }
-              });
-            }
-          });
-        },
-
-        async onCheckMobile() {
-          const mobile = App.ui.mobile.value.trim();
-          if (!App.utils.validateMobile(mobile)) return;
-
-          App.ui.checkBtn.disabled = true;
-          App.ui.checkBtn.textContent = "Checking...";
-          App.ui.status.textContent = "⏳ Please wait...";
-
-          try {
-            const { data } = await App.config.supabase.from('participants').select('*').eq('mobile', mobile).maybeSingle();
-
-            if (data) {
-              App.state.existingRecord = data;
-              App.ui.name.value = data.name || '';
-              App.ui.unit.value = data.unit || '';
-              App.ui.resolutionText.value = data.future_ready || ''; // DB column
-              App.ui.resolutionRemaining.textContent = Math.max(0, App.config.MAX_EDITS - (data.edits || 0));
-              // --- SELFIE COUNT FIX ---
-              App.ui.selfieRemaining.textContent = Math.max(0, App.config.MAX_EDITS - (data.selfie_edits || 0));
-              
-              App.ui.welcomeName.textContent = data.name || 'participant';
-              App.ui.welcomeMobile.textContent = mobile;
-              App.ui.welcomeMessage.classList.remove("hidden");
-
-              if (data.selfie_url) {
-                App.ui.existingSelfieImg.src = data.selfie_url;
-                App.ui.existingSelfiePreview.classList.remove("hidden");
-              } else {
-                App.ui.existingSelfiePreview.classList.add("hidden");
-              }
-            } else {
-              App.state.existingRecord = null;
-              App.ui.name.value = '';
-              App.ui.unit.value = '';
-              App.ui.resolutionText.value = '';
-              App.ui.existingSelfiePreview.classList.add("hidden");
-              App.ui.welcomeMessage.classList.add("hidden");
-              App.ui.resolutionRemaining.textContent = App.config.MAX_EDITS;
-              // --- SELFIE COUNT FIX ---
-              App.ui.selfieRemaining.textContent = App.config.MAX_EDITS;
-            }
-
-            App.state.currentUserMobile = mobile;
-            localStorage.setItem('loggedInMobile', mobile);
-            App.methods.showTopControls();
-
-            // Show hidden elements
-            App.ui.nav.classList.remove("hidden"); // <-- Show the nav bar
-            App.ui.formFields.classList.remove("hidden");
-            App.ui.mobile.readOnly = true;
-            App.ui.checkBtn.classList.add("hidden");
-            App.ui.status.textContent = data ? "Record found. You can update your details." : "New participant. Please fill the form.";
-          } catch (err) {
-            console.error(err);
-            App.ui.status.textContent = "❌ Error checking mobile";
-            App.ui.checkBtn.disabled = false;
-            App.ui.checkBtn.textContent = "Continue →";
-          }
-        },
-
-        async onFormSubmit(e) {
-          e.preventDefault();
-          App.ui.submitBtn.disabled = true;
-          App.ui.submitBtn.textContent = "⏳ Saving...";
-          App.ui.status.textContent = ''; // Clear status
-
-          const mobile = App.ui.mobile.value.trim();
-          const name = App.ui.name.value.trim();
-          const unit = App.ui.unit.value.trim();
-          const resolutionText = App.ui.resolutionText.value.trim(); // UI value
-          const selfieFile = App.ui.selfie.files[0];
-
-          const fileValidation = App.utils.validateFile(selfieFile);
-          if (!fileValidation.valid) {
-            if (selfieFile) {
-              App.ui.selfieError.textContent = fileValidation.error;
-              App.ui.selfieError.classList.remove("hidden");
-            }
-            App.ui.submitBtn.disabled = false;
-            App.ui.submitBtn.textContent = "Submit ✓";
-            return;
-          }
-
-          try {
-            const record = App.state.existingRecord;
-            const prevResolution = record?.future_ready || ''; // DB column
-            const prevSelfieUrl = record?.selfie_url || null;
-            let newEditsCount = record ? (record.edits || 0) : 0;
-            let newSelfieEdits = record ? (record.selfie_edits || 0) : 0;
-
-            const resolutionChanged = resolutionText !== prevResolution;
-            const selfieChanged = !!selfieFile;
-
-            if (resolutionChanged) {
-              if (newEditsCount >= App.config.MAX_EDITS) {
-                App.ui.status.textContent = "⚠️ Resolution update limit reached.";
-                App.ui.submitBtn.disabled = false;
-                App.ui.submitBtn.textContent = "Submit ✓";
-                return;
-              }
-              newEditsCount++;
-            }
-
-            let finalSelfieUrl = prevSelfieUrl;
-            if (selfieChanged) {
-              // Check the selfie edit count
-              if (newSelfieEdits >= App.config.MAX_EDITS) {
-                App.ui.selfieError.textContent = `⚠️ You have reached the ${App.config.MAX_EDITS}-time limit for selfie updates.`;
-                App.ui.selfieError.classList.remove("hidden");
-                App.ui.submitBtn.disabled = false;
-                App.ui.submitBtn.textContent = "Submit ✓";
-                // Clear the file input so they don't try again
-                App.ui.selfie.value = '';
-                App.ui.newSelfiePreview.classList.add("hidden");
-                return;
-              }
-              App.ui.status.textContent = "📤 Uploading selfie...";
-              finalSelfieUrl = await App.utils.uploadFileSafe(selfieFile, mobile, prevSelfieUrl);
-              newSelfieEdits++; // Only increment if upload was successful
-            }
-
-            App.ui.status.textContent = "💾 Saving participant...";
-
-            const participantData = {
-              mobile,
-              name,
-              unit,
-              future_ready: resolutionText || null, // DB column
-              selfie_url: finalSelfieUrl,
-              edits: newEditsCount,
-              selfie_edits: newSelfieEdits,
-              created_at: record?.created_at || new Date().toISOString()
-            };
-
-            const { error } = await App.config.supabase.from('participants').upsert(participantData, { onConflict: 'mobile' });
-            if (error) throw error;
-
-            App.state.existingRecord = { ...App.state.existingRecord, ...participantData };
-            
-            App.ui.submitBtn.textContent = "Submit ✓";
-            App.ui.status.textContent = "✅ Saved successfully.";
-            
-            setTimeout(() => {
-              App.methods.navigateTo('#resolutions');
-            }, 900);
-
-          } catch (err) {
-            console.error(err);
-            App.ui.status.textContent = "❌ " + (err.message || err);
-            App.ui.submitBtn.disabled = false;
-            App.ui.submitBtn.textContent = "Submit ✓";
-          }
-        },
-
-        doLogout() {
-          localStorage.removeItem('loggedInMobile');
-          App.state.currentUserMobile = null;
-          App.state.likedResolutions = new Set();
-          App.state.existingRecord = null;
-          
-          // Reset form
-          App.ui.mobile.value = '';
-          App.ui.formFields.classList.add("hidden");
-          App.ui.welcomeMessage.classList.add("hidden");
-          App.ui.existingSelfiePreview.classList.add("hidden");
-          App.ui.newSelfiePreview.classList.add("hidden");
-          App.ui.selfie.value = '';
-          App.ui.status.textContent = '';
-          App.ui.checkBtn.classList.remove("hidden");
-          App.ui.checkBtn.disabled = false;
-          App.ui.checkBtn.textContent = "Continue →";
-          App.ui.mobile.readOnly = false;
-          
-          App.ui.nav.classList.add("hidden"); // <-- Hide the nav bar
-          App.methods.showTopControls();
-          App.methods.navigateTo('#register');
-          App.ui.cardsContainer.innerHTML = '';
+          return;
         }
-      },
+        setNavActive('resolutions');
+      } else {
+        setNavActive('register');
+      }
+    }
+    window.addEventListener('hashchange', handleRoute);
 
-      // --- Initialization ---
-      init() {
-        // Initialize Supabase client
-        const { createClient } = window.supabase;
-        App.config.supabase = createClient(App.config.SUPABASE_URL, App.config.SUPABASE_KEY);
+    /* ------------- FORM LOGIC ------------- */
+    
+    // 1. Check Mobile (Login)
+    document.getElementById("checkBtn").addEventListener("click", async () => {
+      const mobile = document.getElementById("mobile").value.trim();
+      if (!/^[0-9]{10}$/.test(mobile)) {
+        document.getElementById("mobileError").classList.remove("hidden");
+        return;
+      }
+      document.getElementById("mobileError").classList.add("hidden");
 
-        // Cache all UI elements
-        App.ui = {
-          topControls: document.getElementById('topControls'),
-          nav: document.querySelector('nav'), // <-- Cache the nav bar
-          navRegister: document.getElementById('navRegister'),
-          navResolutions: document.getElementById('navResolutions'),
-          registerPage: document.getElementById('registerPage'),
-          resolutionsPage: document.getElementById('resolutionsPage'),
-          
-          // Form elements
-          participantForm: document.getElementById('participantForm'),
-          welcomeMessage: document.getElementById('welcomeMessage'),
-          welcomeName: document.getElementById('welcomeName'),
-          welcomeMobile: document.getElementById('welcomeMobile'),
-          mobile: document.getElementById('mobile'),
-          mobileError: document.getElementById('mobileError'),
-          checkBtn: document.getElementById('checkBtn'),
-          formFields: document.getElementById('formFields'),
-          name: document.getElementById('name'),
-          unit: document.getElementById('unit'),
-          resolutionText: document.getElementById('resolutionText'),
-          resolutionRemaining: document.getElementById('resolutionRemaining'),
-          selfie: document.getElementById('selfie'),
-          selfieError: document.getElementById('selfieError'),
-          // --- SELFIE COUNT FIX ---
-          selfieRemaining: document.getElementById('selfieRemaining'), 
-          existingSelfiePreview: document.getElementById('existingSelfiePreview'),
-          existingSelfieImg: document.getElementById('existingSelfieImg'),
-          newSelfiePreview: document.getElementById('newSelfiePreview'),
-          newSelfieImg: document.getElementById('newSelfieImg'),
-          clearSelfieBtn: document.getElementById('clearSelfieBtn'),
-          submitBtn: document.getElementById('submitBtn'),
-          status: document.getElementById('status'),
+      const btn = document.getElementById("checkBtn");
+      btn.disabled = true; btn.textContent = "Checking...";
 
-          // Resolutions page elements
-          searchInput: document.getElementById('searchInput'),
-          refreshBtn: document.getElementById('refreshBtn'),
-          countBadge: document.getElementById('countBadge'),
-          cardsContainer: document.getElementById('cardsContainer'),
-          emptyState: document.getElementById('emptyState'),
+      try {
+        const { data } = await supabase.from('participants').select('*').eq('mobile', mobile).maybeSingle();
+        
+        currentUserMobile = mobile;
+        localStorage.setItem('loggedInMobile', mobile);
+        existingRecord = data || null; 
+
+        // UI Updates
+        document.getElementById("mobile").readOnly = true;
+        document.getElementById("mobile").classList.add("text-slate-400", "bg-slate-50");
+        btn.classList.add("hidden"); 
+        document.getElementById("formFields").classList.remove("hidden");
+        
+        populateForm(existingRecord);
+        updateAuthUI();
+        loadLikedResolutionsForUser();
+
+        // AUTO-REDIRECT: If returning user and profile is complete, go to resolutions
+        if (existingRecord && existingRecord.name && existingRecord.unit && existingRecord.future_ready) {
+           // Small delay for UX
+           setTimeout(() => {
+             if(!window.location.hash || window.location.hash === '#register') {
+               window.location.hash = "#resolutions";
+             }
+           }, 500);
+        }
+
+      } catch (e) {
+        alert("Connection error. Please try again.");
+        console.error(e);
+        btn.disabled = false; btn.textContent = "Next";
+      }
+    });
+
+    // 2. Populate & Lock Logic
+    function populateForm(data) {
+      const nameInput = document.getElementById("name");
+      const unitInput = document.getElementById("unit");
+      const visionInput = document.getElementById("futureReady");
+      const selfieInput = document.getElementById("selfie");
+      const submitBtn = document.getElementById("submitBtn");
+
+      // Reset styling
+      nameInput.disabled = false; nameInput.classList.remove("disabled");
+      unitInput.disabled = false; unitInput.classList.remove("disabled");
+      visionInput.disabled = false; 
+      selfieInput.disabled = false;
+      submitBtn.disabled = false; // Ensure button is enabled initially
+      document.getElementById("nameLockedMsg").classList.add("hidden");
+      
+      if (!data) {
+        // NEW USER
+        document.getElementById("visionCounterBadge").textContent = "3 Edits Left";
+        document.getElementById("selfieCounterBadge").textContent = "3 Uploads Left";
+        return;
+      }
+
+      // EXISTING USER logic
+      document.getElementById("welcomeMessage").classList.remove("hidden");
+      document.getElementById("welcomeName").textContent = shortName(data.name);
+
+      if (data.name) {
+        nameInput.value = data.name;
+        nameInput.disabled = true; // READ ONLY
+        document.getElementById("nameLockedMsg").classList.remove("hidden");
+      }
+      if (data.unit) {
+        unitInput.value = data.unit;
+        unitInput.disabled = true; // READ ONLY
+      }
+
+      visionInput.value = data.future_ready || '';
+      const visionEdits = data.edits || 0;
+      const visionLeft = Math.max(0, MAX_VISION_EDITS - visionEdits);
+      
+      if (visionLeft === 0) {
+        document.getElementById("visionCounterBadge").innerHTML = `<span class="text-rose-600">Locked</span>`;
+        document.getElementById("visionCounterBadge").className = "px-3 py-1 rounded-full text-xs font-bold bg-rose-100 border border-rose-200";
+        visionInput.disabled = true;
+        document.getElementById("visionLockedMsg").classList.remove("hidden");
+      } else {
+         document.getElementById("visionCounterBadge").textContent = `${visionLeft} Edits Left`;
+         document.getElementById("visionCounterBadge").className = "px-3 py-1 rounded-full text-xs font-bold bg-teal-100 text-teal-700 border border-teal-200";
+      }
+
+      const selfieEdits = data.selfie_edits || 0;
+      const selfieLeft = Math.max(0, MAX_SELFIE_EDITS - selfieEdits);
+      
+      if (data.selfie_url) {
+        document.getElementById("existingSelfieImg").src = data.selfie_url;
+        document.getElementById("existingSelfiePreview").classList.remove("hidden");
+      }
+
+      if (selfieLeft === 0) {
+        document.getElementById("selfieCounterBadge").innerHTML = `<span class="text-rose-600">Locked</span>`;
+        document.getElementById("selfieCounterBadge").className = "px-3 py-1 rounded-full text-xs font-bold bg-rose-100 border border-rose-200";
+        selfieInput.disabled = true;
+        document.getElementById("selfieLockedMsg").classList.remove("hidden");
+      } else {
+         document.getElementById("selfieCounterBadge").textContent = `${selfieLeft} Uploads Left`;
+         document.getElementById("selfieCounterBadge").className = "px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200";
+      }
+    }
+
+    // 3. Submit Handler
+    document.getElementById("participantForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      // Trap Enter key on mobile field
+      const formFields = document.getElementById("formFields");
+      if (formFields.classList.contains("hidden")) {
+         document.getElementById("checkBtn").click(); 
+         return; 
+      }
+
+      const statusDiv = document.getElementById("status");
+      const submitBtn = document.getElementById("submitBtn");
+      
+      statusDiv.textContent = "Processing...";
+      statusDiv.className = "mt-4 text-center text-sm font-medium h-5 text-teal-600 animate-pulse";
+      submitBtn.disabled = true;
+
+      // Value extraction
+      const inputMobile = document.getElementById("mobile").value.trim();
+      const activeMobile = currentUserMobile || inputMobile;
+      const name = document.getElementById("name").value.trim();
+      const unit = document.getElementById("unit").value.trim();
+      const vision = document.getElementById("futureReady").value.trim();
+      const selfieFile = document.getElementById("selfie").files[0];
+
+      if(!activeMobile) {
+         statusDiv.textContent = "Error: Mobile number missing. Refresh page.";
+         statusDiv.className = "mt-4 text-center text-sm font-bold h-5 text-rose-600";
+         submitBtn.disabled = false;
+         return;
+      }
+
+      // --- MANDATORY FIELD VALIDATION ---
+      if (!name || !unit || !vision) {
+        statusDiv.textContent = "Please fill in all mandatory fields (*).";
+        statusDiv.className = "mt-4 text-center text-sm font-bold h-5 text-rose-600";
+        submitBtn.disabled = false;
+        return;
+      }
+
+      try {
+        let curVisionEdits = existingRecord ? (existingRecord.edits || 0) : 0;
+        let curSelfieEdits = existingRecord ? (existingRecord.selfie_edits || 0) : 0;
+        
+        // Detect Changes
+        const visionChanged = vision !== (existingRecord?.future_ready || '');
+        
+        if (visionChanged && curVisionEdits >= MAX_VISION_EDITS) throw new Error("Resolution edit limit reached.");
+        if (selfieFile && curSelfieEdits >= MAX_SELFIE_EDITS) throw new Error("Selfie upload limit reached.");
+
+        // Upload Selfie
+        let finalSelfieUrl = existingRecord?.selfie_url || null;
+        if (selfieFile) {
+            statusDiv.textContent = "Uploading image...";
+            finalSelfieUrl = await uploadFileSafe(selfieFile, activeMobile, finalSelfieUrl);
+            curSelfieEdits++;
+        }
+
+        if (visionChanged) curVisionEdits++;
+
+        const payload = {
+          mobile: activeMobile,
+          name: name,
+          unit: unit,
+          future_ready: vision, // Required now
+          selfie_url: finalSelfieUrl,
+          edits: curVisionEdits,
+          selfie_edits: curSelfieEdits,
+          created_at: existingRecord?.created_at || new Date().toISOString()
         };
 
-        // --- Bind Event Listeners ---
+        const { data, error } = await supabase
+            .from('participants')
+            .upsert(payload, { onConflict: 'mobile' })
+            .select()
+            .single();
         
-        // Routing
-        window.addEventListener('hashchange', App.methods.handleRoute);
+        if (error) throw error;
 
-        // Form
-        App.ui.mobile.addEventListener("input", (e) => {
-          e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 10);
-        });
-        App.ui.checkBtn.addEventListener("click", App.methods.onCheckMobile);
-        App.ui.participantForm.addEventListener("submit", App.methods.onFormSubmit);
+        existingRecord = data;
+        statusDiv.textContent = "Success! Redirecting...";
+        statusDiv.className = "mt-4 text-center text-sm font-bold h-5 text-emerald-600";
         
-        // Selfie controls
-        App.ui.clearSelfieBtn.addEventListener("click", () => {
-          App.ui.selfie.value = '';
-          App.ui.newSelfiePreview.classList.add("hidden");
-          App.ui.newSelfieImg.src = '';
-        });
-        App.ui.selfie.addEventListener("change", (e) => {
-          const file = e.target.files[0];
-          App.ui.selfieError.classList.add('hidden');
-          App.ui.selfieError.textContent = '';
-          if (file) {
-            const v = App.utils.validateFile(file);
-            if (!v.valid) {
-              App.ui.selfieError.textContent = v.error;
-              App.ui.selfieError.classList.remove('hidden');
-              e.target.value = '';
-              return;
-            }
-            const url = URL.createObjectURL(file);
-            App.ui.newSelfieImg.src = url;
-            App.ui.newSelfiePreview.classList.remove("hidden");
-            setTimeout(() => URL.revokeObjectURL(url), 6000); // Revoke blob URL
-          } else {
-            App.ui.newSelfiePreview.classList.add("hidden");
-          }
-        });
+        setTimeout(() => {
+          window.location.hash = "#resolutions";
+        }, 800);
 
-        // Resolutions page
-        App.ui.searchInput.addEventListener("input", (e) => {
-          const term = e.target.value.toLowerCase().trim();
-          if (!term) {
-            App.methods.renderResolutions(App.state.allResolutions);
-            return;
-          }
-          const filtered = App.state.allResolutions.filter(v =>
-            (v.name || '').toLowerCase().includes(term) ||
-            (v.unit || '').toLowerCase().includes(term) ||
-            (v.future_ready || '').toLowerCase().includes(term) // DB column
-          );
-          App.methods.renderResolutions(filtered);
-        });
-        App.ui.refreshBtn.addEventListener("click", App.methods.loadResolutions);
-
-        // --- Initial Page Load ---
-        App.methods.showTopControls(); // Will show nothing, as requested
-        App.methods.handleRoute(); // Will show #registerPage
+      } catch (err) {
+        console.error(err);
+        let msg = err.message || "Error saving data";
+        if (msg.includes("duplicate key")) msg = "User already exists";
+        statusDiv.textContent = msg;
+        statusDiv.className = "mt-4 text-center text-sm font-bold h-5 text-rose-600";
+        submitBtn.disabled = false;
       }
-    };
+    });
 
-    // Run the app
-    document.addEventListener('DOMContentLoaded', App.init);
+
+    /* ------------- RESOLUTIONS PAGE LOGIC ------------- */
+    async function loadResolutions() {
+      const container = document.getElementById("cardsContainer");
+      const empty = document.getElementById("emptyState");
+      
+      container.innerHTML = '<div class="col-span-full text-center py-10"><div class="animate-spin inline-block w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full"></div></div>';
+
+      try {
+        const { data, error } = await supabase
+          .from('participants')
+          .select('*')
+          .not('future_ready','is',null)
+          .neq('future_ready', '')
+          .order('likes', {ascending:false})
+          .order('created_at', {ascending:false})
+          .limit(100);
+
+        if (error) throw error;
+        allResolutions = data || [];
+        renderVisions(allResolutions);
+      } catch (e) {
+        container.innerHTML = `<div class="col-span-full text-center text-rose-500">Failed to load resolutions.</div>`;
+      }
+    }
+
+    function renderVisions(list) {
+      const container = document.getElementById("cardsContainer");
+      const empty = document.getElementById("emptyState");
+
+      if (!list.length) {
+        container.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+      container.innerHTML = '';
+
+      list.forEach(v => {
+        const isOwn = (v.mobile === currentUserMobile);
+        const hasLiked = likedResolutions.has(String(v.id));
+        const initial = shortName(v.name).charAt(0);
+        const colors = ['bg-orange-100 text-orange-600', 'bg-blue-100 text-blue-600', 'bg-purple-100 text-purple-600', 'bg-pink-100 text-pink-600'];
+        const avatarClass = colors[v.name.length % colors.length];
+
+        const card = document.createElement('div');
+        card.className = 'resolution-card bg-white rounded-2xl p-6 border border-slate-100 h-full flex flex-col';
+        
+        let avatarHTML = `<div class="w-10 h-10 rounded-full ${avatarClass} flex items-center justify-center font-bold text-lg shadow-sm">${initial}</div>`;
+        if (v.selfie_url) {
+          avatarHTML = `<img src="${v.selfie_url}" class="w-10 h-10 rounded-full object-cover shadow-sm border border-slate-100">`;
+        }
+
+        card.innerHTML = `
+          <div class="flex items-center gap-3 mb-4">
+            ${avatarHTML}
+            <div>
+              <h4 class="font-bold text-slate-800 leading-tight">${esc(v.name)}</h4>
+              <p class="text-xs text-slate-400 font-medium uppercase tracking-wide">${esc(v.unit || 'Unit N/A')}</p>
+            </div>
+            ${isOwn ? '<span class="ml-auto text-xs font-bold bg-slate-100 text-slate-500 px-2 py-1 rounded">YOU</span>' : ''}
+          </div>
+          
+          <div class="flex-1 mb-5">
+            <p class="text-slate-600 text-sm leading-relaxed italic">"${esc(v.future_ready)}"</p>
+          </div>
+
+          <div class="flex items-center justify-between pt-4 border-t border-slate-50">
+             <button class="like-btn group flex items-center gap-2 px-3 py-1.5 rounded-full ${hasLiked ? 'bg-rose-50 text-rose-600 ring-1 ring-rose-100' : 'bg-slate-50 text-slate-500 hover:bg-rose-50 hover:text-rose-600'} font-semibold text-sm" data-id="${v.id}" ${isOwn || hasLiked ? 'disabled' : ''}>
+               <span class="transform transition-transform group-hover:scale-110">${hasLiked ? '❤️' : '🤍'}</span>
+               <span class="like-count">${v.likes || 0}</span>
+             </button>
+             <span class="text-[10px] text-slate-300 font-medium">${new Date(v.created_at).toLocaleDateString()}</span>
+          </div>
+        `;
+
+        if(!isOwn && !hasLiked) {
+          const btn = card.querySelector('.like-btn');
+          btn.addEventListener('click', () => handleLike(v.id, btn));
+        }
+
+        container.appendChild(card);
+      });
+    }
+
+    async function handleLike(id, btn) {
+      if(!currentUserMobile) return;
+      const countSpan = btn.querySelector('.like-count');
+      const iconSpan = btn.querySelectorAll('span')[0];
+      const originalCount = parseInt(countSpan.textContent);
+      
+      countSpan.textContent = originalCount + 1;
+      iconSpan.textContent = '❤️';
+      btn.classList.remove('bg-slate-50', 'text-slate-500');
+      btn.classList.add('bg-rose-50', 'text-rose-600', 'ring-1', 'ring-rose-100');
+      btn.disabled = true;
+
+      try {
+        const { error } = await supabase.from('likes').insert({ user_mobile: currentUserMobile, target_id: String(id) });
+        if(error) throw error;
+        likedResolutions.add(String(id));
+        saveLikedResolutionsForUser();
+      } catch (err) {
+        countSpan.textContent = originalCount;
+        iconSpan.textContent = '🤍';
+        btn.disabled = false;
+      }
+    }
+
+    /* ------------- FILE HELPERS (Limit Added) ------------- */
+    function compressImageIfNeeded(file, maxWidth = 1200, quality = 0.9) {
+      return new Promise((resolve, reject) => {
+        if (!file) return resolve(null);
+        if (file.size < 200 * 1024) return resolve(file); 
+        const reader = new FileReader();
+        reader.onload = () => {
+          const img = new Image();
+          img.onload = () => {
+            const scale = (img.width > maxWidth) ? (maxWidth / img.width) : 1;
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width * scale; 
+            canvas.height = img.height * scale;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(b => resolve(new File([b], file.name, {type:'image/jpeg'})), 'image/jpeg', quality);
+          };
+          img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function uploadFileSafe(file, mobile, prevUrl) {
+      const compressed = await compressImageIfNeeded(file);
+      const path = `selfies/${mobile}_${Date.now()}.jpg`;
+      const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(path, compressed, { upsert: true });
+      if (error) throw error;
+      const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+      
+      if(prevUrl && prevUrl.includes(STORAGE_BUCKET)) {
+        try {
+           const oldPath = prevUrl.split(`${STORAGE_BUCKET}/`)[1];
+           if(oldPath) supabase.storage.from(STORAGE_BUCKET).remove([oldPath]);
+        } catch(e) {}
+      }
+      return data.publicUrl;
+    }
+
+    /* ------------- LOCAL STORAGE ------------- */
+    function saveLikedResolutionsForUser() {
+      if (!currentUserMobile) return;
+      localStorage.setItem(`likes_${currentUserMobile}`, JSON.stringify([...likedResolutions]));
+    }
+    function loadLikedResolutionsForUser() {
+      likedResolutions = new Set();
+      if (!currentUserMobile) return;
+      try {
+        const raw = localStorage.getItem(`likes_${currentUserMobile}`);
+        if (raw) JSON.parse(raw).forEach(id => likedResolutions.add(id));
+      } catch (e) {}
+    }
+
+    function doLogout() {
+      localStorage.removeItem('loggedInMobile');
+      window.location.reload();
+    }
+
+    document.getElementById("searchInput").addEventListener("input", (e) => {
+      const term = e.target.value.toLowerCase();
+      const filtered = allResolutions.filter(v => 
+        v.name.toLowerCase().includes(term) || 
+        (v.unit || '').toLowerCase().includes(term) || 
+        (v.future_ready || '').toLowerCase().includes(term)
+      );
+      renderVisions(filtered);
+    });
+    
+    document.getElementById("refreshBtn").addEventListener("click", loadResolutions);
+    
+    // Selfie Preview & SIZE CHECK
+    document.getElementById("selfie").addEventListener("change", (e) => {
+       const file = e.target.files[0];
+       const err = document.getElementById("selfieError");
+       
+       // Reset
+       err.classList.add("hidden");
+       document.getElementById("newSelfiePreview").classList.add("hidden");
+       
+       if(file) {
+         // SIZE LIMIT CHECK (5MB)
+         if (file.size > MAX_FILE_SIZE) {
+           err.textContent = "⚠️ File is too large (Max 5MB)";
+           err.classList.remove("hidden");
+           e.target.value = ""; // clear input
+           return;
+         }
+
+         document.getElementById("newSelfiePreview").classList.remove("hidden");
+         document.getElementById("newSelfieImg").src = URL.createObjectURL(file);
+       }
+    });
+    
+    document.getElementById("clearSelfieBtn").addEventListener("click", () => {
+      document.getElementById("selfie").value = "";
+      document.getElementById("newSelfiePreview").classList.add("hidden");
+    });
+
+    updateAuthUI();
+    handleRoute();
+    if(currentUserMobile) {
+       document.getElementById("mobile").value = currentUserMobile;
+       document.getElementById("checkBtn").click(); 
+    }
   </script>
 </body>
 </html>
