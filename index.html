@@ -115,7 +115,7 @@
           <div class="text-center mb-10">
             <h2 class="text-2xl font-bold text-slate-800">Profile & Resolution</h2>
             <p class="text-slate-500 text-sm mt-1">Complete your details to access the portal.</p>
-            <p class="text-slate-500 text-sm mt-1">Made with ❤️by Ordnance Fraternity</p>
+            <p class="text-slate-500 text-sm mt-1">Made with ❤️ by Ordnance Fraternity</p>
           </div>
 
           <div id="welcomeMessage" class="hidden mb-8 bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-100 rounded-2xl p-6 text-center shadow-sm relative overflow-hidden">
@@ -143,26 +143,18 @@
             <div id="formFields" class="space-y-8 hidden fade-in">
               <div class="h-px bg-slate-200 w-full"></div>
 
-              <div class="grid md:grid-cols-2 gap-6">
+              
                 <div class="relative group">
                   <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
                     Full Name <span class="text-rose-500">*</span>
                   </label>
-                  <input id="name" type="text" placeholder="e.g. Major Amit Kumar" required
+                  <input id="name" type="text" placeholder="e.g. Vrinda Kumar" required
                     class="glass-input w-full p-3 rounded-xl font-medium" />
                   <div id="nameLockedMsg" class="hidden absolute right-3 top-9 text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded">Locked</div>
                 </div>
 
-                <div class="relative">
-                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                    Unit / Directorate <span class="text-rose-500">*</span>
-                  </label>
-                  <input id="unit" type="text" placeholder="e.g. COD Delhi" required
-                    class="glass-input w-full p-3 rounded-xl font-medium" />
-                </div>
-              </div>
-
-              <div class="bg-slate-50/50 p-5 rounded-2xl border border-slate-100">
+              
+              <div class="col-span-2 bg-slate-50/50 p-5 rounded-2xl border border-slate-100">
                 <div class="flex justify-between items-center mb-3">
                   <label class="flex items-center gap-2 text-sm font-bold text-teal-700">
                     <span>✨ Your Resolution for 2026 <span class="text-rose-500">*</span></span>
@@ -177,7 +169,7 @@
                 <p id="visionLockedMsg" class="hidden text-xs text-rose-500 font-bold mt-2">⚠️ Editing limit reached for Resolutions.</p>
               </div>
 
-              <div class="bg-slate-50/50 p-5 rounded-2xl border border-slate-100">
+              <div class="col-span-2 bg-slate-50/50 p-5 rounded-2xl border border-slate-100">
                 <div class="flex justify-between items-center mb-3">
                   <label class="flex items-center gap-2 text-sm font-bold text-slate-700">
                     <span>📸 Upload Selfie (Optional)</span>
@@ -399,7 +391,7 @@
         loadLikedResolutionsForUser();
 
         // AUTO-REDIRECT: If returning user and profile is complete, go to resolutions
-        if (existingRecord && existingRecord.name && existingRecord.unit && existingRecord.future_ready) {
+        if (existingRecord && existingRecord.name && existingRecord.future_ready) {
            // Small delay for UX
            setTimeout(() => {
              if(!window.location.hash || window.location.hash === '#register') {
@@ -418,14 +410,12 @@
     // 2. Populate & Lock Logic
     function populateForm(data) {
       const nameInput = document.getElementById("name");
-      const unitInput = document.getElementById("unit");
       const visionInput = document.getElementById("futureReady");
       const selfieInput = document.getElementById("selfie");
       const submitBtn = document.getElementById("submitBtn");
 
       // Reset styling
       nameInput.disabled = false; nameInput.classList.remove("disabled");
-      unitInput.disabled = false; unitInput.classList.remove("disabled");
       visionInput.disabled = false; 
       selfieInput.disabled = false;
       submitBtn.disabled = false; // Ensure button is enabled initially
@@ -447,10 +437,7 @@
         nameInput.disabled = true; // READ ONLY
         document.getElementById("nameLockedMsg").classList.remove("hidden");
       }
-      if (data.unit) {
-        unitInput.value = data.unit;
-        unitInput.disabled = true; // READ ONLY
-      }
+     
 
       visionInput.value = data.future_ready || '';
       const visionEdits = data.edits || 0;
@@ -507,7 +494,6 @@
       const inputMobile = document.getElementById("mobile").value.trim();
       const activeMobile = currentUserMobile || inputMobile;
       const name = document.getElementById("name").value.trim();
-      const unit = document.getElementById("unit").value.trim();
       const vision = document.getElementById("futureReady").value.trim();
       const selfieFile = document.getElementById("selfie").files[0];
 
@@ -519,7 +505,7 @@
       }
 
       // --- MANDATORY FIELD VALIDATION ---
-      if (!name || !unit || !vision) {
+      if (!name || !vision) {
         statusDiv.textContent = "Please fill in all mandatory fields (*).";
         statusDiv.className = "mt-4 text-center text-sm font-bold h-5 text-rose-600";
         submitBtn.disabled = false;
@@ -549,7 +535,6 @@
         const payload = {
           mobile: activeMobile,
           name: name,
-          unit: unit,
           future_ready: vision, // Required now
           selfie_url: finalSelfieUrl,
           edits: curVisionEdits,
@@ -641,7 +626,6 @@
             ${avatarHTML}
             <div>
               <h4 class="font-bold text-slate-800 leading-tight">${esc(v.name)}</h4>
-              <p class="text-xs text-slate-400 font-medium uppercase tracking-wide">${esc(v.unit || 'Unit N/A')}</p>
             </div>
             ${isOwn ? '<span class="ml-auto text-xs font-bold bg-slate-100 text-slate-500 px-2 py-1 rounded">YOU</span>' : ''}
           </div>
@@ -754,7 +738,6 @@
       const term = e.target.value.toLowerCase();
       const filtered = allResolutions.filter(v => 
         v.name.toLowerCase().includes(term) || 
-        (v.unit || '').toLowerCase().includes(term) || 
         (v.future_ready || '').toLowerCase().includes(term)
       );
       renderVisions(filtered);

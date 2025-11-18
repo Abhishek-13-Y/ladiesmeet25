@@ -8,539 +8,718 @@
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
   <style>
-    :root{
-      --glass-bg: rgba(255,255,255,0.12);
-      --glass-border: rgba(255,255,255,0.18);
+    /* --- USER PROVIDED THEME --- */
+    :root {
+      --glass-bg: rgba(255, 255, 255, 0.25);
+      --glass-border: rgba(255, 255, 255, 0.4);
       --teal-1: #06b6d4;
       --teal-2: #14b8a6;
+      --teal-dark: #044e54;
       --gold: #fbbf24;
     }
 
     body {
       background: linear-gradient(135deg, #dffaf6 0%, #c8f7f1 40%, #bfeeee 100%);
-      min-height:100vh;
-      margin:0;
-      font-family: Inter, ui-sans-serif, system-ui;
+      min-height: 100vh;
+      margin: 0;
+      font-family: 'Inter', ui-sans-serif, system-ui;
       color: #044e54;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
     }
 
     .glass {
       background: var(--glass-bg);
-      backdrop-filter: blur(8px) saturate(120%);
+      backdrop-filter: blur(12px) saturate(120%);
       border: 1px solid var(--glass-border);
+      box-shadow: 0 8px 32px rgba(6, 182, 212, 0.1);
     }
 
     .number-cell { transition: all .28s ease; user-select:none; }
-    .uncalled { background: rgba(200,200,200,0.12); color:#0f172a; }
-    .called { background: linear-gradient(135deg, #a7f3d0, #6ee7b7); color:#044e54; font-weight:700; }
-    .current { background: linear-gradient(135deg,#c8f7f1,#a7f3d0); color:var(--teal-2); font-weight:800; border:3px solid rgba(6,182,212,0.12); transform:scale(1.03); }
+    .uncalled { background: rgba(255,255,255,0.4); color:#334155; border: 1px solid rgba(255,255,255,0.5); }
+    .called { background: linear-gradient(135deg, #a7f3d0, #5eead4); color:#0f5132; font-weight:700; box-shadow: inset 0 2px 4px rgba(255,255,255,0.4); }
+    .current { background: linear-gradient(135deg,#c8f7f1,#2dd4bf); color:#0f766e; font-weight:800; border:2px solid #0d9488; transform:scale(1.1); z-index: 10; box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3); }
 
-    #mainBoard, #hostBoard {
-      display:grid; gap:8px;
-      grid-template-columns: repeat(auto-fit, minmax(46px, 1fr));
+    .screen { 
+      display: none !important; 
+      opacity: 0;
+      transition: opacity 0.3s ease;
     }
-
-    .toast {
-      position:fixed; right:16px; top:16px; z-index:9999;
-      animation: slideIn .28s ease-out;
+    .screen.active { 
+      display: flex !important; 
+      opacity: 1;
     }
-    @keyframes slideIn {
-      from { opacity:0; transform: translateY(-6px) scale(.97); }
-      to { opacity:1; transform: translateY(0) scale(1); }
-    }
-
-    .screen { display:none; }
-    .screen.active { display:block; }
 
     /* PREMIUM PRIZES UI */
     .special-prize {
       background: linear-gradient(135deg, #06b6d4, #14b8a6, #0d9488);
-      color:white;
+      color: white;
       padding: 12px 18px;
       border-radius: 14px;
       font-weight: 800;
       box-shadow: 0 6px 18px rgba(6,182,212,0.25);
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      transition:.2s ease;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: .2s ease;
+      transform: translateX(0);
+      animation: slideInLeft 0.5s ease;
+    }
+    
+    .special-prize:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(6,182,212,0.35);
     }
 
-    .special-button {
-      background:white;
-      color:#0d6e6c;
-      padding:8px 14px;
-      border-radius:10px;
-      font-weight:700;
-      box-shadow:0 3px 8px rgba(0,0,0,0.10);
+    /* Basic Prize Card (Light Theme) */
+    .prize-card-basic {
+      background: rgba(255,255,255,0.4);
+      border: 1px solid rgba(255,255,255,0.6);
+      color: #115e59;
+      transform: translateX(0);
+      animation: slideInLeft 0.5s ease;
+    }
+    .prize-card-basic.claimed {
+      background: linear-gradient(90deg, #ccfbf1, #99f6e4);
+      border-left: 5px solid #0d9488;
+      color: #0f766e;
     }
 
-    .special-button:disabled {
-      opacity:0.6;
-      color:#555;
+    /* --- ANIMATIONS --- */
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    .float-anim { animation: float 4s ease-in-out infinite; }
+
+    @keyframes popIn {
+      0% { transform: scale(0.5); opacity: 0; }
+      70% { transform: scale(1.1); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .pop-in { animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+    @keyframes slideInLeft {
+      from { transform: translateX(-30px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
     }
 
-    .pulse {
-      animation: pulseGold 1.2s ease-in-out;
+    @keyframes slideInRight {
+      from { transform: translateX(30px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
     }
 
-    @keyframes pulseGold {
-      0% { transform:scale(1); box-shadow:0 0 0 rgba(6,182,212,0.15); }
-      50% { transform:scale(1.05); box-shadow:0 0 22px rgba(6,182,212,0.35); }
-      100% { transform:scale(1); box-shadow:0 0 0 rgba(6,182,212,0.15); }
+    @keyframes fadeInUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
     }
+
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 20px rgba(6, 182, 212, 0.3); }
+      50% { box-shadow: 0 0 40px rgba(6, 182, 212, 0.6); }
+    }
+
+    /* Sphere for Current Number (Light Version) */
+    .number-sphere {
+      background: radial-gradient(circle at 30% 30%, #ffffff, #ccfbf1);
+      box-shadow: 
+        inset 0 0 20px rgba(255,255,255,1),
+        0 10px 30px rgba(20, 184, 166, 0.3),
+        0 0 0 8px rgba(255,255,255,0.3);
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.8);
+      animation: pulse-glow 2s infinite;
+    }
+    
+    .number-sphere::after {
+      content: '';
+      position: absolute;
+      top: -50%; left: -50%; width: 200%; height: 200%;
+      background: linear-gradient(transparent, rgba(255,255,255,0.8), transparent);
+      transform: rotate(45deg);
+      animation: shine 3s infinite;
+    }
+
+    @keyframes shine {
+      0% { transform: translateX(-100%) rotate(45deg); }
+      100% { transform: translateX(100%) rotate(45deg); }
+    }
+
+    /* History Ball (Light Version) */
+    .history-ball {
+      background: radial-gradient(circle at 35% 35%, #ffffff, #e2e8f0);
+      color: #0f766e;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      border: 1px solid white;
+      animation: fadeInUp 0.3s ease;
+    }
+
+    /* Active Navigation */
+    .nav-link {
+      position: relative;
+      transition: all 0.3s ease;
+    }
+    
+    .nav-link.active {
+      background: rgba(255,255,255,0.6);
+      color: #0d9488;
+      font-weight: 700;
+    }
+    
+    .nav-link.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60%;
+      height: 3px;
+      background: linear-gradient(90deg, #06b6d4, #14b8a6);
+      border-radius: 2px 2px 0 0;
+    }
+
+    /* Scrollbar Hide */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* Host Control Enhancements */
+    .control-card {
+      animation: fadeInUp 0.5s ease;
+      transition: all 0.3s ease;
+    }
+    
+    .control-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(6, 182, 212, 0.15);
+    }
+
+    /* Draw Button Pulse */
+    @keyframes button-pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    
+    .draw-btn-active {
+      animation: button-pulse 2s infinite;
+    }
+
   </style>
 </head>
 
 <body>
 
-<header class="p-4 flex justify-between items-center">
-  <div class="flex items-center gap-3">
-    <div class="px-3 py-2 rounded-full bg-gradient-to-r from-teal-400 to-cyan-500 text-white font-semibold">
-      Monthly Interaction 2025
+  <!-- AUDIO SYSTEM (Invisible) -->
+  <div id="audioControl" class="hidden"></div>
+
+  <!-- HEADER -->
+  <header class="fixed top-0 w-full z-50 glass px-6 py-3 flex justify-between items-center bg-white/30">
+    <div class="flex items-center gap-3">
+      <div class="h-10 w-10 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center font-bold text-white shadow-md">MI</div>
+      <div class="flex flex-col">
+        <h1 class="text-xl font-bold tracking-wide text-teal-900">TAMBOLA</h1>
+        <span class="text-xs text-teal-700 uppercase tracking-widest font-semibold">Monthly Interaction 2025</span>
+      </div>
     </div>
-    <h1 class="text-2xl font-extrabold text-teal-600">Tambola 🎲</h1>
-  </div>
+    <nav class="flex gap-2 text-sm font-medium">
+      <button onclick="switchScreen('player')" class="nav-link px-4 py-2 rounded-lg transition text-teal-800 font-semibold" id="navPlayer">Player</button>
+      <button onclick="switchScreen('host')" class="nav-link px-4 py-2 rounded-lg transition text-teal-800 font-semibold" id="navHost">Host</button>
+    </nav>
+  </header>
 
-  <nav class="flex gap-3">
-    <a id="navPlayer" href="#player" class="glass px-3 py-2 rounded-md">Player</a>
-    <a id="navHost" href="#host" class="glass px-3 py-2 rounded-md">Host</a>
-  </nav>
-</header>
+  <!-- PLAYER SCREEN -->
+  <main id="playerScreen" class="screen active pt-24 pb-16 px-4 flex-grow flex flex-col">
+    
+    <div class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow h-full">
+      
+      <!-- LEFT: PRIZES (3 Cols) -->
+      <div class="lg:col-span-3 flex flex-col gap-4 order-3 lg:order-1">
+        <div class="glass rounded-2xl p-5 h-full flex flex-col control-card">
+          <h2 class="text-teal-800 font-bold uppercase tracking-widest text-sm mb-4 border-b border-teal-200 pb-2 flex items-center gap-2">
+            <span>🏆</span> Prizes
+          </h2>
+          <div id="prizesList" class="space-y-3 overflow-y-auto max-h-[400px] lg:max-h-full pr-2 no-scrollbar flex-grow">
+            <!-- Prizes Injected Here -->
+          </div>
+        </div>
+      </div>
 
-<main id="playerScreen" class="screen active px-4">
-  <div class="max-w-6xl mx-auto">
+      <!-- CENTER: THE STAGE (6 Cols) -->
+      <div class="lg:col-span-6 flex flex-col items-center justify-center order-1 lg:order-2 min-h-[400px] py-10">
+        
+        <!-- Main Number Display -->
+        <div class="relative group scale-110">
+          <!-- Outer Glow Ring -->
+          <div class="absolute inset-0 bg-teal-300 blur-[60px] opacity-30 rounded-full group-hover:opacity-50 transition duration-1000"></div>
+          
+          <!-- The Sphere -->
+          <div class="number-sphere w-72 h-72 md:w-80 md:h-80 rounded-full flex items-center justify-center float-anim">
+             <div class="text-center z-10">
+                <div id="mainNumberDisplay" class="text-[150px] font-black text-teal-600 drop-shadow-sm tabular-nums leading-none tracking-tighter">
+                  --
+                </div>
+             </div>
+          </div>
+        </div>
 
-    <div class="glass rounded-3xl p-6 mb-6 shadow">
-      <div class="flex flex-col gap-6">
+        <!-- Minimal Status Indicator -->
+        <div id="spinIndicator" class="mt-12 h-2 w-32 bg-teal-100 rounded-full overflow-hidden opacity-0 transition-opacity duration-300">
+          <div class="h-full bg-teal-500 w-full animate-pulse"></div>
+        </div>
 
-        <div class="flex flex-col lg:flex-row gap-6">
+      </div>
 
-          <div class="flex-1 flex items-center justify-center bg-white/30 rounded-2xl p-6">
-            <div class="text-center w-full">
-              <div class="text-sm font-semibold text-teal-700 mb-1">Current Number</div>
-              <div id="currentNumberDisplay" class="text-7xl font-extrabold text-teal-500">--</div>
+      <!-- RIGHT: HISTORY (3 Cols) -->
+      <div class="lg:col-span-3 flex flex-col gap-4 order-2 lg:order-3">
+        <div class="glass rounded-2xl p-5 h-full control-card">
+          <h2 class="text-teal-800 font-bold uppercase tracking-widest text-sm mb-4 border-b border-teal-200 pb-2 flex items-center gap-2">
+            <span>📜</span> Last 20
+          </h2>
+          <div id="historyGrid" class="grid grid-cols-4 gap-3 content-start">
+            <!-- History Balls Injected Here -->
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- HOST SCREEN -->
+  <main id="hostScreen" class="screen pt-24 pb-16 px-4 flex-grow flex flex-col">
+    <div class="max-w-6xl mx-auto w-full">
+      
+      <div class="glass rounded-3xl p-6 md:p-8 bg-white/60 control-card">
+        <div class="flex justify-between items-center mb-8 border-b border-teal-100 pb-4">
+          <h2 class="text-2xl font-bold text-teal-900">🎮 Host Control Panel</h2>
+          <div class="flex gap-3">
+            <button onclick="resetGame()" class="bg-red-100 hover:bg-red-200 text-red-600 border border-red-200 px-6 py-2 rounded-lg font-semibold transition shadow-sm hover:shadow-md transform hover:scale-105">Reset Game</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          <!-- Left Controls (4 Cols) -->
+          <div class="lg:col-span-4 space-y-6">
+            
+            <!-- Draw Section -->
+            <div class="bg-white/50 rounded-2xl p-6 border border-white shadow-sm control-card">
+              <div class="text-xs text-teal-600 uppercase font-bold mb-4 tracking-wider">🎲 Game Controls</div>
+              <div class="flex gap-4 mb-6">
+                <button id="drawBtn" onclick="hostDrawNumber()" class="flex-1 bg-gradient-to-r from-teal-400 to-teal-500 text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-teal-200 transition transform active:scale-95 hover:brightness-105 draw-btn-active">
+                  🎲 Draw
+                </button>
+                <button id="flashBtn" onclick="hostFlashNumber()" disabled class="flex-1 bg-slate-200 text-slate-400 py-4 rounded-xl font-bold text-lg transition cursor-not-allowed border border-slate-300">
+                  📢 Flash
+                </button>
+              </div>
+              
+              <div class="flex flex-col items-center bg-teal-50 p-4 rounded-xl border border-teal-100">
+                <span class="text-teal-500 text-xs uppercase font-bold mb-1">Pending Number</span>
+                <span id="hostDrawnDisplay" class="text-5xl font-mono font-bold text-yellow-500 tracking-tighter drop-shadow-sm">--</span>
+              </div>
+            </div>
+
+            <!-- Prize Manager -->
+            <div class="bg-white/50 rounded-2xl p-6 border border-white shadow-sm max-h-[400px] overflow-y-auto control-card">
+              <div class="text-xs text-teal-600 uppercase font-bold mb-4 tracking-wider">🏆 Prize Manager</div>
+              <div id="hostPrizeList" class="space-y-2">
+                <!-- Host Prize Controls -->
+              </div>
             </div>
           </div>
 
-          <div class="flex-1 glass rounded-2xl p-6">
-            <div class="text-sm font-semibold text-teal-700 mb-2">Last 10</div>
-            <div id="lastNumbers" class="flex gap-2 flex-wrap"></div>
+          <!-- Right Master Board (8 Cols) -->
+          <div class="lg:col-span-8 bg-white/50 rounded-2xl p-6 border border-white shadow-sm control-card">
+             <div class="text-xs text-teal-600 uppercase font-bold mb-4 tracking-wider">📊 Master Board</div>
+             <div id="masterBoard" class="grid grid-cols-10 gap-1.5">
+               <!-- 1-90 Grid -->
+             </div>
           </div>
-        </div>
 
-        <div id="prizeRow" class="glass rounded-xl p-4 flex gap-3 overflow-x-auto"></div>
-
-      </div>
-    </div>
-
-    <div class="glass rounded-3xl p-6 shadow">
-      <h2 class="text-xl font-bold text-teal-700 mb-4">Number Board</h2>
-      <div id="mainBoard"></div>
-    </div>
-
-  </div>
-</main>
-
-<main id="hostScreen" class="screen px-4">
-  <div class="max-w-5xl mx-auto">
-
-    <div class="glass rounded-3xl p-6 shadow mb-6">
-
-      <div class="flex justify-between items-center">
-        <h2 class="text-3xl font-bold text-teal-700">Host Panel</h2>
-
-        <div class="flex gap-2">
-          <button id="resetGameBtn" class="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold">Reset</button>
-          <button id="lockHostBtn" class="bg-gray-200 px-4 py-2 rounded-lg font-semibold">Lock</button>
         </div>
       </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-
-        <div class="bg-white/40 p-4 rounded-2xl">
-          <div class="text-sm text-teal-700 font-semibold mb-2">Draw Number</div>
-          <div class="flex gap-3">
-            <button id="drawNumberBtn" class="flex-1 bg-gradient-to-r from-teal-400 to-cyan-500 text-white py-3 rounded-xl font-bold">🎲 Draw</button>
-            <button id="flashNumberBtn" disabled class="flex-1 bg-gradient-to-r from-teal-300 to-teal-500 text-white py-3 rounded-xl font-bold">📢 Flash</button>
-          </div>
-
-          <div class="mt-6">
-            <div class="text-sm text-teal-700 font-semibold">Drawn</div>
-            <div id="drawnNumber" class="text-5xl font-extrabold text-teal-600">--</div>
-          </div>
-
-          <div class="mt-6">
-            <div class="text-sm text-teal-700 font-semibold mb-2">Prize Management</div>
-            <div id="prizeManagement" class="space-y-3"></div>
-          </div>
-        </div>
-
-        <div class="bg-white/40 p-4 rounded-2xl">
-          <div class="text-sm text-teal-700 font-semibold mb-2">Host Board</div>
-          <div id="hostBoard"></div>
-        </div>
-
-      </div>
     </div>
-  </div>
-</main>
+  </main>
 
-<div id="resetModal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-  <div class="glass p-6 rounded-3xl max-w-sm w-full">
-    <h3 class="text-xl font-bold text-teal-700 mb-2">Reset Game?</h3>
-    <p class="mb-4">This will clear all called numbers and reset all prizes.</p>
-    <div class="flex gap-3">
-      <button id="confirmResetBtn" class="flex-1 bg-red-500 text-white py-2 rounded-lg font-semibold">Reset</button>
-      <button id="cancelResetBtn" class="flex-1 bg-gray-200 py-2 rounded-lg font-semibold">Cancel</button>
+  <!-- FOOTER -->
+  <footer class="fixed bottom-0 w-full glass border-t border-white/40 py-3 z-40 bg-white/60 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-6 flex justify-center items-center text-sm text-teal-800 font-medium tracking-wide">
+      Made with ❤️ by Ordnance Fraternity
     </div>
-  </div>
-</div>
+  </footer>
 
-<div id="toastContainer"></div>
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="fixed top-24 right-5 bg-teal-800 border border-teal-600 text-white px-6 py-3 rounded-lg shadow-2xl transform translate-x-[150%] transition-transform duration-300 z-50 flex items-center gap-3">
+    <span class="text-xl">ℹ️</span>
+    <span id="toastMsg" class="font-medium">Notification</span>
+  </div>
 
 <script>
-/* ============================================================
-   INITIAL STATE
-   ============================================================ */
+/* ------------------------------------------------------------------
+   AUDIO SYSTEM (Web Audio API)
+   ------------------------------------------------------------------ */
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playTickSound() {
+  if(audioCtx.state === 'suspended') audioCtx.resume();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.05);
+  gain.gain.setValueAtTime(0.03, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.05);
+}
+
+function playChimeSound() {
+  if(audioCtx.state === 'suspended') audioCtx.resume();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(880, audioCtx.currentTime); 
+  osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.1);
+  gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.5);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 1.5);
+}
+
+/* ------------------------------------------------------------------
+   GAME STATE & SUPABASE
+   ------------------------------------------------------------------ */
+const SUPABASE_URL = "https://jlzqdefinnwoazsqlunf.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsenFkZWZpbm53b2F6c3FsdW5mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI0NTgwOTksImV4cCI6MjA3ODAzNDA5OX0.ZPfFVDqJgZkuhPGO9WNlYHKDwKgQ9SZoGjSIypgaDIE";
+const { createClient } = window.supabase;
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
 let gameState = {
   calledNumbers: [],
   currentNumber: null,
   drawnNumber: null,
-  lastNumbers: [],
   prizes: [
     { id:"fullhouse", name:"Full House", status:"OPEN" },
     { id:"outhouse", name:"Outhouse", status:"OPEN" },
     { id:"top_line", name:"Top Line", status:"OPEN" },
     { id:"middle_line", name:"Middle Line", status:"OPEN" },
     { id:"bottom_line", name:"Bottom Line", status:"OPEN" },
-    { id:"star", name:"Star", status:"OPEN" }
+    { id:"star", name:"Star", status:"OPEN" },
+    { id:"early_5", name:"Early 5", status:"OPEN" }
   ]
 };
 
-let hostUnlocked = true;
+let spinInterval = null;
+let isSpinning = false;
 
-/* ============================================================
-   SUPABASE
-   ============================================================ */
-const SUPABASE_URL = "https://jlzqdefinnwoazsqlunf.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsenFkZWZpbm53b2F6c3FsdW5mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI0NTgwOTksImV4cCI6MjA3ODAzNDA5OX0.ZPfFVDqJgZkuhPGO9WNlYHKDwKgQ9SZoGjSIypgaDIE";
-const { createClient } = window.supabase;
-  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+/* ------------------------------------------------------------------
+   INIT & ROUTING
+   ------------------------------------------------------------------ */
+async function init() {
+  await loadGame();
+  setupRealtime();
+  handleHash();
+  renderAll();
+}
 
-/* ============================================================
-   DOM ELEMENTS
-   ============================================================ */
-const playerScreen = document.getElementById('playerScreen');
-const hostScreen = document.getElementById('hostScreen');
-const currentNumberDisplay = document.getElementById('currentNumberDisplay');
-const mainBoard = document.getElementById('mainBoard');
-const hostBoard = document.getElementById('hostBoard');
-const lastNumbersDiv = document.getElementById('lastNumbers');
-const prizeRow = document.getElementById('prizeRow');
-const prizeManagement = document.getElementById('prizeManagement');
-const drawnNumberDiv = document.getElementById('drawnNumber');
-const drawNumberBtn = document.getElementById('drawNumberBtn');
-const flashNumberBtn = document.getElementById('flashNumberBtn');
-const toastContainer = document.getElementById('toastContainer');
-
-/* ============================================================
-   SCREEN ROUTER
-   ============================================================ */
 function handleHash(){
-  if(location.hash === "#host") showScreen("host");
-  else showScreen("player");
+  const hash = location.hash === "#host" ? "host" : "player";
+  switchScreen(hash);
 }
-function showScreen(name){
-  if(name === "host"){
-    playerScreen.classList.remove("active");
-    hostScreen.classList.add("active");
-  } else {
-    hostScreen.classList.remove("active");
-    playerScreen.classList.add("active");
+
+function switchScreen(name) {
+  // Remove active class from all screens
+  document.querySelectorAll('.screen').forEach(s => {
+    s.classList.remove('active');
+  });
+  
+  // Add active class to selected screen
+  const targetScreen = document.getElementById(`${name}Screen`);
+  if (targetScreen) {
+    targetScreen.classList.add('active');
   }
+  
+  // Update navigation
+  document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+  const navBtn = document.getElementById(`nav${name.charAt(0).toUpperCase() + name.slice(1)}`);
+  if (navBtn) {
+    navBtn.classList.add('active');
+  }
+  
+  // Update URL hash
+  window.history.pushState(null, '', `#${name}`);
 }
+
 window.addEventListener("hashchange", handleHash);
-handleHash();
 
-/* ============================================================
-   BUILD NUMBER BOARDS
-   ============================================================ */
-function buildBoards(){
-  mainBoard.innerHTML = '';
-  hostBoard.innerHTML = '';
-  for(let i=1; i<=90; i++){
-    const cell1 = document.createElement('div');
-    cell1.textContent = i;
-    cell1.dataset.number = i;
-    cell1.className = 'number-cell uncalled text-center px-2 py-3 rounded-lg font-bold';
-    mainBoard.appendChild(cell1);
-
-    const cell2 = document.createElement('div');
-    cell2.textContent = i;
-    cell2.dataset.number = i;
-    cell2.className = 'number-cell uncalled text-center px-2 py-2 rounded-lg text-sm';
-    hostBoard.appendChild(cell2);
-  }
+/* ------------------------------------------------------------------
+   UI RENDERING
+   ------------------------------------------------------------------ */
+function renderAll() {
+  renderPlayerScreen();
+  renderHostScreen();
 }
 
-/* ============================================================
-   UPDATE UI
-   ============================================================ */
-function updateUI(){
-  currentNumberDisplay.textContent = gameState.currentNumber || "--";
+// --- PLAYER RENDER ---
+function renderPlayerScreen() {
+  const mainDisplay = document.getElementById('mainNumberDisplay');
+  const spinIndicator = document.getElementById('spinIndicator');
 
-  document.querySelectorAll('.number-cell').forEach(c=>{
-    const n = Number(c.dataset.number);
-    c.classList.remove("uncalled","called","current");
-
-    if(n === gameState.currentNumber) c.classList.add("current");
-    else if(gameState.calledNumbers.includes(n)) c.classList.add("called");
-    else c.classList.add("uncalled");
-  });
-
-  lastNumbersDiv.innerHTML = "";
-  gameState.lastNumbers.slice(0,10).forEach(n=>{
-    const d = document.createElement('div');
-    d.className = "px-3 py-2 rounded-md font-bold text-white";
-    d.style.background = "linear-gradient(135deg,#06b6d4,#14b8a6)";
-    d.textContent = n;
-    lastNumbersDiv.appendChild(d);
-  });
-
-  prizeRow.innerHTML = "";
-  gameState.prizes.forEach(p=>{
-    const row = document.createElement('div');
-
-    if(p.id==="fullhouse" || p.id==="outhouse"){
-      row.className = "special-prize";
-      if(p.status==="CLAIMED") row.classList.add("pulse");
+  // 1. ANIMATION CONTROLLER
+  if (gameState.drawnNumber && gameState.drawnNumber !== gameState.currentNumber) {
+    // Rolling Mode
+    if (!isSpinning) startSpinning();
+    spinIndicator.classList.remove('opacity-0');
+  } 
+  else {
+    // Stable state
+    if (isSpinning) stopSpinning(gameState.currentNumber);
+    spinIndicator.classList.add('opacity-0');
+    
+    if(gameState.currentNumber) {
+      mainDisplay.textContent = gameState.currentNumber;
+      mainDisplay.classList.remove('opacity-50');
     } else {
-      row.className = "px-3 py-2 rounded-xl font-semibold bg-gradient-to-r from-teal-100 to-teal-200 text-teal-700";
-      if(p.status==="CLAIMED"){
-        row.style.background="linear-gradient(135deg,#a7f3d0,#6ee7b7)";
-      }
+      mainDisplay.textContent = "--";
     }
+  }
 
-    row.textContent = `${p.name} — ${p.status}`;
-
-    prizeRow.appendChild(row);
+  // 2. PRIZES
+  const prizeList = document.getElementById('prizesList');
+  prizeList.innerHTML = '';
+  gameState.prizes.forEach((p, idx) => {
+    const div = document.createElement('div');
+    const isClaimed = p.status === "CLAIMED";
+    const isSpecial = (p.id === "fullhouse" || p.id === "outhouse");
+    
+    // Use special style for Full/Outhouse, basic for others
+    if(isSpecial) {
+       div.className = `special-prize mb-2 ${isClaimed ? 'opacity-50 grayscale' : ''}`;
+    } else {
+       div.className = `prize-card-basic p-3 rounded-xl flex justify-between items-center mb-2 ${isClaimed ? 'claimed' : ''}`;
+    }
+    
+    div.style.animationDelay = `${idx * 0.05}s`;
+    
+    div.innerHTML = `
+      <span class="font-bold text-sm ${isSpecial ? 'text-white' : 'text-teal-900'}">${p.name}</span>
+      <span class="text-[10px] font-mono px-2 py-1 rounded bg-white/30 tracking-wider ${isSpecial ? 'text-white' : 'text-teal-700'} font-bold">${p.status}</span>
+    `;
+    prizeList.appendChild(div);
   });
 
-  drawnNumberDiv.textContent = gameState.drawnNumber || "--";
+  // 3. HISTORY
+  const historyGrid = document.getElementById('historyGrid');
+  historyGrid.innerHTML = '';
+  const history = gameState.calledNumbers.slice(0, 20); 
+  
+  history.forEach((num, idx) => {
+    const ball = document.createElement('div');
+    const isLatest = (num === gameState.currentNumber);
+    
+    ball.className = `history-ball h-12 w-12 rounded-full flex items-center justify-center font-bold text-lg shadow-sm transition-transform
+      ${isLatest ? 'border-4 border-teal-400 scale-110 z-10 ring-2 ring-teal-200' : 'scale-100'}`;
+    ball.style.animationDelay = `${idx * 0.03}s`;
+    ball.textContent = num;
+    historyGrid.appendChild(ball);
+  });
+}
 
-  prizeManagement.innerHTML = "";
-  gameState.prizes.forEach(p=>{
-    const box = document.createElement('div');
-    box.className = "p-3 bg-white/60 rounded-lg";
+// --- ANIMATION LOGIC ---
+function startSpinning() {
+  if (isSpinning) return;
+  isSpinning = true;
+  const display = document.getElementById('mainNumberDisplay');
+  
+  spinInterval = setInterval(() => {
+    display.textContent = Math.floor(Math.random() * 90) + 1;
+    display.classList.add('opacity-50', 'blur-[1px]');
+    playTickSound();
+  }, 80); 
+}
 
-    const title = document.createElement('div');
-    title.className = "font-semibold text-teal-700 mb-1";
-    title.textContent = `${p.name} · ${p.status}`;
-    box.appendChild(title);
+function stopSpinning(finalNumber) {
+  if (!isSpinning) return;
+  isSpinning = false;
+  clearInterval(spinInterval);
+  
+  const display = document.getElementById('mainNumberDisplay');
+  display.classList.remove('opacity-50', 'blur-[1px]');
+  display.textContent = finalNumber || "--";
+  
+  playChimeSound();
+  
+  display.parentElement.classList.remove('pop-in');
+  void display.parentElement.offsetWidth; 
+  display.parentElement.classList.add('pop-in');
+}
 
+
+// --- HOST RENDER ---
+function renderHostScreen() {
+  const hostBoard = document.getElementById('masterBoard');
+  hostBoard.innerHTML = '';
+  
+  for(let i=1; i<=90; i++) {
+    const d = document.createElement('div');
+    const isCalled = gameState.calledNumbers.includes(i);
+    const isCurrent = gameState.currentNumber === i;
+    
+    // Host cell classes based on CSS
+    let classes = "number-cell h-8 rounded flex items-center justify-center text-sm transition-colors cursor-default ";
+    if (isCurrent) classes += "current";
+    else if (isCalled) classes += "called";
+    else classes += "uncalled";
+    
+    d.className = classes;
+    d.textContent = i;
+    hostBoard.appendChild(d);
+  }
+
+  const drawBtn = document.getElementById('drawBtn');
+  const flashBtn = document.getElementById('flashBtn');
+  const drawnDisplay = document.getElementById('hostDrawnDisplay');
+
+  // Button Logic
+  if (gameState.drawnNumber && gameState.drawnNumber !== gameState.currentNumber) {
+    drawBtn.disabled = true;
+    drawBtn.classList.remove('draw-btn-active');
+    drawBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    flashBtn.disabled = false;
+    flashBtn.classList.remove('bg-slate-200', 'text-slate-400', 'cursor-not-allowed', 'border-slate-300');
+    flashBtn.classList.add('bg-yellow-400', 'text-white', 'hover:bg-yellow-500', 'shadow-lg', 'shadow-yellow-200', 'draw-btn-active');
+    drawnDisplay.textContent = gameState.drawnNumber;
+  } else {
+    drawBtn.disabled = false;
+    drawBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+    drawBtn.classList.add('draw-btn-active');
+    flashBtn.disabled = true;
+    flashBtn.className = "flex-1 bg-slate-200 text-slate-400 py-4 rounded-xl font-bold text-lg transition cursor-not-allowed border border-slate-300";
+    drawnDisplay.textContent = "--";
+  }
+
+  // Prize Controls
+  const hostPrizeList = document.getElementById('hostPrizeList');
+  hostPrizeList.innerHTML = '';
+  gameState.prizes.forEach((p, idx) => {
     const row = document.createElement('div');
-    row.className = "flex gap-3";
-
-    const btn = document.createElement('button');
-    btn.className = "px-3 py-2 rounded-lg font-bold text-white";
-    btn.style.background = "linear-gradient(135deg,#06b6d4,#14b8a6)";
-    btn.textContent = p.status === "OPEN" ? "Mark CLAIMED" : "Reopen";
-
-    btn.onclick = async ()=>{
-      p.status = p.status === "OPEN" ? "CLAIMED" : "OPEN";
-
-      if(p.id==="fullhouse" || p.id==="outhouse"){
-        triggerPulse(p.id);
-      }
-
-      await syncDB();
-      updateUI();
-      toast(`${p.name} ${p.status}`);
-    };
-
-    const saveBtn = document.createElement('button');
-    saveBtn.className = "px-3 py-2 rounded-lg font-bold bg-blue-500 text-white";
-    saveBtn.textContent = "Save";
-    saveBtn.onclick = async()=>{
-      await syncDB();
-      toast(`Saved ${p.name}`);
-    }
-
-    row.appendChild(btn);
-    row.appendChild(saveBtn);
-    box.appendChild(row);
-
-    prizeManagement.appendChild(box);
+    row.className = "flex items-center justify-between bg-white p-2 rounded mb-2 border border-gray-100 shadow-sm transition-all hover:shadow-md";
+    row.style.animationDelay = `${idx * 0.05}s`;
+    row.style.animation = 'fadeInUp 0.5s ease forwards';
+    row.innerHTML = `
+      <span class="text-sm font-medium ${p.status === 'CLAIMED' ? 'text-teal-600 line-through opacity-60' : 'text-teal-900'}">${p.name}</span>
+      <button onclick="togglePrize(${idx})" class="text-xs px-3 py-1.5 rounded font-bold transition transform hover:scale-105 ${p.status === 'OPEN' ? 'bg-teal-500 hover:bg-teal-600 text-white shadow-sm' : 'bg-gray-300 text-gray-600 hover:bg-gray-400'}">
+        ${p.status === 'OPEN' ? '✓ WIN' : '↺ UNDO'}
+      </button>
+    `;
+    hostPrizeList.appendChild(row);
   });
 }
 
-function triggerPulse(){
-  const cards = document.querySelectorAll('.special-prize');
-  cards.forEach(c=>{
-    c.classList.add('pulse');
-    setTimeout(()=>c.classList.remove('pulse'),1500);
-  });
-}
-
-/* ============================================================
-   DRAW + FLASH NUMBER
-   ============================================================ */
-drawNumberBtn.onclick = ()=>{
+/* ------------------------------------------------------------------
+   HOST ACTIONS
+   ------------------------------------------------------------------ */
+async function hostDrawNumber() {
   const available = [];
-  for(let i=1;i<=90;i++){
-    if(!gameState.calledNumbers.includes(i) &&
-       i!==gameState.currentNumber &&
-       i!==gameState.drawnNumber){
+  for(let i=1; i<=90; i++) {
+    if(!gameState.calledNumbers.includes(i) && i !== gameState.drawnNumber) {
       available.push(i);
     }
   }
-  if(!available.length) return toast("All numbers drawn");
+  
+  if(available.length === 0) return showToast("All numbers called!");
+  
+  const nextNum = available[Math.floor(Math.random() * available.length)];
+  gameState.drawnNumber = nextNum; 
+  
+  await syncState();
+  renderHostScreen(); 
+  showToast(`Number ${nextNum} drawn!`);
+}
 
-  const next = available[Math.floor(Math.random()*available.length)];
-  gameState.drawnNumber = next;
-  updateUI();
+async function hostFlashNumber() {
+  if (!gameState.drawnNumber) return;
+  
+  const num = gameState.drawnNumber;
+  gameState.currentNumber = num;
+  gameState.calledNumbers.unshift(num); 
+  
+  await syncState();
+  renderHostScreen();
+  showToast(`Number ${num} flashed!`);
+}
 
-  flashNumberBtn.disabled = false;
-};
+function togglePrize(index) {
+  const p = gameState.prizes[index];
+  p.status = p.status === "OPEN" ? "CLAIMED" : "OPEN";
+  syncState();
+  renderHostScreen();
+  showToast(`${p.name} ${p.status === 'CLAIMED' ? 'claimed' : 'reopened'}!`);
+}
 
-flashNumberBtn.onclick = async()=>{
-  if(!gameState.drawnNumber) return;
-
-  if(gameState.currentNumber){
-    gameState.calledNumbers.unshift(gameState.currentNumber);
-    gameState.lastNumbers.unshift(gameState.currentNumber);
-  }
-
-  gameState.currentNumber = gameState.drawnNumber;
-  gameState.drawnNumber = null;
-
-  flashNumberBtn.disabled = true;
-
-  await syncDB();
-  updateUI();
-  toast(`Number ${gameState.currentNumber} flashed`);
-};
-
-/* ============================================================
-   RESET GAME
-   ============================================================ */
-resetGameBtn.onclick = ()=>{
-  resetModal.classList.remove('hidden');
-};
-cancelResetBtn.onclick = ()=>{
-  resetModal.classList.add('hidden');
-};
-confirmResetBtn.onclick = async()=>{
-  resetModal.classList.add('hidden');
-
+async function resetGame() {
+  if(!confirm("Reset entire game? This will clear all numbers and prizes!")) return;
   gameState = {
     calledNumbers: [],
     currentNumber: null,
     drawnNumber: null,
-    lastNumbers: [],
-    prizes: [
-      { id:"fullhouse", name:"Full House", status:"OPEN" },
-      { id:"outhouse", name:"Outhouse", status:"OPEN" },
-      { id:"top_line", name:"Top Line", status:"OPEN" },
-      { id:"middle_line", name:"Middle Line", status:"OPEN" },
-      { id:"bottom_line", name:"Bottom Line", status:"OPEN" },
-      { id:"star", name:"Star", status:"OPEN" }
-    ]
+    prizes: gameState.prizes.map(p => ({...p, status: "OPEN"}))
   };
-
-  await syncDB();
-  updateUI();
-  toast("Game Reset");
-};
-
-/* ============================================================
-   LOCK HOST PANEL
-   ============================================================ */
-lockHostBtn.onclick = ()=>{
-  hostUnlocked = !hostUnlocked;
-  lockHostBtn.textContent = hostUnlocked ? "Lock" : "Unlock";
-};
-
-/* ============================================================
-   TOAST
-   ============================================================ */
-function toast(text){
-  const t = document.createElement("div");
-  t.className = "toast glass p-3 rounded-lg shadow";
-  t.textContent = text;
-  toastContainer.appendChild(t);
-
-  setTimeout(()=>{
-    t.style.opacity="0"; 
-    t.style.transform="translateY(-6px)";
-    setTimeout(()=>t.remove(),250);
-  },3000);
+  await syncState();
+  renderAll();
+  showToast("🔄 Game Reset Successfully!");
 }
 
-/* ============================================================
-   DATABASE SYNC
-   ============================================================ */
-async function syncDB(){
-  try {
-    await supabase.from("tambola_game").upsert({
-      id:1,
-      game_state:gameState,
-      updated_at:new Date().toISOString()
-    });
-  } catch(e){ console.log(e); }
+/* ------------------------------------------------------------------
+   DATABASE & SYNC
+   ------------------------------------------------------------------ */
+async function syncState() {
+  await supabase.from("tambola_game").upsert({
+    id: 1,
+    game_state: gameState,
+    updated_at: new Date().toISOString()
+  });
 }
 
-async function loadDB(){
-  try{
-    const {data} = await supabase
-      .from("tambola_game")
-      .select("*")
-      .eq("id",1)
-      .single();
-
-    if(data && data.game_state){
-      gameState = data.game_state;
-    } else {
-      await syncDB();
-    }
-  } catch(e){
-    console.log("DB Load error", e);
+async function loadGame() {
+  const { data } = await supabase.from("tambola_game").select("*").eq("id", 1).single();
+  if(data) {
+     gameState = data.game_state;
+     if(!gameState.prizes.find(p => p.id === "early_5")) {
+       gameState.prizes.unshift({ id:"early_5", name:"Early 5", status:"OPEN" });
+     }
   }
 }
 
-/* ============================================================
-   REALTIME SUBSCRIPTION (ADDED)
-   ============================================================ */
 function setupRealtime() {
-  const channel = supabase.channel('game_updates')
-    .on(
-      'postgres_changes',
-      { event: 'UPDATE', schema: 'public', table: 'tambola_game' },
-      (payload) => {
-        if(payload.new && payload.new.game_state) {
-          console.log("Remote update received:", payload.new);
-          gameState = payload.new.game_state;
-          updateUI();
-        }
+  supabase.channel('game_updates')
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'tambola_game' }, payload => {
+      if(payload.new && payload.new.game_state) {
+        gameState = payload.new.game_state;
+        renderAll();
       }
-    )
+    })
     .subscribe();
 }
 
-/* ============================================================
-   INIT
-   ============================================================ */
-async function init(){
-  buildBoards();
-  await loadDB();
-  setupRealtime(); // Start listening for changes
-  updateUI();
+/* ------------------------------------------------------------------
+   UTILS
+   ------------------------------------------------------------------ */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  const m = document.getElementById('toastMsg');
+  m.textContent = msg;
+  t.classList.remove('translate-x-[150%]');
+  setTimeout(() => t.classList.add('translate-x-[150%]'), 3000);
 }
-init();
 
-document.getElementById('navPlayer').onclick = ()=> location.hash="#player";
-document.getElementById('navHost').onclick = ()=> location.hash="#host";
+// Start
+init();
 
 </script>
 </body>
