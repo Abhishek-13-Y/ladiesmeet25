@@ -81,40 +81,13 @@
     }
 
     .pulse {
-      animation: pulseGold 0.6s ease-in-out;
+      animation: pulseGold 1.2s ease-in-out;
     }
 
     @keyframes pulseGold {
-      0% { transform:scale(1); box-shadow:0 0 0 rgba(251, 191, 36, 0); }
-      50% { transform:scale(1.15); box-shadow:0 0 30px rgba(251, 191, 36, 0.6); }
-      100% { transform:scale(1); box-shadow:0 0 0 rgba(251, 191, 36, 0); }
-    }
-
-    .sync-indicator {
-      position: fixed;
-      bottom: 8px;
-      left: 8px;
-      padding: 4px 8px;
-      border-radius: 12px;
-      font-size: 10px;
-      font-weight: 600;
-      z-index: 1000;
-      opacity: 0.6;
-      transition: opacity 0.2s;
-    }
-
-    .sync-indicator:hover {
-      opacity: 1;
-    }
-
-    .sync-connected {
-      background: #10b981;
-      color: white;
-    }
-
-    .sync-disconnected {
-      background: #ef4444;
-      color: white;
+      0% { transform:scale(1); box-shadow:0 0 0 rgba(6,182,212,0.15); }
+      50% { transform:scale(1.05); box-shadow:0 0 22px rgba(6,182,212,0.35); }
+      100% { transform:scale(1); box-shadow:0 0 0 rgba(6,182,212,0.15); }
     }
   </style>
 </head>
@@ -134,9 +107,6 @@
     <a id="navHost" href="#host" class="glass px-3 py-2 rounded-md">Host</a>
   </nav>
 </header>
-
-<!-- Sync Indicator -->
-<div id="syncIndicator" class="sync-indicator sync-disconnected">●</div>
 
 <!-- PLAYER SCREEN -->
 <main id="playerScreen" class="screen active px-4">
@@ -255,12 +225,12 @@ let gameState = {
     { id:"top_line", name:"Top Line", status:"OPEN" },
     { id:"middle_line", name:"Middle Line", status:"OPEN" },
     { id:"bottom_line", name:"Bottom Line", status:"OPEN" },
-    { id:"star", name:"Star", status:"OPEN" }
+    { id:"star", name:"Star", status:"OPEN" },
+    { id:"early5", name:"Early Five", status:"OPEN" }
   ]
 };
 
 let hostUnlocked = true;
-let isUpdatingFromRemote = false; // Flag to prevent sync loops
 
 /* ============================================================
    SUPABASE
@@ -268,7 +238,7 @@ let isUpdatingFromRemote = false; // Flag to prevent sync loops
 const SUPABASE_URL = "https://jlzqdefinnwoazsqlunf.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsenFkZWZpbm53b2F6c3FsdW5mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI0NTgwOTksImV4cCI6MjA3ODAzNDA5OX0.ZPfFVDqJgZkuhPGO9WNlYHKDwKgQ9SZoGjSIypgaDIE";
 const { createClient } = window.supabase;
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 /* ============================================================
    DOM ELEMENTS
@@ -285,7 +255,6 @@ const drawnNumberDiv = document.getElementById('drawnNumber');
 const drawNumberBtn = document.getElementById('drawNumberBtn');
 const flashNumberBtn = document.getElementById('flashNumberBtn');
 const toastContainer = document.getElementById('toastContainer');
-const syncIndicator = document.getElementById('syncIndicator');
 
 /* ============================================================
    SCREEN ROUTER
@@ -333,21 +302,15 @@ function buildBoards(){
 function updateUI(){
   currentNumberDisplay.textContent = gameState.currentNumber || "--";
 
-  // Update all number cells
   document.querySelectorAll('.number-cell').forEach(c=>{
     const n = Number(c.dataset.number);
-    c.classList.remove("uncalled","called","current","pulse");
+    c.classList.remove("uncalled","called","current");
 
-    if(n === gameState.currentNumber) {
-      c.classList.add("current","pulse");
-    } else if(gameState.calledNumbers.includes(n)) {
-      c.classList.add("called");
-    } else {
-      c.classList.add("uncalled");
-    }
+    if(n === gameState.currentNumber) c.classList.add("current");
+    else if(gameState.calledNumbers.includes(n)) c.classList.add("called");
+    else c.classList.add("uncalled");
   });
 
-  // Update last 10 numbers
   lastNumbersDiv.innerHTML = "";
   gameState.lastNumbers.slice(0,10).forEach(n=>{
     const d = document.createElement('div');
@@ -357,13 +320,13 @@ function updateUI(){
     lastNumbersDiv.appendChild(d);
   });
 
-  // Update prize display
   prizeRow.innerHTML = "";
   gameState.prizes.forEach(p=>{
     const row = document.createElement('div');
 
     if(p.id==="fullhouse" || p.id==="outhouse"){
       row.className = "special-prize";
+      if(p.status==="CLAIMED") row.classList.add("pulse");
     } else {
       row.className = "px-3 py-2 rounded-xl font-semibold bg-gradient-to-r from-teal-100 to-teal-200 text-teal-700";
       if(p.status==="CLAIMED"){
@@ -371,13 +334,13 @@ function updateUI(){
       }
     }
 
-    row.textContent = `${p.name} – ${p.status}`;
+    row.textContent = `${p.name} — ${p.status}`;
+
     prizeRow.appendChild(row);
   });
 
   drawnNumberDiv.textContent = gameState.drawnNumber || "--";
 
-  // Update prize management for host
   prizeManagement.innerHTML = "";
   gameState.prizes.forEach(p=>{
     const box = document.createElement('div');
@@ -388,19 +351,47 @@ function updateUI(){
     title.textContent = `${p.name} · ${p.status}`;
     box.appendChild(title);
 
+    const row = document.createElement('div');
+    row.className = "flex gap-3";
+
     const btn = document.createElement('button');
-    btn.className = "px-3 py-2 rounded-lg font-bold text-white w-full";
+    btn.className = "px-3 py-2 rounded-lg font-bold text-white";
     btn.style.background = "linear-gradient(135deg,#06b6d4,#14b8a6)";
     btn.textContent = p.status === "OPEN" ? "Mark CLAIMED" : "Reopen";
 
     btn.onclick = async ()=>{
       p.status = p.status === "OPEN" ? "CLAIMED" : "OPEN";
+
+      if(p.id==="fullhouse" || p.id==="outhouse"){
+        triggerPulse(p.id);
+      }
+
       await syncDB();
       updateUI();
+      toast(`${p.name} ${p.status}`);
     };
 
-    box.appendChild(btn);
+    const saveBtn = document.createElement('button');
+    saveBtn.className = "px-3 py-2 rounded-lg font-bold bg-blue-500 text-white";
+    saveBtn.textContent = "Save";
+    saveBtn.onclick = async()=>{
+      await syncDB();
+      toast(`Saved ${p.name}`);
+    }
+
+    row.appendChild(btn);
+    row.appendChild(saveBtn);
+    box.appendChild(row);
+
     prizeManagement.appendChild(box);
+  });
+}
+
+function triggerPulse(){
+  const cards = document.querySelectorAll('.special-prize');
+  cards.forEach(c=>{
+    c.classList.add('pulse');
+    setTimeout(()=>c.classList.remove('pulse'),1500);
   });
 }
 
@@ -409,36 +400,38 @@ function updateUI(){
    ============================================================ */
 drawNumberBtn.onclick = ()=>{
   const available = [];
-  for(let i=1; i<=90; i++){
-    if(!gameState.calledNumbers.includes(i) && i !== gameState.currentNumber){
+  for(let i=1;i<=90;i++){
+    if(!gameState.calledNumbers.includes(i) &&
+       i!==gameState.currentNumber &&
+       i!==gameState.drawnNumber){
       available.push(i);
     }
   }
   if(!available.length) return toast("All numbers drawn");
 
-  gameState.drawnNumber = available[Math.floor(Math.random() * available.length)];
-  flashNumberBtn.disabled = false;
+  const next = available[Math.floor(Math.random()*available.length)];
+  gameState.drawnNumber = next;
   updateUI();
+
+  flashNumberBtn.disabled = false;
 };
 
 flashNumberBtn.onclick = async()=>{
   if(!gameState.drawnNumber) return;
 
   if(gameState.currentNumber){
-    if(!gameState.calledNumbers.includes(gameState.currentNumber)){
-      gameState.calledNumbers.unshift(gameState.currentNumber);
-    }
-    if(!gameState.lastNumbers.includes(gameState.currentNumber)){
-      gameState.lastNumbers.unshift(gameState.currentNumber);
-    }
+    gameState.calledNumbers.unshift(gameState.currentNumber);
+    gameState.lastNumbers.unshift(gameState.currentNumber);
   }
 
   gameState.currentNumber = gameState.drawnNumber;
   gameState.drawnNumber = null;
+
   flashNumberBtn.disabled = true;
 
   await syncDB();
   updateUI();
+  toast(`Number ${gameState.currentNumber} flashed`);
 };
 
 /* ============================================================
@@ -464,7 +457,8 @@ confirmResetBtn.onclick = async()=>{
       { id:"top_line", name:"Top Line", status:"OPEN" },
       { id:"middle_line", name:"Middle Line", status:"OPEN" },
       { id:"bottom_line", name:"Bottom Line", status:"OPEN" },
-      { id:"star", name:"Star", status:"OPEN" }
+      { id:"star", name:"Star", status:"OPEN" },
+      { id:"early5", name:"Early Five", status:"OPEN" }
     ]
   };
 
@@ -498,29 +492,16 @@ function toast(text){
 }
 
 /* ============================================================
-   SYNC INDICATOR
-   ============================================================ */
-function updateSyncIndicator(connected) {
-  syncIndicator.textContent = connected ? '●' : '○';
-  syncIndicator.className = connected ? 'sync-indicator sync-connected' : 'sync-indicator sync-disconnected';
-  syncIndicator.title = connected ? 'Live connected' : 'Offline';
-}
-
-/* ============================================================
    DATABASE SYNC
    ============================================================ */
 async function syncDB(){
-  if (isUpdatingFromRemote) return;
-  
   try {
     await supabase.from("tambola_game").upsert({
       id:1,
       game_state:gameState,
       updated_at:new Date().toISOString()
     });
-  } catch(e){ 
-    console.error('Sync error:', e); 
-  }
+  } catch(e){ console.log(e); }
 }
 
 async function loadDB(){
@@ -537,38 +518,8 @@ async function loadDB(){
       await syncDB();
     }
   } catch(e){
-    console.log("DB Load error:", e);
+    console.log("DB Load error", e);
   }
-}
-
-/* ============================================================
-   REALTIME SUBSCRIPTION
-   ============================================================ */
-function setupRealtime() {
-  const channel = supabase
-    .channel('tambola-realtime')
-    .on(
-      'postgres_changes',
-      {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'tambola_game',
-        filter: 'id=eq.1'
-      },
-      (payload) => {
-        if (payload.new && payload.new.game_state) {
-          isUpdatingFromRemote = true;
-          gameState = payload.new.game_state;
-          updateUI();
-          setTimeout(() => { isUpdatingFromRemote = false; }, 100);
-        }
-      }
-    )
-    .subscribe((status) => {
-      updateSyncIndicator(status === 'SUBSCRIBED');
-    });
-
-  return channel;
 }
 
 /* ============================================================
@@ -578,15 +529,11 @@ async function init(){
   buildBoards();
   await loadDB();
   updateUI();
-  setupRealtime();
 }
 init();
 
 document.getElementById('navPlayer').onclick = ()=> location.hash="#player";
 document.getElementById('navHost').onclick = ()=> location.hash="#host";
-
-window.addEventListener('online', setupRealtime);
-window.addEventListener('offline', () => updateSyncIndicator(false));
 
 </script>
 </body>
