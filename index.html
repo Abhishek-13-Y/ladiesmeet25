@@ -388,7 +388,9 @@
         
         populateForm(existingRecord);
         updateAuthUI();
-        loadLikedResolutionsForUser();
+        
+        // --- FIXED: Sync with DB instead of LocalStorage ---
+        await fetchUserLikes();
 
         // AUTO-REDIRECT: If returning user and profile is complete, go to resolutions
         if (existingRecord && existingRecord.name && existingRecord.future_ready) {
@@ -658,6 +660,7 @@
       const iconSpan = btn.querySelectorAll('span')[0];
       const originalCount = parseInt(countSpan.textContent);
       
+      // Optimistic Update
       countSpan.textContent = originalCount + 1;
       iconSpan.textContent = '❤️';
       btn.classList.remove('bg-slate-50', 'text-slate-500');
@@ -668,11 +671,15 @@
         const { error } = await supabase.from('likes').insert({ user_mobile: currentUserMobile, target_id: String(id) });
         if(error) throw error;
         likedResolutions.add(String(id));
-        saveLikedResolutionsForUser();
+        // Note: We no longer save to localStorage, we trust the DB
       } catch (err) {
+        // Revert on error
         countSpan.textContent = originalCount;
         iconSpan.textContent = '🤍';
         btn.disabled = false;
+        btn.classList.add('bg-slate-50', 'text-slate-500');
+        btn.classList.remove('bg-rose-50', 'text-rose-600', 'ring-1', 'ring-rose-100');
+        console.error("Like failed:", err);
       }
     }
 
@@ -715,18 +722,24 @@
       return data.publicUrl;
     }
 
-    /* ------------- LOCAL STORAGE ------------- */
-    function saveLikedResolutionsForUser() {
-      if (!currentUserMobile) return;
-      localStorage.setItem(`likes_${currentUserMobile}`, JSON.stringify([...likedResolutions]));
-    }
-    function loadLikedResolutionsForUser() {
+    /* ------------- DATABASE SYNC FOR LIKES ------------- */
+    async function fetchUserLikes() {
       likedResolutions = new Set();
       if (!currentUserMobile) return;
+      
       try {
-        const raw = localStorage.getItem(`likes_${currentUserMobile}`);
-        if (raw) JSON.parse(raw).forEach(id => likedResolutions.add(id));
-      } catch (e) {}
+        // Fetch directly from DB to handle Incognito/Cross-device
+        const { data, error } = await supabase
+          .from('likes')
+          .select('target_id')
+          .eq('user_mobile', currentUserMobile);
+          
+        if (data) {
+          data.forEach(row => likedResolutions.add(String(row.target_id)));
+        }
+      } catch (e) {
+        console.error("Error fetching likes from DB:", e);
+      }
     }
 
     function doLogout() {

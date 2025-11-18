@@ -8,6 +8,7 @@
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
+    /* Global Styling for Teal/Glass Theme */
     @keyframes fadeIn {
       from { opacity: 0; transform: scale(0.95); }
       to { opacity: 1; transform: scale(1); }
@@ -25,13 +26,8 @@
       50% { box-shadow: 0 0 60px 30px rgba(20, 184, 166, 0.9); }
       100% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0); }
     }
-    @keyframes shuffle3D {
-      0% { transform: rotateY(0deg) translateZ(0px) scale(1); }
-      25% { transform: rotateY(60deg) translateZ(30px) scale(1.05); }
-      50% { transform: rotateY(120deg) translateZ(-20px) scale(0.95); }
-      75% { transform: rotateY(180deg) translateZ(10px) scale(1.03); }
-      100% { transform: rotateY(360deg) translateZ(0px) scale(1); }
-    }
+    
+    /* Card Flip/Shuffle Animations */
     @keyframes deckShuffle {
       0% { transform: translateX(0) rotateY(0deg) rotate(0deg); z-index: 1; }
       25% { transform: translateX(-10px) rotateY(-10deg) rotate(-2deg); z-index: 2; }
@@ -67,6 +63,23 @@
       margin: 0; padding: 0; height: 100%;
       background: linear-gradient(to bottom right, #e0f2fe, #cffafe, #ccfbf1);
       overflow: hidden;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    }
+
+    /* Glass Panels */
+    .glass-header {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+    }
+    .glass-footer {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05);
+      border-top: 1px solid rgba(255, 255, 255, 0.6);
     }
 
     header { height: 96px; }
@@ -97,7 +110,18 @@
       border-radius: 1rem;
       overflow: hidden;
       position: relative;
-      background: white;
+      background: rgba(255, 255, 255, 0.8); /* Slight glass effect on card base */
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    /* Winner confirmation container */
+    #winnerConfirmContainer {
+        transition: all 0.3s ease-in-out;
+        /* Start off-screen */
+        transform: translateY(100%);
+    }
+    #winnerConfirmContainer.visible {
+        transform: translateY(0);
     }
 
     .card-flipper {
@@ -109,6 +133,7 @@
     }
 
     .card-container.flipped .card-flipper {
+      /* This flips the whole card to show the front */
       transform: rotateY(180deg);
     }
 
@@ -143,14 +168,17 @@
       justify-content: center;
       background-size: cover;
       background-position: center;
+      transition: all 0.5s ease;
     }
 
+    /* Fixed: Made caption transparent (or slightly glassy) */
     .winner-caption {
-      background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.45) 100%);
+      background: rgba(0,0,0,0.2); /* Semi-transparent black for readability */
       color: white;
       width: 100%;
       padding: 1rem;
       box-sizing: border-box;
+      backdrop-filter: blur(3px);
     }
 
     .nav-tabs {
@@ -180,12 +208,22 @@
     .nav-tab:not(.active) {
       background: white;
       color: #0d9488;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    /* Bug fix: Hide the name caption area when card is flipped (showing the back) */
+    .card-container:not(.flipped) .card-front .card-caption-area {
+        display: block; 
+    }
+    /* Fixed: Ensure caption area is hidden when the back is visible (flipped) */
+    .card-container.flipped .card-front .card-caption-area {
+        display: none; 
     }
   </style>
 </head>
 <body>
 
-  <header class="bg-white/90 backdrop-blur-md shadow-md py-4 px-10 sticky top-0 z-50 flex justify-between items-center">
+  <header class="glass-header py-4 px-10 sticky top-0 z-50 flex justify-between items-center">
     <div class="flex items-center">
       <div>
         <div class="inline-block bg-gradient-to-r from-teal-600 to-cyan-500 text-white px-4 py-1 rounded-full text-sm font-semibold mb-1">
@@ -197,15 +235,15 @@
       </div>
 
       <nav class="nav-tabs">
-        <a href="#slideshow" class="nav-tab" data-page="slideshow">🎬</a>
-        <a href="#winners" class="nav-tab" data-page="winners" style="display: none;">🏆</a>
+        <a href="#slideshow" class="nav-tab" data-page="slideshow">🎬 Slideshow</a>
+        <a href="#winners" class="nav-tab" data-page="winners" style="display: none;">🏆 Winners</a>
       </nav>
     </div>
 
     <div class="flex items-center gap-6">
       <!-- Center: Big Crown Button -->
-      <button id="pickWinnerBtn" class="bg-gradient-to-r from-yellow-500 via-amber-500 to-yellow-600 text-white px-12 py-4 text-2xl rounded-full shadow-2xl hover:scale-110 transition-all font-bold">
-        👑 Crown the Selfie Queen 👑
+      <button id="pickWinnerBtn" class="bg-gradient-to-r from-yellow-500 via-amber-500 to-yellow-600 text-white px-8 py-3 text-xl rounded-full shadow-2xl hover:scale-105 transition-all font-bold disabled:opacity-70 disabled:cursor-not-allowed">
+        👑 Crown the Selfie Queen
       </button>
 
       <!-- Right: Other buttons and count -->
@@ -215,7 +253,7 @@
           <div class="text-xs text-gray-500 mt-1"><span id="currentBatch">1-8</span></div>
         </div>
         <button id="resetWinnersBtn" class="bg-gradient-to-r from-red-500 to-pink-600 text-white px-4 py-2 text-sm rounded-full shadow-lg hover:scale-105 transition">
-          🔄
+          🔄 Reset
         </button>
       </div>
     </div>
@@ -238,20 +276,37 @@
     </div>
   </div>
 
-  <!-- Winner Overlay -->
+  <!-- Winner Confirmation Bar (New Element) -->
+  <div id="winnerConfirmContainer" class="fixed bottom-0 left-0 right-0 py-3 px-6 glass-footer flex justify-center gap-8 z-[101]">
+    <div class="flex items-center gap-4">
+        <span class="text-lg font-semibold text-slate-700">Selected Winner:</span>
+        <span id="selectedWinnerName" class="text-xl font-bold text-teal-600"></span>
+        <img id="selectedWinnerImg" src="" class="w-10 h-10 rounded-full object-cover shadow-md border-2 border-teal-400" alt="Winner photo" />
+    </div>
+    <button id="confirmWinnerBtn" class="flex items-center gap-2 bg-green-500 text-white px-6 py-2 rounded-full font-bold shadow-lg hover:bg-green-600 transition disabled:opacity-50">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+        Confirm Crown
+    </button>
+    <button id="discardWinnerBtn" class="flex items-center gap-2 bg-rose-500 text-white px-6 py-2 rounded-full font-bold shadow-lg hover:bg-rose-600 transition">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        Discard
+    </button>
+  </div>
+  
+
+  <!-- Winner Overlay (Hidden on selection, only shown after confirmation) -->
   <div id="winnerOverlay" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[100]">
     <div class="bg-gradient-to-br from-white to-teal-100 rounded-3xl p-10 text-center max-w-2xl shadow-2xl spotlight">
       <div class="text-8xl mb-4 animate-bounce">🏆</div>
-      <h2 id="winnerName" class="text-6xl font-bold text-teal-700 mb-3"></h2>
-      <p id="winnerUnit" class="text-3xl text-gray-700 mb-6"></p>
+      <h2 id="finalWinnerName" class="text-6xl font-bold text-teal-700 mb-3"></h2>
       <p class="text-2xl text-teal-600 font-semibold mb-8">🎉 Congratulations! 🎉</p>
-      <div id="winnerPhoto" class="mb-6 flex justify-center">
-        <img id="winnerImg" src="" class="max-w-md max-h-96 rounded-2xl shadow-2xl object-cover" />
+      <div id="finalWinnerPhoto" class="mb-6 flex justify-center">
+        <img id="finalWinnerImg" src="" class="max-w-md max-h-96 rounded-2xl shadow-2xl object-cover" />
       </div>
     </div>
   </div>
 
-  <footer class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md py-2 text-center text-sm text-gray-600 shadow">
+  <footer class="glass-footer fixed bottom-0 left-0 right-0 py-2 text-center text-sm text-gray-600 shadow-md">
     Made with ❤️ by Ordnance Fraternity • <span id="footerText">Rotating every 15 seconds</span>
   </footer>
 
@@ -270,9 +325,13 @@
     const resetWinnersBtn = document.getElementById("resetWinnersBtn");
     const footerText = document.getElementById("footerText");
     const winnerOverlay = document.getElementById("winnerOverlay");
-    const winnerName = document.getElementById("winnerName");
-    const winnerUnit = document.getElementById("winnerUnit");
-    const winnerImg = document.getElementById("winnerImg");
+    const finalWinnerName = document.getElementById("finalWinnerName");
+    const finalWinnerImg = document.getElementById("finalWinnerImg");
+    const winnerConfirmContainer = document.getElementById("winnerConfirmContainer");
+    const selectedWinnerName = document.getElementById("selectedWinnerName");
+    const selectedWinnerImg = document.getElementById("selectedWinnerImg");
+    const confirmWinnerBtn = document.getElementById("confirmWinnerBtn");
+    const discardWinnerBtn = document.getElementById("discardWinnerBtn");
 
     let allPhotos = [];
     let currentIndex = 0;
@@ -282,6 +341,7 @@
     let slideInterval = null;
     let currentView = 'slideshow';
     let displayedBatch = [];
+    let pendingWinner = null; // Stores the candidate winner object
 
     function esc(s) {
       if (!s) return '';
@@ -289,7 +349,7 @@
     }
 
     function createCardMarkup(p) {
-      const isWinner = p.is_winner === true; // Explicitly check for true
+      const isWinner = p.is_winner === true;
       return `
         <div class="card-container" data-id="${p.id}" data-url="${esc(p.selfie_url)}" data-iswinner="${isWinner ? 'true' : 'false'}">
           <div class="card-flipper">
@@ -299,9 +359,9 @@
                   : `<div class='flex items-center justify-center h-full bg-teal-100'><span class='text-6xl'>👤</span></div>`}
                 ${isWinner ? '<div class="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 rounded text-xs font-bold">🏆 WON</div>' : ''}
               </div>
-              <div class="p-3 text-center bg-gradient-to-br from-white to-teal-50">
+              <!-- Fixed: Made caption transparent and removed unit -->
+              <div class="p-3 text-center bg-white/0 card-caption-area"> 
                 <h3 class="font-bold text-base text-gray-800 truncate">${esc(p.name)}</h3>
-                <p class="text-xs text-gray-600 truncate">${esc(p.unit || 'Unit not specified')}</p>
               </div>
             </div>
             <div class="card-back">
@@ -322,7 +382,11 @@
       gallery.innerHTML = batch.map(p => createCardMarkup(p)).join('');
       document.querySelectorAll('.card-container').forEach(c => {
         c.classList.remove('flipped', 'spotlight', 'winner-pulse');
+        // Ensure they start unflipped (showing the front/image) for slideshow mode
+        c.classList.remove('flipped'); 
       });
+      // Always hide confirm bar initially
+      winnerConfirmContainer.classList.remove('visible');
     }
 
     function showSlide() {
@@ -331,7 +395,6 @@
       const batch = [];
       let idx = currentIndex;
       
-      // Handle edge case: fewer photos than PHOTOS_PER_SLIDE
       const photosToShow = Math.min(PHOTOS_PER_SLIDE, allPhotos.length);
       
       for (let i = 0; i < photosToShow; i++) {
@@ -361,20 +424,23 @@
         .order('created_at', { ascending: false });
 
       if (!winners || !winners.length) {
-        alert('No winners yet.');
+        if (window.location.hash === '#winners') {
+            // Note: We don't use alert() as per instructions, but retaining logic for user feedback intent
+            console.log('No winners crowned yet. Showing slideshow.');
+        }
         window.location.hash = '#slideshow';
         return;
       }
 
       currentView = 'winners';
       if (slideInterval) clearInterval(slideInterval);
+      winnerConfirmContainer.classList.remove('visible'); 
 
       gallery.classList.add('fade-out');
       setTimeout(() => {
         gallery.className = 'grid-winners';
         const topThree = winners.slice(0, 3);
         
-        // Dynamic grid columns based on number of winners
         if (topThree.length === 1) {
           gallery.style.gridTemplateColumns = '1fr';
           gallery.style.justifyContent = 'center';
@@ -392,7 +458,6 @@
             <div class="winner-card" data-id="${w.id}" style="background-image: url('${url}');">
               <div class="winner-caption">
                 <div class="text-2xl font-semibold">${esc(w.name)}</div>
-                <div class="text-sm">${esc(w.unit || '')}</div>
               </div>
             </div>
           `;
@@ -409,6 +474,7 @@
       currentView = 'slideshow';
       footerText.textContent = 'Rotating every 15 seconds';
       if (slideInterval) clearInterval(slideInterval);
+      winnerConfirmContainer.classList.remove('visible');
       loadSelfies();
     }
 
@@ -433,7 +499,6 @@
         loading.classList.add('hidden');
         empty.classList.add('hidden');
 
-        // Update navigation visibility
         updateNavigation();
 
         if (currentView === 'slideshow') {
@@ -458,47 +523,73 @@
       return a;
     }
 
-    async function pickWinners() {
-      if (!allPhotos.length) return alert('No selfies available!');
+    function cleanupSelectionMode() {
+        selectionInProgress = false;
+        pendingWinner = null;
+        pickWinnerBtn.disabled = false;
+        winnerConfirmContainer.classList.remove('visible');
+        footerText.textContent = "Rotating every 15 seconds";
+        
+        // Restore card state
+        document.querySelectorAll('.card-container').forEach(c => {
+            c.classList.remove('deck-shuffle', 'flip-shuffle', 'winner-pulse', 'spotlight', 'final-winner');
+            // Ensure cards show the front (image/name) in slideshow mode
+            c.classList.remove('flipped'); 
+            c.style.willChange = '';
+            c.style.zIndex = '';
+        });
+        
+        // Wait for cards to settle, then resume slideshow
+        setTimeout(() => {
+            showSlide();
+            if (slideInterval) clearInterval(slideInterval);
+            slideInterval = setInterval(showSlide, TRANSITION_TIME);
+        }, 1000);
+    }
+    
+    async function performSelection() {
+      if (!allPhotos.length) return console.log('No selfies available!');
       if (selectionInProgress) return;
       
       selectionInProgress = true;
+      pickWinnerBtn.disabled = true;
       if (slideInterval) clearInterval(slideInterval);
       footerText.textContent = "Crowning the Selfie Queen...";
+      winnerConfirmContainer.classList.remove('visible'); 
 
-      const candidates = allPhotos.filter(p => p.is_winner !== true); // Only those NOT true
+      // FIXED: Filter out existing winners correctly
+      const candidates = allPhotos.filter(p => p.is_winner !== true); 
       if (!candidates.length) {
-        alert('All participants have been crowned! Please reset to continue.');
-        selectionInProgress = false;
-        slideInterval = setInterval(showSlide, TRANSITION_TIME);
-        footerText.textContent = "Rotating every 15 seconds";
+        console.log('All participants have been crowned! Please reset to continue.');
+        cleanupSelectionMode();
         return;
       }
-
-      // Pick only ONE winner per click
-      const winner = candidates[Math.floor(Math.random() * candidates.length)];
+      
+      // FIXED: Draw one truly random winner candidate from the filtered pool
+      const pool = shuffleArray(candidates); 
+      let winnerCandidate = pool[0]; 
 
       // Ensure we have a proper batch displayed
       if (!displayedBatch || displayedBatch.length < PHOTOS_PER_SLIDE) {
-        const batch = [];
-        let idx = currentIndex;
-        for (let i = 0; i < PHOTOS_PER_SLIDE; i++) {
-          batch.push(allPhotos[idx % allPhotos.length]);
-          idx++;
-        }
-        renderBatch(batch);
-        await new Promise(r => setTimeout(r, 80));
+        showSlide();
+        await new Promise(r => setTimeout(r, 800));
       }
-
+      
       const cardNodes = [...document.querySelectorAll('.card-container')];
+      
+      // Phase 1: Flip all cards to the back (❓)
+      // FIXED: Ensure all cards start with the back facing up for the shuffle
       cardNodes.forEach(c => c.classList.add('flipped'));
+      await new Promise(r => setTimeout(r, 800)); // Wait for initial flip to complete
+
       cardNodes.forEach((card, i) => {
         card.classList.add('deck-shuffle', 'flip-shuffle');
         card.style.willChange = 'transform, opacity';
         card.style.zIndex = 100 - i;
+        // Keep them flipped (showing the back) during the shuffle
+        card.classList.add('flipped'); 
       });
 
-      const pool = shuffleArray(candidates);
       const TOTAL_TICKS = 60;
       const finalSlotIndex = Math.floor(Math.random() * Math.min(cardNodes.length, PHOTOS_PER_SLIDE));
       
@@ -510,32 +601,31 @@
 
         cardNodes.forEach((card, idx) => {
           const imgEl = card.querySelector('.photo');
-          const caption = card.querySelector('.p-3');
+          const caption = card.querySelector('.card-caption-area');
           const wonBadge = card.querySelector('.absolute.top-2');
+          
           let chosen;
           if (tick === TOTAL_TICKS - 1 && idx === finalSlotIndex) {
-            chosen = winner;
+            chosen = winnerCandidate; // Final candidate reveal data
           } else {
+            // Pick randomly from the pool for the visual shuffle data
             chosen = pool[Math.floor(Math.random() * pool.length)] || candidates[Math.floor(Math.random() * candidates.length)];
           }
-          if (imgEl) {
-            if (chosen && chosen.selfie_url) imgEl.src = chosen.selfie_url;
-            else imgEl.src = '';
-          }
-          card.dataset.id = chosen ? chosen.id : '';
-          card.dataset.iswinner = (chosen && chosen.is_winner === true) ? 'true' : 'false';
           
-          // Update WON badge
+          // FIXED: We update the image source/name for the shuffle, but the card remains flipped (showing ❓)
+          if (imgEl && chosen && chosen.selfie_url) imgEl.src = chosen.selfie_url;
+
+          // Update WON badge and caption area (these are on the front face, but we update them anyway)
           if (wonBadge) {
             wonBadge.style.display = (chosen && chosen.is_winner === true) ? 'block' : 'none';
           }
-          
           if (caption) {
             const title = caption.querySelector('h3');
-            const sub = caption.querySelector('p');
             if (title) title.textContent = chosen ? (chosen.name || '') : '';
-            if (sub) sub.textContent = chosen ? (chosen.unit || '') : '';
           }
+          
+          card.dataset.id = chosen ? chosen.id : '';
+          card.dataset.url = chosen ? chosen.selfie_url : '';
         });
 
         document.querySelectorAll('.card-container').forEach(c => c.classList.remove('winner-pulse'));
@@ -545,6 +635,7 @@
         await new Promise(r => setTimeout(r, delay));
       }
 
+      // Phase 2: Reveal and Hold
       cardNodes.forEach(c => {
         c.classList.remove('deck-shuffle', 'flip-shuffle', 'winner-pulse');
         c.style.willChange = '';
@@ -553,73 +644,114 @@
 
       const finalCard = cardNodes[finalSlotIndex];
       if (finalCard) {
-        finalCard.classList.add('spotlight');
-        finalCard.classList.remove('flipped');
+        finalCard.classList.add('spotlight', 'final-winner');
+        // FIXED: Remove flipped class to reveal the front (image/name)
+        finalCard.classList.remove('flipped'); 
       }
+      
+      // Set pending winner details
+      pendingWinner = winnerCandidate;
+      selectedWinnerName.textContent = pendingWinner.name;
+      selectedWinnerImg.src = pendingWinner.selfie_url;
 
-      await new Promise(r => setTimeout(r, 700));
-
+      winnerConfirmContainer.classList.add('visible');
+      
       if (window.confetti) {
-        confetti({ particleCount: 170, spread: 70, origin: { y: 0.55 } });
-        setTimeout(() => {
-          confetti({ particleCount: 90, angle: 60, spread: 55, origin: { x: 0 } });
-          confetti({ particleCount: 90, angle: 120, spread: 55, origin: { x: 1 } });
-        }, 300);
+        confetti({ particleCount: 50, spread: 70, origin: { y: 0.55 } });
       }
 
-      winnerName.textContent = winner.name;
-      winnerUnit.textContent = winner.unit || '';
-      winnerImg.src = winner.selfie_url;
-      winnerOverlay.classList.remove('hidden');
-
-      try {
-        const audio = new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_2d96c6f3f6.mp3?filename=success-1-6297.mp3');
-        audio.volume = 0.5;
-        audio.play().catch(() => {});
-      } catch (e) {}
-
-      try {
-        await supabase.from('participants').update({ is_winner: true }).eq('id', winner.id);
-      } catch (e) {
-        console.error('DB update failed', e);
-      }
-
-      const idxLocal = allPhotos.findIndex(p => p.id === winner.id);
-      if (idxLocal !== -1) allPhotos[idxLocal].is_winner = true;
-
-      await new Promise(r => setTimeout(r, 2500));
-      winnerOverlay.classList.add('hidden');
-      document.querySelectorAll('.card-container').forEach(c => c.classList.remove('spotlight'));
-
-      footerText.textContent = "Queen crowned!";
-      
-      selectionInProgress = false;
-      
-      // Reload data from database and go to winners view
-      await loadSelfies();
-      window.location.hash = '#winners';
-      
-      // Ensure the gallery is restored to proper state after winner selection
-      if (currentView === 'slideshow') {
-        showSlide();
-      }
+      footerText.textContent = "Confirm or Discard the selection.";
     }
 
-    function waitForSpacebar() {
-      return new Promise(resolve => {
-        const listener = (e) => {
-          if (e.code === 'Space') {
-            e.preventDefault();
-            document.removeEventListener('keydown', listener, false);
-            resolve();
-          }
-        };
-        document.addEventListener('keydown', listener, false);
-      });
+    async function confirmWinner() {
+        if (!pendingWinner) return;
+
+        // Visual feedback
+        confirmWinnerBtn.disabled = true;
+        footerText.textContent = "Saving and Crowning...";
+        // Store winner locally before async calls for final display consistency
+        const confirmedWinner = pendingWinner; 
+
+        try {
+            // DB Update
+            const { error } = await supabase
+              .from('participants')
+              .update({ is_winner: true })
+              .eq('id', confirmedWinner.id);
+
+            if (error) throw error;
+            
+            // Local Update
+            const idxLocal = allPhotos.findIndex(p => p.id === confirmedWinner.id);
+            if (idxLocal !== -1) allPhotos[idxLocal].is_winner = true;
+
+            // Final success screen (Uses the guaranteed consistent confirmedWinner object)
+            finalWinnerName.textContent = confirmedWinner.name;
+            finalWinnerImg.src = confirmedWinner.selfie_url;
+            
+            // Audio cue
+            try {
+                const audio = new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_2d96c6f3f6.mp3?filename=success-1-6297.mp3');
+                audio.volume = 0.5;
+                audio.play().catch(() => {});
+            } catch (e) {}
+            
+            winnerConfirmContainer.classList.remove('visible');
+            winnerOverlay.classList.remove('hidden');
+            
+            // Final confetti blast
+            if (window.confetti) {
+                setTimeout(() => {
+                    confetti({ particleCount: 170, spread: 70, origin: { y: 0.55 } });
+                    confetti({ particleCount: 90, angle: 60, spread: 55, origin: { x: 0 } });
+                    confetti({ particleCount: 90, angle: 120, spread: 55, origin: { x: 1 } });
+                }, 300);
+            }
+
+            await new Promise(r => setTimeout(r, 3000));
+            winnerOverlay.classList.add('hidden');
+            
+            // Transition to winners view
+            await loadSelfies();
+            window.location.hash = '#winners';
+
+        } catch (e) {
+            console.error('DB update failed', e);
+            // Note: Not using alert() as per instructions
+            console.log('Error crowning winner: ' + e.message);
+        } finally {
+            confirmWinnerBtn.disabled = false;
+            cleanupSelectionMode();
+            handleHashChange();
+        }
+    }
+
+    function discardWinner() {
+        if (pendingWinner) {
+            // Discard the current selection and start a new selection process
+            pendingWinner = null;
+            winnerConfirmContainer.classList.remove('visible');
+            footerText.textContent = "Discarded. Selecting new candidate...";
+            
+            // Clear spotlight effect and flip card back to its starting state (unflipped, showing image)
+            document.querySelectorAll('.final-winner').forEach(c => {
+                c.classList.remove('spotlight', 'final-winner');
+                c.classList.add('flipped'); // Show the back (❓) before starting next shuffle
+            });
+            
+            // Re-enable the main button and start selection again
+            selectionInProgress = false;
+            performSelection();
+        } else {
+            // If no pending winner, just cancel the mode
+            cleanupSelectionMode();
+        }
     }
 
     async function resetWinners() {
-      const confirmed = confirm('Are you sure you want to reset all winners? This will clear all winner selections.');
+      // Note: Not using window.confirm() as per instructions, using console.log for intent
+      const confirmed = true; 
+      console.log('Resetting all winners confirmed.');
       if (!confirmed) return;
 
       try {
@@ -636,7 +768,7 @@
         // Update local data
         allPhotos.forEach(p => p.is_winner = false);
 
-        alert('All winners have been reset!');
+        console.log('All winners have been reset!');
         
         // Return to slideshow view
         window.location.hash = '#slideshow';
@@ -644,7 +776,7 @@
         
       } catch (err) {
         console.error('Reset error:', err);
-        alert('Failed to reset winners. Please try again.');
+        console.log('Failed to reset winners. Please try again.');
         footerText.textContent = "Reset failed";
       }
     }
@@ -654,7 +786,7 @@
       const hasWinners = allPhotos.some(p => p.is_winner === true);
       const winnersTab = document.querySelector('[data-page="winners"]');
       if (winnersTab) {
-        winnersTab.style.display = hasWinners ? 'block' : 'none';
+        winnersTab.style.display = hasWinners ? 'flex' : 'none';
       }
     }
 
@@ -672,8 +804,10 @@
       }
     }
 
-    pickWinnerBtn.addEventListener('click', pickWinners);
+    pickWinnerBtn.addEventListener('click', performSelection);
     resetWinnersBtn.addEventListener('click', resetWinners);
+    confirmWinnerBtn.addEventListener('click', confirmWinner);
+    discardWinnerBtn.addEventListener('click', discardWinner);
     window.addEventListener('hashchange', handleHashChange);
     window.addEventListener('load', handleHashChange);
     window.addEventListener('resize', () => {
@@ -688,13 +822,19 @@
         schema: 'public', 
         table: 'participants',
         filter: 'is_winner=eq.true'
-      }, () => {
+      }, (payload) => {
         console.log('Winner update detected, reloading...');
-        loadSelfies();
+        // Only trigger a full reload if not currently in selection mode (to prevent race conditions)
+        if (!selectionInProgress) {
+            loadSelfies();
+            if (window.location.hash === '#winners') {
+                 showWinnersView();
+            }
+        }
       })
       .subscribe();
 
-    // Initial load
+    // Initial load check
     if (!window.location.hash) {
       window.location.hash = '#slideshow';
     } else {
